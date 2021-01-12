@@ -1,0 +1,23 @@
+{
+  "name": "NN Image Labeling",
+  "type": "app",
+  "categories": [
+    "neural network",
+    "labeling"
+  ],
+  "description": "Use neural network in labeling interface",
+  "docker_image": "supervisely/base-py-sdk:6.1.43",
+  "main_script": "src/main.py",
+  "gui_template": "src/gui.html",
+  "modal_template": "src/modal.html",
+  "modal_template_state": {
+  },
+
+  "task_location": "application_sessions",
+  "isolate": true,
+  "headless": false,
+  "integrated_into": ["image_annotation_tool"],
+
+  "icon": "https://img.icons8.com/color/96/000000/ingredients.png",
+  "icon_background": "#FFFFFF"
+}

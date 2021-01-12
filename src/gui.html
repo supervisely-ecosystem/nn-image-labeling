@@ -1,0 +1,139 @@
+<div>
+    <div v-if="context.userId !== data.owner.id" style="color: red;">
+        This app session is available only for user {{data.owner.name}} (id = {{data.owner.id}})
+    </div>
+<!--    <div v-if="context.projectId !== data.targetProject.id" style="color: red;">-->
+<!--        This app session is only for project {{data.targetProject.name}} (id = {{data.targetProject.id}})-->
+<!--    </div>-->
+<!--    <div id="mark-reference-objects-for-retail" v-if="context.projectId === data.targetProject.id">-->
+<!--        <sly-style>-->
+<!--            #mark-reference-objects-for-retail {-->
+
+<!--            }-->
+<!--            #small_table.tiny-table table thead th {-->
+<!--            font-size: 10px;-->
+<!--            }-->
+<!--            #small_table.tiny-table table {-->
+<!--            font-size: 11px;-->
+<!--            }-->
+<!--            #small_tabs .el-tabs__item {-->
+<!--            font-size: 10px;-->
+<!--            font-weight: 500;-->
+<!--            height: 30px;-->
+<!--            line-height: 30px;-->
+<!--            }-->
+<!--            #small_tabs .el-tabs__header {-->
+<!--            background: white;-->
+<!--            }-->
+
+<!--            #mark-reference-objects-for-retail .app-header {-->
+<!--            background: white;-->
+<!--            }-->
+
+<!--            #mark-reference-objects-for-retail .grid-gallery-views-scene.img-grid-gallery {-->
+<!--            z-index: 0;-->
+<!--            }-->
+
+<!--            #mark-reference-objects-for-retail {-->
+<!--            position: absolute;-->
+<!--            top: 0;-->
+<!--            bottom: 0;-->
+<!--            right: 0;-->
+<!--            left: 0;-->
+<!--            }-->
+<!--            #mark-reference-objects-for-retail .el-tabs {-->
+<!--            display: flex;-->
+<!--            flex-direction: column;-->
+<!--            height: calc(100% - 42px);-->
+<!--            }-->
+<!--            #mark-reference-objects-for-retail .el-tabs__content {-->
+<!--            overflow: scroll;-->
+<!--            }-->
+
+<!--        </sly-style>-->
+<!--        <div class="app-header">-->
+<!--            <div class="fflex" style="justify-content: space-between">-->
+<!--                <div>-->
+<!--                    <el-button-->
+<!--                            class="mt5 ml5 mb15"-->
+<!--                            type="primary"-->
+<!--                            size="mini"-->
+<!--                            :disabled="context.figureId === null ||-->
+<!--                                   ![state.targetClass, state.multiselectClass].includes(context.figureClassTitle)"-->
+<!--                            @click="command('assign_tag')">-->
+<!--                        <i class="zmdi zmdi-label mr5"></i> Tag-->
+<!--                    </el-button>-->
+<!--                    <el-button-->
+<!--                            class="mt5 ml5 mb15"-->
+<!--                            type="warning"-->
+<!--                            size="mini"-->
+<!--                            :disabled="context.figureId === null ||-->
+<!--                                   ![state.targetClass, state.multiselectClass].includes(context.figureClassTitle)"-->
+<!--                            @click="command('delete_tag')">-->
+<!--                        <i class="zmdi zmdi-close-circle mr5"></i> Untag-->
+<!--                    </el-button>-->
+<!--                </div>-->
+<!--                <el-button-->
+<!--                        class="mt5 mr5 mb15"-->
+<!--                        type="danger"-->
+<!--                        size="mini"-->
+<!--                        :disabled="Object.values(state.user[context.userId].cardsCheckboxes).filter(Boolean).length == 0"-->
+<!--                        @click="command('delete_reference')"-->
+<!--                >-->
+<!--                    <i class="zmdi zmdi-delete mr5"></i> Delete references-->
+<!--                </el-button>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--        <el-tabs id="small_tabs" v-model="state.selectedTab">-->
+<!--            <el-tab-pane label="PRODUCT" name="product" class="ml5">-->
+<!--                <div v-if="data.user.hasOwnProperty(context.userId) &&-->
+<!--                           data.user[context.userId].fieldNotFound.length > 0"-->
+<!--                     style="color:red;"-->
+<!--                >-->
+<!--                    {{data.user[context.userId].fieldNotFound}}-->
+<!--                </div>-->
+<!--                <div class="info">-->
+<!--                    <div v-if="data.user.hasOwnProperty(context.userId) &&-->
+<!--                               data.user[context.userId].fieldNotFound.length === 0">-->
+<!--                        <div style="color: green; font-weight: 500;">IMAGE FIELD:</div>-->
+<!--                        <b style="color: #777777;">{{data.fieldName}}</b>: {{data.user[context.userId].fieldValue}}-->
+<!--                        <div class="mt10" style="color: green; font-weight: 500;">CATALOG INFO:</div>-->
+<!--                        <div v-for="v,k in data.user[context.userId].catalogInfo">-->
+<!--                            <b style="color: #777777;">{{k}}</b>: {{v}}-->
+<!--                        </div>-->
+<!--                        <div class="mt10" style="color: green; font-weight: 500;">-->
+<!--                            REFERENCES (found / total): {{data.user[context.userId].refCount}} /-->
+<!--                            {{data.user[context.userId].totalRefCount}}-->
+<!--                        </div>-->
+
+<!--                    </div>-->
+<!--                    <sly-grid-gallery-->
+<!--                            v-show="data.user.hasOwnProperty(context.userId) && data.user[context.userId].refCount > 0"-->
+<!--                            :content="(data.user.hasOwnProperty(context.userId) && data.user[context.userId].refCount > 0)-->
+<!--                                       ? data.user[context.userId].previewRefs.content-->
+<!--                                       : data.emptyGallery.content"-->
+<!--                            :options="(data.user.hasOwnProperty(context.userId) && data.user[context.userId].refCount > 0)-->
+<!--                                       ? data.user[context.userId].previewRefs.options-->
+<!--                                       : data.emptyGallery.options"-->
+<!--                    >-->
+<!--                        <template v-slot:card-footer="{ annotation }">-->
+<!--                            <el-checkbox-->
+<!--                                    class="mt5"-->
+<!--                                    v-model="state.user[context.userId].cardsCheckboxes[annotation.labelId]"-->
+<!--                            >-->
+<!--                                delete-->
+<!--                            </el-checkbox>-->
+<!--                        </template>-->
+<!--                    </sly-grid-gallery>-->
+<!--                </div>-->
+<!--            </el-tab-pane>-->
+<!--            <el-tab-pane label="CATALOG" name="catalog" class="ml5">-->
+<!--                <span slot="label"><i class="zmdi zmdi-view-list-alt"></i> CATALOG</span>-->
+<!--                <sly-table id="small_table"-->
+<!--                           :options="{perPage: 10, pageSizes: [5, 10, 20, 50, 100]}"-->
+<!--                           :content="data.catalog"-->
+<!--                ></sly-table>-->
+<!--            </el-tab-pane>-->
+<!--        </el-tabs>-->
+<!--    </div>-->
+</div>
