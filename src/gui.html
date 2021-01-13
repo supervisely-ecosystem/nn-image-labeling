@@ -1,8 +1,7 @@
 <div id="nn-image-labeling">
-    <!--    @TODO: only available for one user-->
-    <!--    <div v-if="context.userId !== data.owner.id" style="color: red;">-->
-    <!--        This app session is available only for user {{data.owner.name}} (id = {{data.owner.id}})-->
-    <!--    </div>-->
+    <div v-if="context.userId !== data.ownerId" style="color: red;">
+        You don't have permissions to open this application session.
+    </div>
 
     <sly-style>
         #nn-image-labeling .el-checkbox.small .el-checkbox__inner {
@@ -26,9 +25,12 @@
             </sly-icon>
             <div class="fflex">
                 <el-input placeholder="Please input session id" size="mini" v-model="state.sessionId"></el-input>
-                <el-button class="ml5" type="primary" size="mini"
+                <el-button class="ml5"
+                           type="primary"
+                           size="mini"
                            :disabled="state.sessionId===''"
-                           @click="command('get_model_info')">
+                           @click="command('get_model_info')"
+                >
                     <i class="zmdi zmdi-refresh mr5"></i> Connect
                 </el-button>
             </div>
@@ -46,6 +48,7 @@
                        class="mt5"
                        style="margin-bottom: 15px;"
                        :disabled="data.classes.length === 0 && data.tags.length === 0"
+                       @click="command('inference')"
             >
                 <i class="zmdi zmdi-fire mr5"></i>Apply model
             </el-button>
@@ -123,6 +126,9 @@
                             </tbody>
                         </table>
                     </sly-field>
+                </el-tab-pane>
+                <el-tab-pane label="INFERENCE" name="inference">
+                    TODO: INFERENCE SETTINGS
                 </el-tab-pane>
             </el-tabs>
         </div>
