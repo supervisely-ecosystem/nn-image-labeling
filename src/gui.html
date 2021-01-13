@@ -9,6 +9,13 @@
         height: 14px;
         width: 14px;
         }
+
+        #nn-image-labeling .el-tabs.small .el-tabs__item {
+        font-size: 10px;
+        font-weight: 500;
+        height: 30px;
+        line-height: 30px;
+        }
     </sly-style>
 
     <div class="ml5 mr10">
@@ -33,72 +40,91 @@
                 :content="data.connectionError">
         </sly-notification>
         <div v-if="data.connected === true">
+            <div><b>ACTIONS:</b></div>
             <el-button type="success"
                        size="mini"
+                       class="mt5"
                        style="margin-bottom: 15px;"
                        :disabled="data.classes.length === 0 && data.tags.length === 0"
             >
                 <i class="zmdi zmdi-fire mr5"></i>Apply model
             </el-button>
-            <sly-field title="Model info"
-                       description="General info about deployed model">
-                <sly-icon slot="icon" :options="{ color: '#6670f9', bgColor: '#d2ddff', rounded: false }">
-                    <i class="zmdi zmdi-info"></i>
-                </sly-icon>
-                <div v-for="v,k in data.info">
-                    <b style="color: #777777;">{{k}}</b>: {{v}}
-                </div>
-            </sly-field>
-            <sly-field title="Model classes"
-                       description="Select classes of interest">
-                <sly-icon slot="icon" :options="{ color: '#a9ad0f', bgColor: '#feffb3', rounded: false }">
-                    <i class="zmdi zmdi-shape"></i>
-                </sly-icon>
-                <div class="fflex">
-                    <el-button type="text" size="mini" @click="command('select_all_classes');">
-                        <i class="zmdi zmdi-check-all"></i> Select all
-                    </el-button>
-                    <el-button type="text" size="mini" @click="command('deselect_all_classes');"
-                               style="margin-left: 25px;">
-                        <i class="zmdi zmdi-square-o"></i> Deselect all
-                    </el-button>
-                </div>
-                <table>
-                    <tbody>
-                        <tr v-for="(objClass, index) in data.classes">
-                            <td><el-checkbox class="small" v-model="state.classes[index]"></el-checkbox></td>
-                            <td><i class="zmdi zmdi-circle ml5 mr5" :style="{color: objClass.color}"></i></td>
-                            <td><b style="color: #777777">{{objClass.title}}</b></td>
-                            <td><span class="ml5">{{objClass.shape}}</span></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </sly-field>
-            <sly-field title="Model tags"
-                       description="Select tags of interest">
-                <sly-icon slot="icon" :options="{ color: '#ef50e9', bgColor: '#f5d8f8', rounded: false }">
-                    <i class="zmdi zmdi-label"></i>
-                </sly-icon>
-                <div class="fflex">
-                    <el-button type="text" size="mini" @click="command('select_all_tags');">
-                        <i class="zmdi zmdi-check-all"></i> Select all
-                    </el-button>
-                    <el-button type="text" size="mini" @click="command('deselect_all_tags');"
-                               style="margin-left: 25px;">
-                        <i class="zmdi zmdi-square-o"></i> Deselect all
-                    </el-button>
-                </div>
-                <table>
-                    <tbody>
-                        <tr v-for="(tagMeta, index) in data.tags">
-                            <td><el-checkbox class="small" v-model="state.tags[index]"></el-checkbox></td>
-                            <td><i class="zmdi zmdi-label ml5 mr5" :style="{color: tagMeta.color}"></i></td>
-                            <td><b style="color: #777777">{{tagMeta.name}}</b></td>
-                            <td><span class="ml5">{{tagMeta['value_type']}}</span></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </sly-field>
+            <div><b>SETTINGS:</b></div>
+            <el-tabs class="small" v-model="state.tabName">
+                <el-tab-pane label="INFO" name="info">
+                    <span slot="label"><i class="zmdi zmdi-info mr5"></i>INFO</span>
+                    <sly-field title="Model info"
+                               description="General info about deployed model">
+<!--                        <sly-icon slot="icon" :options="{ color: '#6670f9', bgColor: '#d2ddff', rounded: false }">-->
+<!--                            <i class="zmdi zmdi-info"></i>-->
+<!--                        </sly-icon>-->
+                        <div v-for="v,k in data.info">
+                            <b style="color: #777777;">{{k}}</b>: {{v}}
+                        </div>
+                    </sly-field>
+                </el-tab-pane>
+                <el-tab-pane label="CLASSES" name="classes">
+                    <span slot="label"><i class="zmdi zmdi-shape mr5"></i>CLASSES</span>
+                    <div v-if="data.classes.length === 0">Model does not produce classes</div>
+                    <sly-field title="Model output classes"
+                               description="Select classes of interest"
+                               v-if="data.classes.length > 0">
+                        <div class="fflex">
+                            <el-button type="text" size="mini" @click="command('select_all_classes');">
+                                <i class="zmdi zmdi-check-all"></i> Select all
+                            </el-button>
+                            <el-button type="text" size="mini" @click="command('deselect_all_classes');"
+                                       style="margin-left: 25px;">
+                                <i class="zmdi zmdi-square-o"></i> Deselect all
+                            </el-button>
+                        </div>
+                        <table>
+                            <tbody>
+                            <tr v-for="(objClass, index) in data.classes">
+                                <td>
+                                    <el-checkbox class="small" v-model="state.classes[index]"></el-checkbox>
+                                </td>
+                                <td><i class="zmdi zmdi-circle ml5 mr5" :style="{color: objClass.color}"></i></td>
+                                <td><b style="color: #777777">{{objClass.title}}</b></td>
+                                <td><span class="ml5">{{objClass.shape}}</span></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </sly-field>
+                </el-tab-pane>
+                <el-tab-pane label="TAGS" name="tags">
+                    <span slot="label"><i class="zmdi zmdi-label mr5"></i>TAGS</span>
+                    <div v-if="data.tags.length === 0">Model does not produce tags</div>
+                    <sly-field title="Model output tags"
+                               description="Select tags of interest"
+                               v-if="data.tags.length > 0">
+<!--                        <sly-icon slot="icon" :options="{ color: '#ef50e9', bgColor: '#f5d8f8', rounded: false }">-->
+<!--                            <i class="zmdi zmdi-label"></i>-->
+<!--                        </sly-icon>-->
+                        <div class="fflex">
+                            <el-button type="text" size="mini" @click="command('select_all_tags');">
+                                <i class="zmdi zmdi-check-all"></i> Select all
+                            </el-button>
+                            <el-button type="text" size="mini" @click="command('deselect_all_tags');"
+                                       style="margin-left: 25px;">
+                                <i class="zmdi zmdi-square-o"></i> Deselect all
+                            </el-button>
+                        </div>
+                        <table>
+                            <tbody>
+                            <tr v-for="(tagMeta, index) in data.tags">
+                                <td>
+                                    <el-checkbox class="small" v-model="state.tags[index]"></el-checkbox>
+                                </td>
+                                <td><i class="zmdi zmdi-label ml5 mr5" :style="{color: tagMeta.color}"></i></td>
+                                <td><b style="color: #777777">{{tagMeta.name}}</b></td>
+                                <td><span class="ml5">{{tagMeta['value_type']}}</span></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </sly-field>
+                </el-tab-pane>
+            </el-tabs>
         </div>
     </div>
 </div>
