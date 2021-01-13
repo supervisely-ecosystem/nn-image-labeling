@@ -19,7 +19,11 @@
             </div>
         </sly-field>
         <hr style="border: 0; border-top: 1px solid rgba(0,0,0,.12); margin-bottom: 15px;"/>
-        <div v-if="data.connectionError.length > 0" style="color: red">{{data.connectionError}}</div>
+        <sly-notification
+                v-if="data.connectionError.length > 0"
+                :options="{'name': 'Error notification', 'type': 'error'}"
+                :content="data.connectionError">
+        </sly-notification>
         <div v-if="data.connected === true">
             <el-button type="success"
                        size="mini"
