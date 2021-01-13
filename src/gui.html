@@ -18,44 +18,69 @@
                 </el-button>
             </div>
         </sly-field>
-        <sly-field title="Model info"
-                   description="General info about deployed model">
-            <sly-icon slot="icon" :options="{ color: '#6670f9', bgColor: '#d2ddff', rounded: false }">
-                <i class="zmdi zmdi-info"></i>
-            </sly-icon>
-            <div v-for="v,k in data.info">
-                <b style="color: #777777;">{{k}}</b>: {{v}}
-            </div>
-        </sly-field>
-        <sly-field title="Model classes"
-                   description="Select classes of interest">
-            <sly-icon slot="icon" :options="{ color: '#a9ad0f', bgColor: '#feffb3', rounded: false }">
-                <i class="zmdi zmdi-shape"></i>
-            </sly-icon>
-<!--            <pre>{{data.classes}}</pre>-->
-            <div v-for="(objClass, index) in data.classes">
-                <el-checkbox size="small" v-model="state.classes[index]">
-                    <b style="color: #777777">{{objClass.title}}</b>
-                    <i class="zmdi zmdi-circle" :style="{color: objClass.color}"></i>
-                    <span style="color: #777777;">{{objClass.shape}}</span>
-                </el-checkbox>
-            </div>
-        </sly-field>
-        <sly-field title="Model tags"
-                   description="Select tags of interest">
-            <sly-icon slot="icon" :options="{ color: '#ef50e9', bgColor: '#f5d8f8', rounded: false }">
-                <i class="zmdi zmdi-label"></i>
-            </sly-icon>
-<!--            <pre>{{data.tags}}</pre>-->
-            <div v-for="(tagMeta, index) in data.tags">
-                <el-checkbox size="small" v-model="state.tags[index]">
-                    <b style="color: #777777">{{tagMeta.name}}</b>
-                    <i class="zmdi zmdi-label" :style="{color: tagMeta.color}"></i>
-                    <span style="color: #777777;">{{tagMeta['value_type']}}</span>
-                </el-checkbox>
-            </div>
-        </sly-field>
-
-
+        <hr style="border: 0; border-top: 1px solid rgba(0,0,0,.12); margin-bottom: 15px;"/>
+        <div v-if="data.connectionError.length > 0" style="color: red">{{data.connectionError}}</div>
+        <div v-if="data.connected === true">
+            <el-button type="success"
+                       size="mini"
+                       style="margin-bottom: 15px;"
+                       :disabled="data.classes.length === 0 && data.tags.length === 0"
+            >
+                <i class="zmdi zmdi-fire mr5"></i>Apply model
+            </el-button>
+            <sly-field title="Model info"
+                       description="General info about deployed model">
+                <sly-icon slot="icon" :options="{ color: '#6670f9', bgColor: '#d2ddff', rounded: false }">
+                    <i class="zmdi zmdi-info"></i>
+                </sly-icon>
+                <div v-for="v,k in data.info">
+                    <b style="color: #777777;">{{k}}</b>: {{v}}
+                </div>
+            </sly-field>
+            <sly-field title="Model classes"
+                       description="Select classes of interest">
+                <sly-icon slot="icon" :options="{ color: '#a9ad0f', bgColor: '#feffb3', rounded: false }">
+                    <i class="zmdi zmdi-shape"></i>
+                </sly-icon>
+                <div class="fflex">
+                    <el-button type="text" size="mini" @click="command('select_all_classes');">
+                        <i class="zmdi zmdi-check-all"></i> Select all
+                    </el-button>
+                    <el-button type="text" size="mini" @click="command('deselect_all_classes');"
+                               style="margin-left: 25px;">
+                        <i class="zmdi zmdi-square-o"></i> Deselect all
+                    </el-button>
+                </div>
+                <div v-for="(objClass, index) in data.classes">
+                    <el-checkbox size="small" v-model="state.classes[index]" style="margin-bottom: 5px;">
+                        <b style="color: #777777">{{objClass.title}}</b>
+                        <i class="zmdi zmdi-circle" :style="{color: objClass.color}"></i>
+                        <span style="color: #777777;">{{objClass.shape}}</span>
+                    </el-checkbox>
+                </div>
+            </sly-field>
+            <sly-field title="Model tags"
+                       description="Select tags of interest">
+                <sly-icon slot="icon" :options="{ color: '#ef50e9', bgColor: '#f5d8f8', rounded: false }">
+                    <i class="zmdi zmdi-label"></i>
+                </sly-icon>
+                <div class="fflex">
+                    <el-button type="text" size="mini" @click="command('select_all_tags');">
+                        <i class="zmdi zmdi-check-all"></i> Select all
+                    </el-button>
+                    <el-button type="text" size="mini" @click="command('deselect_all_tags');"
+                               style="margin-left: 25px;">
+                        <i class="zmdi zmdi-square-o"></i> Deselect all
+                    </el-button>
+                </div>
+                <div v-for="(tagMeta, index) in data.tags">
+                    <el-checkbox size="small" v-model="state.tags[index]" style="margin-bottom: 5px;">
+                        <b style="color: #777777">{{tagMeta.name}}</b>
+                        <i class="zmdi zmdi-label" :style="{color: tagMeta.color}"></i>
+                        <span style="color: #777777;">{{tagMeta['value_type']}}</span>
+                    </el-checkbox>
+                </div>
+            </sly-field>
+        </div>
     </div>
 </div>
