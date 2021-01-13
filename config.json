@@ -5,8 +5,8 @@
     "neural network",
     "labeling"
   ],
-  "description": "Use neural network in labeling interface",
-  "docker_image": "supervisely/base-py-sdk:6.1.43",
+  "description": "Use deployed neural network in labeling interface",
+  "docker_image": "supervisely/base-py-sdk:6.1.44",
   "main_script": "src/main.py",
   "gui_template": "src/gui.html",
   "modal_template": "src/modal.html",

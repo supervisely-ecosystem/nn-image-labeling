@@ -1,49 +1,53 @@
+import os
 import supervisely_lib as sly
 
 owner_id = int(os.environ['context.userId'])
 team_id = int(os.environ['context.teamId'])
 
-app: sly.AppService = sly.AppService(ignore_task_id=True)
+my_app: sly.AppService = sly.AppService(ignore_task_id=True)
+meta: sly.ProjectMeta = None
 
 
-@ag.app.callback("manual_selected_image_changed")
+@my_app.callback("manual_selected_image_changed")
 def event_next_image(api: sly.Api, task_id, context, state, app_logger):
     pass
 
-@ag.app.callback("delete_reference")
+
+@my_app.callback("get_model_info")
 @sly.timeit
-def delete_reference(api: sly.Api, task_id, context, state, app_logger):
-    pass
+def get_model_info(api: sly.Api, task_id, context, state, app_logger):
+    global meta
+    info = api.task.send_request(state["sessionId"], "get_session_info", data={})
+    info["session"] = state["sessionId"]
+    app_logger.debug("Session Info", extra={"info": info})
+
+    meta_json = api.task.send_request(state["sessionId"], "get_output_classes_and_tags", data={})
+    meta = sly.ProjectMeta.from_json(meta_json)
+
+    fields = [
+        {"field": "data.info", "payload": info},
+        {"field": "data.classes", "payload": meta.obj_classes.to_json()},
+        {"field": "state.classes", "payload": [True] * len(meta.obj_classes)},
+        {"field": "data.tags", "payload": meta.tag_metas.to_json()},
+        {"field": "state.tags", "payload": [True] * len(meta.tag_metas)},
+    ]
+    api.task.set_fields(task_id, fields)
 
 
 def main():
     data = {}
-    data["user"] = {}
-
-    data["catalog"] = {"columns": [], "data": []}
-    data["ownerId"] = ag.owner_id
-    data["targetProject"] = {"id": ag.project.id, "name": ag.project.name}
-    data["currentMeta"] = {}
-    data["fieldName"] = ag.field_name
+    data["ownerId"] = owner_id
+    data["info"] = {}
+    data["classes"] = []
+    data["tags"] = []
 
     state = {}
-    state["selectedTab"] = "product"
-    state["targetClass"] = ag.target_class_name
-    state["multiselectClass"] = ag.multiselect_class_name
-    state["user"] = {}
+    state["sessionId"] = "2163" #@TODO: for debug
+    state["classes"] = []
+    state["tags"] = []
+    my_app.run(data=data, state=state)
 
-    sly.logger.info("Initialize catalog ...")
-    catalog.init()
-    data["catalog"] = json.loads(catalog.df.to_json(orient="split"))
-    data["emptyGallery"] = references.empty_gallery
 
-    sly.logger.info("Initialize existing references ...")
-    references.index_existing()
-
-    ag.app.run(data=data, state=state)
-
-#@TODO: save references to file at the end
-#@TODO: redme - how to hide object properties on object select event
-#@TODO: readme - create classes before start
+#@TODO: check UI only for one user
 if __name__ == "__main__":
     sly.main_wrapper("main", main)
