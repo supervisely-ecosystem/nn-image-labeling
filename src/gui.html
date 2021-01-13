@@ -1,8 +1,16 @@
-<div>
+<div id="nn-image-labeling">
     <!--    @TODO: only available for one user-->
     <!--    <div v-if="context.userId !== data.owner.id" style="color: red;">-->
     <!--        This app session is available only for user {{data.owner.name}} (id = {{data.owner.id}})-->
     <!--    </div>-->
+
+    <sly-style>
+        #nn-image-labeling .el-checkbox.small .el-checkbox__inner {
+        height: 14px;
+        width: 14px;
+        }
+    </sly-style>
+
     <div class="ml5 mr10">
         <sly-field title="Connect to running NN"
                    description="Define session (task id) with deployed model">
@@ -21,7 +29,7 @@
         <hr style="border: 0; border-top: 1px solid rgba(0,0,0,.12); margin-bottom: 15px;"/>
         <sly-notification
                 v-if="data.connectionError.length > 0"
-                :options="{'name': 'Error notification', 'type': 'error'}"
+                :options="{'name': 'Connection Error', 'type': 'error'}"
                 :content="data.connectionError">
         </sly-notification>
         <div v-if="data.connected === true">
@@ -55,13 +63,16 @@
                         <i class="zmdi zmdi-square-o"></i> Deselect all
                     </el-button>
                 </div>
-                <div v-for="(objClass, index) in data.classes">
-                    <el-checkbox size="small" v-model="state.classes[index]" style="margin-bottom: 5px;">
-                        <b style="color: #777777">{{objClass.title}}</b>
-                        <i class="zmdi zmdi-circle" :style="{color: objClass.color}"></i>
-                        <span style="color: #777777;">{{objClass.shape}}</span>
-                    </el-checkbox>
-                </div>
+                <table>
+                    <tbody>
+                        <tr v-for="(objClass, index) in data.classes">
+                            <td><el-checkbox class="small" v-model="state.classes[index]"></el-checkbox></td>
+                            <td><i class="zmdi zmdi-circle ml5 mr5" :style="{color: objClass.color}"></i></td>
+                            <td><b style="color: #777777">{{objClass.title}}</b></td>
+                            <td><span class="ml5">{{objClass.shape}}</span></td>
+                        </tr>
+                    </tbody>
+                </table>
             </sly-field>
             <sly-field title="Model tags"
                        description="Select tags of interest">
@@ -77,13 +88,16 @@
                         <i class="zmdi zmdi-square-o"></i> Deselect all
                     </el-button>
                 </div>
-                <div v-for="(tagMeta, index) in data.tags">
-                    <el-checkbox size="small" v-model="state.tags[index]" style="margin-bottom: 5px;">
-                        <b style="color: #777777">{{tagMeta.name}}</b>
-                        <i class="zmdi zmdi-label" :style="{color: tagMeta.color}"></i>
-                        <span style="color: #777777;">{{tagMeta['value_type']}}</span>
-                    </el-checkbox>
-                </div>
+                <table>
+                    <tbody>
+                        <tr v-for="(tagMeta, index) in data.tags">
+                            <td><el-checkbox class="small" v-model="state.tags[index]"></el-checkbox></td>
+                            <td><i class="zmdi zmdi-label ml5 mr5" :style="{color: tagMeta.color}"></i></td>
+                            <td><b style="color: #777777">{{tagMeta.name}}</b></td>
+                            <td><span class="ml5">{{tagMeta['value_type']}}</span></td>
+                        </tr>
+                    </tbody>
+                </table>
             </sly-field>
         </div>
     </div>

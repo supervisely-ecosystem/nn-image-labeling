@@ -85,5 +85,6 @@ def main():
 
 
 #@TODO: check UI only for one user
+#@TODO: v-if classes and tags are not empty
 if __name__ == "__main__":
     sly.main_wrapper("main", main)
