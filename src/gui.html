@@ -17,7 +17,7 @@
         }
     </sly-style>
 
-    <div class="ml5 mr10">
+    <div class="ml5 mr10" v-if="context.userId === data.ownerId">
         <sly-field title="Connect to running NN"
                    description="Define session (task id) with deployed model">
             <sly-icon slot="icon" :options="{ color: '#2cd26e', bgColor: '#d8f8e7', rounded: false }">
@@ -128,7 +128,11 @@
                     </sly-field>
                 </el-tab-pane>
                 <el-tab-pane label="INFERENCE" name="inference">
-                    TODO: INFERENCE SETTINGS
+                    <sly-field title="Class/tag suffix"
+                               description="The suffix will be added to name only if model meta (model output classes
+                                            and tags) have conflicts with the ones in project meta">
+                        <el-input placeholder="Please input" size="mini" v-model="state.suffix"></el-input>
+                    </sly-field>
                 </el-tab-pane>
             </el-tabs>
         </div>
