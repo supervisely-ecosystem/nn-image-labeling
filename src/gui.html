@@ -18,50 +18,60 @@
     </sly-style>
 
     <div class="ml5 mr10" v-if="context.userId === data.ownerId">
-        <sly-field title="Connect to running NN"
-                   description="Define session (task id) with deployed model">
-            <sly-icon slot="icon" :options="{ color: '#2cd26e', bgColor: '#d8f8e7', rounded: false }">
-                <i class="zmdi zmdi-compass"></i>
-            </sly-icon>
-            <div class="fflex">
-                <el-input placeholder="Please input session id" size="mini" v-model="state.sessionId"></el-input>
-                <el-button class="ml5"
-                           type="primary"
-                           size="mini"
-                           :disabled="state.sessionId===''"
-                           @click="command('get_model_info')"
-                >
-                    <i class="zmdi zmdi-refresh mr5"></i> Connect
-                </el-button>
-            </div>
-        </sly-field>
-        <hr style="border: 0; border-top: 1px solid rgba(0,0,0,.12); margin-bottom: 15px;"/>
-        <sly-notification
-                v-if="data.connectionError.length > 0"
-                :options="{'name': 'Connection Error', 'type': 'error'}"
-                :content="data.connectionError">
-        </sly-notification>
+        <div v-if="data.connected === false">
+            <sly-field title="Connect to running NN"
+                       description="Define session (task id) with deployed model">
+                <sly-icon slot="icon" :options="{ color: '#2cd26e', bgColor: '#d8f8e7', rounded: false }">
+                    <i class="zmdi zmdi-compass"></i>
+                </sly-icon>
+                <div class="fflex">
+                    <el-input placeholder="Please input session id" size="mini" v-model="state.sessionId"></el-input>
+                    <el-button class="ml5"
+                               type="primary"
+                               size="mini"
+                               :disabled="state.sessionId===''"
+                               @click="command('get_model_info')"
+                    >
+                        <i class="zmdi zmdi-refresh mr5"></i> Connect
+                    </el-button>
+                </div>
+            </sly-field>
+            <hr style="border: 0; border-top: 1px solid rgba(0,0,0,.12); margin-bottom: 15px;"/>
+            <sly-notification
+                    v-if="data.connectionError.length > 0"
+                    :options="{'name': 'Connection Error', 'type': 'error'}"
+                    :content="data.connectionError">
+            </sly-notification>
+        </div>
+
         <div v-if="data.connected === true">
             <div><b>ACTIONS:</b></div>
-            <el-button type="success"
-                       size="mini"
-                       class="mt5"
-                       style="margin-bottom: 15px;"
-                       :disabled="data.classes.length === 0 && data.tags.length === 0"
-                       @click="command('inference')"
-            >
-                <i class="zmdi zmdi-fire mr5"></i>Apply model
-            </el-button>
+            <div class="fflex" style="justify-content: space-between">
+                <div>
+                    <el-button type="success" size="mini" class="mt5" style="margin-bottom: 15px;"
+                               :disabled="data.classes.length === 0 && data.tags.length === 0"
+                               @click="command('inference')"
+                    >
+                        <i class="zmdi zmdi-fire mr5"></i>Apply model
+                    </el-button>
+                </div>
+                <div>
+                    <el-button type="warning" size="mini" class="mt5" style="margin-bottom: 15px;"
+                               @click="command('disconnect')"
+                    >
+                        <i class="zmdi zmdi-close mr5"></i>Disconnect
+                    </el-button>
+                </div>
+
+            </div>
+
             <div><b>SETTINGS:</b></div>
             <el-tabs class="small" v-model="state.tabName">
                 <el-tab-pane label="INFO" name="info">
                     <span slot="label"><i class="zmdi zmdi-info mr5"></i>INFO</span>
                     <sly-field title="Model info"
                                description="General info about deployed model">
-<!--                        <sly-icon slot="icon" :options="{ color: '#6670f9', bgColor: '#d2ddff', rounded: false }">-->
-<!--                            <i class="zmdi zmdi-info"></i>-->
-<!--                        </sly-icon>-->
-                        <div v-for="v,k in data.info">
+                        <div v-for="v,k in data.info" class="mt5">
                             <b style="color: #777777;">{{k}}</b>: {{v}}
                         </div>
                     </sly-field>
@@ -101,9 +111,6 @@
                     <sly-field title="Model output tags"
                                description="Select tags of interest"
                                v-if="data.tags.length > 0">
-<!--                        <sly-icon slot="icon" :options="{ color: '#ef50e9', bgColor: '#f5d8f8', rounded: false }">-->
-<!--                            <i class="zmdi zmdi-label"></i>-->
-<!--                        </sly-icon>-->
                         <div class="fflex">
                             <el-button type="text" size="mini" @click="command('select_all_tags');">
                                 <i class="zmdi zmdi-check-all"></i> Select all
@@ -128,10 +135,15 @@
                     </sly-field>
                 </el-tab-pane>
                 <el-tab-pane label="INFERENCE" name="inference">
+                    <span slot="label"><i class="zmdi zmdi-settings mr5"></i></i>INFERENCE</span>
                     <sly-field title="Class/tag suffix"
                                description="The suffix will be added to name only if model meta (model output classes
                                             and tags) have conflicts with the ones in project meta">
                         <el-input placeholder="Please input" size="mini" v-model="state.suffix"></el-input>
+                    </sly-field>
+                    <sly-field title="Settings"
+                               description="Model specific inference settings in YAML format">
+                        <sly-editor v-model="state.settings" :options="{height: '200px', mode: 'ace/mode/yaml'}"></sly-editor>
                     </sly-field>
                 </el-tab-pane>
             </el-tabs>

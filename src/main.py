@@ -1,4 +1,5 @@
 import os
+from typing import List
 import supervisely_lib as sly
 
 import cache
@@ -23,6 +24,8 @@ def get_model_info(api: sly.Api, task_id, context, state, app_logger):
         meta_json = api.task.send_request(state["sessionId"], "get_output_classes_and_tags", data={})
         model_meta = sly.ProjectMeta.from_json(meta_json)
 
+        inf_settings = api.task.send_request(state["sessionId"], "get_custom_inference_settings", data={})
+
         fields = [
             {"field": "data.info", "payload": info},
             {"field": "data.classes", "payload": model_meta.obj_classes.to_json()},
@@ -31,6 +34,7 @@ def get_model_info(api: sly.Api, task_id, context, state, app_logger):
             {"field": "state.tags", "payload": [True] * len(model_meta.tag_metas)},
             {"field": "data.connected", "payload": True},
             {"field": "data.connectionError", "payload": ""},
+            {"field": "state.settings", "payload": inf_settings["settings"]}
         ]
         api.task.set_fields(task_id, fields)
     except Exception as e:
@@ -79,45 +83,58 @@ def _postprocess(api: sly.Api, project_id, ann: sly.Annotation, project_meta: sl
             iter += 1
         return free_name
 
-    def _compare_tag(tag: sly.Tag, new_tag_metas: List, new_tags: List):
-        original_tag_meta = project_meta.tag_metas.get(tag.meta.name)
+    res_meta = project_meta.clone()
+    tag_mapping = {}  # old name to new meta
+    class_mapping = {}  # old name to new meta
+
+    def _compare_tag(res_meta: sly.ProjectMeta, tag: sly.Tag, new_tags: List):
+        if tag.meta.name in tag_mapping:
+            new_tags.append(tag.clone(meta=tag_mapping[tag.meta.name]))
+            return
+        original_tag_meta = res_meta.tag_metas.get(tag.meta.name)
         if original_tag_meta is None:
-            new_tag_metas.append(tag.meta)
+            res_meta = res_meta.add_tag_meta(tag.meta)
             new_tags.append(tag)
         elif original_tag_meta != tag.meta:  # conflict
-            new_tag_name = _find_free_name(project_meta.tag_metas, tag.meta.name)
+            new_tag_name = _find_free_name(res_meta.tag_metas, tag.meta.name)
             new_tag_meta = tag.meta.clone(name=new_tag_name)
-            new_tag_metas.append(new_tag_meta)
+            tag_mapping[new_tag_name] = new_tag_meta
+            res_meta = res_meta.add_tag_meta(new_tag_meta)
             new_tags.append(tag.clone(meta=new_tag_meta))
-
+        else:
+            new_tags.append(tag)
+        return res_meta
 
     image_tags = []
-    new_tag_metas = []
     for tag in ann.img_tags:
-        _compare_tag(tag, new_tag_metas, image_tags)
+        res_meta = _compare_tag(res_meta, tag, image_tags)
 
     new_labels = []
-    new_obj_classes = []
     for label in ann.labels:
         label_tags = []
         for tag in label.tags:
-            _compare_tag(tag, new_tag_metas, label_tags)
+            res_meta = _compare_tag(res_meta, tag, label_tags)
 
-        original_class = project_meta.obj_classes.get(label.obj_class.name)
+        if label.obj_class.name in class_mapping:
+            new_labels.append(label.clone(obj_class=class_mapping[label.obj_class.name],
+                                          tags=sly.TagCollection(label_tags)))
+            continue
+
+        original_class = res_meta.obj_classes.get(label.obj_class.name)
         if original_class is None:
-            new_obj_classes.append(label.obj_class)
+            res_meta = res_meta.add_obj_class(label.obj_class)
             new_labels.append(label.clone(tags=sly.TagCollection(label_tags)))
         elif original_class != label.obj_class:  # conflict
-            new_class_name = _find_free_name(project_meta.obj_classes, label.obj_class.name)
+            new_class_name = _find_free_name(res_meta.obj_classes, label.obj_class.name)
             new_class = label.obj_class.clone(name=new_class_name)
-            new_obj_classes.append(new_class)
+            res_meta = res_meta.add_obj_class(new_class)
             new_labels.append(label.clone(obj_class=new_class, tags=sly.TagCollection(label_tags)))
+        else:
+            new_labels.append(label.clone(tags=sly.TagCollection(label_tags)))
 
-    result_meta = project_meta.clone()
-    if len(new_tag_metas) != 0 or len(new_obj_classes) != 0:
-        result_meta = result_meta.add_tag_metas(new_tag_metas)
-        result_meta = result_meta.add_obj_classes(new_obj_classes)
-        cache.update_project_meta(api, project_id, result_meta)
+    if len(res_meta.obj_classes) != len(project_meta.obj_classes) or \
+       len(res_meta.tag_metas) != len(project_meta.tag_metas):
+        cache.update_project_meta(api, project_id, res_meta)
 
     res_ann = ann.clone(labels=new_labels, img_tags=new_tags)
     return res_ann
@@ -139,9 +156,7 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
                                          "debug_visualization": True if app_logger.level <= 10 else False  # 10 - debug
                                      })
     ann = sly.Annotation.from_json(ann_json, model_meta)
-
-    project_meta = cache.get_project_meta(api, project_id)
-    new_ann = _postprocess(ann, project_meta, state["suffix"])
+    new_ann = _postprocess(api, project_id, ann, project_meta, state["suffix"])
     api.annotation.upload_ann(image_id, new_ann)
 
 
@@ -155,11 +170,12 @@ def main():
     data["connectionError"] = ""
 
     state = {}
-    state["sessionId"] = "2163" #@TODO: for debug
+    state["sessionId"] = "2361" #@TODO: for debug
     state["classes"] = []
     state["tags"] = []
     state["tabName"] = "info"
     state["suffix"] = "model"
+    state["settings"] = "# empty"
     my_app.run(data=data, state=state)
 
 
