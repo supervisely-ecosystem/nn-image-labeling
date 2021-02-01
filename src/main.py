@@ -168,7 +168,10 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
     image_id = context["imageId"]
 
     project_meta = cache.get_project_meta(api, project_id)
-    original_ann = cache.backup_ann(api, image_id, project_meta)
+    cache.backup_ann(api, image_id, project_meta)
+
+    last_annotation_json = api.annotation.download(image_id).annotation
+    last_annotation = sly.Annotation.from_json(last_annotation_json, project_meta)
 
     inference_setting = {}
     try:
@@ -185,7 +188,7 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
     ann_pred = sly.Annotation.from_json(ann_json, model_meta)
     new_ann: sly.Annotation = _postprocess(api, project_id, ann_pred, project_meta, state)
     if state["addMode"] == "merge":
-        new_ann = original_ann.add_labels(new_ann.labels)
+        new_ann = last_annotation.add_labels(new_ann.labels)
         new_ann = new_ann.add_tags(new_ann.img_tags)
     else:
         # replace
