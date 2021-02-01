@@ -1,8 +1,10 @@
 import os
 from typing import List
+import yaml
 import supervisely_lib as sly
 
 import cache
+from init_ui import unit_ui
 
 owner_id = int(os.environ['context.userId'])
 team_id = int(os.environ['context.teamId'])
@@ -136,7 +138,7 @@ def _postprocess(api: sly.Api, project_id, ann: sly.Annotation, project_meta: sl
        len(res_meta.tag_metas) != len(project_meta.tag_metas):
         cache.update_project_meta(api, project_id, res_meta)
 
-    res_ann = ann.clone(labels=new_labels, img_tags=new_tags)
+    res_ann = ann.clone(labels=new_labels, img_tags=sly.TagCollection(image_tags))
     return res_ann
 
 
@@ -149,33 +151,43 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
 
     project_meta = cache.get_project_meta(api, project_id)
     cache.backup_ann(api, image_id, project_meta)
+
+    inference_setting = {}
+    try:
+        inference_setting = yaml.safe_load(state["settings"])
+    except Exception as e:
+        app_logger.warn(repr(e))
+
     ann_json = api.task.send_request(state["sessionId"],
                                      "inference_image_id",
                                      data={
                                          "image_id": image_id,
-                                         "debug_visualization": True if app_logger.level <= 10 else False  # 10 - debug
+                                         "settings": inference_setting
                                      })
     ann = sly.Annotation.from_json(ann_json, model_meta)
     new_ann = _postprocess(api, project_id, ann, project_meta, state["suffix"])
     api.annotation.upload_ann(image_id, new_ann)
 
 
+@my_app.callback("disconnect")
+@sly.timeit
+def disconnect(api: sly.Api, task_id, context, state, app_logger):
+    new_data = {}
+    new_state = {}
+    unit_ui(new_data, new_state)
+    fields = [
+        {"field": "data", "payload": new_data, "append": True, "recursive": True},
+        {"field": "state", "payload": new_state, "append": True, "recursive": True},
+    ]
+    api.task.set_fields(task_id, fields)
+
+
 def main():
     data = {}
-    data["ownerId"] = owner_id
-    data["info"] = {}
-    data["classes"] = []
-    data["tags"] = []
-    data["connected"] = False
-    data["connectionError"] = ""
-
     state = {}
-    state["sessionId"] = "2361" #@TODO: for debug
-    state["classes"] = []
-    state["tags"] = []
-    state["tabName"] = "info"
-    state["suffix"] = "model"
-    state["settings"] = "# empty"
+    data["ownerId"] = owner_id
+    unit_ui(data, state)
+
     my_app.run(data=data, state=state)
 
 

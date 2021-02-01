@@ -1,5 +1,6 @@
 <div id="nn-image-labeling">
     <div v-if="context.userId !== data.ownerId" style="color: red;">
+        {{context}}
         You don't have permissions to open this application session.
     </div>
 
@@ -136,9 +137,8 @@
                 </el-tab-pane>
                 <el-tab-pane label="INFERENCE" name="inference">
                     <span slot="label"><i class="zmdi zmdi-settings mr5"></i></i>INFERENCE</span>
-                    <sly-field title="Class/tag suffix"
-                               description="The suffix will be added to name only if model meta (model output classes
-                                            and tags) have conflicts with the ones in project meta">
+                    <sly-field title="Class/tag name suffix"
+                               description="Add suffix to class/tag name in case of conflict with existing one">
                         <el-input placeholder="Please input" size="mini" v-model="state.suffix"></el-input>
                     </sly-field>
                     <sly-field title="Settings"
