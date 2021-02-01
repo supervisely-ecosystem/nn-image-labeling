@@ -50,7 +50,8 @@
             <div class="fflex" style="justify-content: space-between">
                 <div>
                     <el-button type="success" size="mini" class="mt5" style="margin-bottom: 15px;"
-                               :disabled="data.classes.length === 0 && data.tags.length === 0"
+                               :disabled="state.classes.filter(Boolean).length === 0 &&
+                                          state.tags.filter(Boolean).length === 0"
                                @click="command('inference')"
                     >
                         <i class="zmdi zmdi-fire mr5"></i>Apply model
@@ -82,8 +83,8 @@
                 </el-tab-pane>
                 <el-tab-pane label="CLASSES" name="classes">
                     <span slot="label"><i class="zmdi zmdi-shape mr5"></i>CLASSES</span>
-                    <div v-if="data.classes.length === 0">Model does not produce classes</div>
-                    <div v-if="data.classes.length > 0">
+                    <div v-if="state.classesInfo.length === 0">Model does not produce classes</div>
+                    <div v-if="state.classesInfo.length > 0">
                         <div class="mb10">Choose model classes that should be kept, other classes will be skipped</div>
                         <div class="fflex">
                             <el-button type="text" size="mini" @click="command('select_all_classes');">
@@ -96,7 +97,7 @@
                         </div>
                         <table>
                             <tbody>
-                            <tr v-for="(objClass, index) in data.classes">
+                            <tr v-for="(objClass, index) in state.classesInfo">
                                 <td>
                                     <el-checkbox class="small" v-model="state.classes[index]"></el-checkbox>
                                 </td>
@@ -110,8 +111,8 @@
                 </el-tab-pane>
                 <el-tab-pane label="TAGS" name="tags">
                     <span slot="label"><i class="zmdi zmdi-label mr5"></i>TAGS</span>
-                    <div v-if="data.tags.length === 0">Model does not produce tags</div>
-                    <div v-if="data.tags.length > 0">
+                    <div v-if="state.tagsInfo.length === 0">Model does not produce tags</div>
+                    <div v-if="state.tagsInfo.length > 0">
                         <div class="mb10">Choose model tags that should be kept, other tags will be skipped</div>
                         <div class="fflex">
                             <el-button type="text" size="mini" @click="command('select_all_tags');">
@@ -124,7 +125,7 @@
                         </div>
                         <table>
                             <tbody>
-                            <tr v-for="(tagMeta, index) in data.tags">
+                            <tr v-for="(tagMeta, index) in state.tagsInfo">
                                 <td>
                                     <el-checkbox class="small" v-model="state.tags[index]"></el-checkbox>
                                 </td>

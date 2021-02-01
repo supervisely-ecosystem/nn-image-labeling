@@ -30,9 +30,9 @@ def get_model_info(api: sly.Api, task_id, context, state, app_logger):
 
         fields = [
             {"field": "data.info", "payload": info},
-            {"field": "data.classes", "payload": model_meta.obj_classes.to_json()},
+            {"field": "state.classesInfo", "payload": model_meta.obj_classes.to_json()},
             {"field": "state.classes", "payload": [True] * len(model_meta.obj_classes)},
-            {"field": "data.tags", "payload": model_meta.tag_metas.to_json()},
+            {"field": "state.tagsInfo", "payload": model_meta.tag_metas.to_json()},
             {"field": "state.tags", "payload": [True] * len(model_meta.tag_metas)},
             {"field": "data.connected", "payload": True},
             {"field": "data.connectionError", "payload": ""},
@@ -72,6 +72,16 @@ def deselect_all_tags(api: sly.Api, task_id, context, state, app_logger):
 
 
 def _postprocess(api: sly.Api, project_id, ann: sly.Annotation, project_meta: sly.ProjectMeta, state):
+    keep_classes = []
+    for class_info, class_flag in zip(state["classesInfo"], state["classes"]):
+        if class_flag is True:
+            keep_classes.append(class_info["title"])
+
+    keep_tags = []
+    for tag_info, tag_flag in zip(state["tagsInfo"], state["tags"]):
+        if tag_flag is True:
+            keep_tags.append(tag_info["name"])
+
     suffix = state["suffix"]
     def _find_free_name(collection, name):
         free_name = name
@@ -110,12 +120,19 @@ def _postprocess(api: sly.Api, project_id, ann: sly.Annotation, project_meta: sl
 
     image_tags = []
     for tag in ann.img_tags:
+        if tag.meta.name not in keep_tags:
+            continue
         res_meta = _compare_tag(res_meta, tag, image_tags)
 
     new_labels = []
     for label in ann.labels:
+        if label.obj_class.name not in keep_classes:
+            continue
+
         label_tags = []
         for tag in label.tags:
+            if tag.meta.name not in keep_tags:
+                continue
             res_meta = _compare_tag(res_meta, tag, label_tags)
 
         if label.obj_class.name in class_mapping:
@@ -219,6 +236,5 @@ def main():
     my_app.run(data=data, state=state)
 
 
-#@TODO: filter predicted classes and tags (image + objects)
 if __name__ == "__main__":
     sly.main_wrapper("main", main)
