@@ -35,6 +35,7 @@ def backup_ann(api: sly.Api, image_id, project_meta: sly.ProjectMeta):
     anns_lock.acquire()
     anns[image_id] = ann
     anns_lock.release()
+    return ann
 
 
 def restore_ann(image_id):

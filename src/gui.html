@@ -76,19 +76,15 @@
             <el-tabs class="small" v-model="state.tabName">
                 <el-tab-pane label="INFO" name="info">
                     <span slot="label"><i class="zmdi zmdi-info mr5"></i>INFO</span>
-                    <sly-field title="Model info"
-                               description="General info about deployed model">
-                        <div v-for="v,k in data.info" class="mt5">
-                            <b style="color: #777777;">{{k}}</b>: {{v}}
-                        </div>
-                    </sly-field>
+                    <div v-for="v,k in data.info" class="mb5">
+                        <b style="color: #777777;">{{k}}</b>: {{v}}
+                    </div>
                 </el-tab-pane>
                 <el-tab-pane label="CLASSES" name="classes">
                     <span slot="label"><i class="zmdi zmdi-shape mr5"></i>CLASSES</span>
                     <div v-if="data.classes.length === 0">Model does not produce classes</div>
-                    <sly-field title="Model output classes"
-                               description="Select classes of interest"
-                               v-if="data.classes.length > 0">
+                    <div v-if="data.classes.length > 0">
+                        <div class="mb10">Choose model classes that should be kept, other classes will be skipped</div>
                         <div class="fflex">
                             <el-button type="text" size="mini" @click="command('select_all_classes');">
                                 <i class="zmdi zmdi-check-all"></i> Select all
@@ -110,14 +106,13 @@
                             </tr>
                             </tbody>
                         </table>
-                    </sly-field>
+                    </div>
                 </el-tab-pane>
                 <el-tab-pane label="TAGS" name="tags">
                     <span slot="label"><i class="zmdi zmdi-label mr5"></i>TAGS</span>
                     <div v-if="data.tags.length === 0">Model does not produce tags</div>
-                    <sly-field title="Model output tags"
-                               description="Select tags of interest"
-                               v-if="data.tags.length > 0">
+                    <div v-if="data.tags.length > 0">
+                        <div class="mb10">Choose model tags that should be kept, other tags will be skipped</div>
                         <div class="fflex">
                             <el-button type="text" size="mini" @click="command('select_all_tags');">
                                 <i class="zmdi zmdi-check-all"></i> Select all
@@ -139,17 +134,29 @@
                             </tr>
                             </tbody>
                         </table>
-                    </sly-field>
+                    </div>
                 </el-tab-pane>
                 <el-tab-pane label="INFERENCE" name="inference">
                     <span slot="label"><i class="zmdi zmdi-settings mr5"></i></i>INFERENCE</span>
-                    <sly-field title="Class/tag name suffix"
-                               description="Add suffix to class/tag name in case of conflict with existing one">
+                    <div class="mb15">
+                        <div><b>Class/tag name suffix</b></div>
+                        <div>Add suffix to model class/tag name if it has conflicts with existing one</div>
                         <el-input placeholder="Please input" size="mini" v-model="state.suffix"></el-input>
-                    </sly-field>
+                    </div>
+
+                    <div class="mb15">
+                        <div><b>How to add predictions</b></div>
+                        <el-select v-model="state.addMode" size="mini">
+                            <el-option key="merge" label="merge" value="merge"></el-option>
+                            <el-option key="replace" label="replace" value="replace"></el-option>
+                        </el-select>
+                    </div>
+
+
                     <sly-field title="Settings"
                                description="Model specific inference settings in YAML format">
-                        <sly-editor v-model="state.settings" :options="{height: '200px', mode: 'ace/mode/yaml'}"></sly-editor>
+                        <sly-editor v-model="state.settings"
+                                    :options="{height: '200px', mode: 'ace/mode/yaml'}"></sly-editor>
                     </sly-field>
                 </el-tab-pane>
             </el-tabs>

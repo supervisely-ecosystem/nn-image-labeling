@@ -71,7 +71,8 @@ def deselect_all_tags(api: sly.Api, task_id, context, state, app_logger):
     api.task.set_field(task_id, "state.tags", [False] * len(model_meta.tag_metas))
 
 
-def _postprocess(api: sly.Api, project_id, ann: sly.Annotation, project_meta: sly.ProjectMeta, suffix):
+def _postprocess(api: sly.Api, project_id, ann: sly.Annotation, project_meta: sly.ProjectMeta, state):
+    suffix = state["suffix"]
     def _find_free_name(collection, name):
         free_name = name
         item = collection.get(free_name)
@@ -150,7 +151,7 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
     image_id = context["imageId"]
 
     project_meta = cache.get_project_meta(api, project_id)
-    cache.backup_ann(api, image_id, project_meta)
+    original_ann = cache.backup_ann(api, image_id, project_meta)
 
     inference_setting = {}
     try:
@@ -164,8 +165,15 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
                                          "image_id": image_id,
                                          "settings": inference_setting
                                      })
-    ann = sly.Annotation.from_json(ann_json, model_meta)
-    new_ann = _postprocess(api, project_id, ann, project_meta, state["suffix"])
+    ann_pred = sly.Annotation.from_json(ann_json, model_meta)
+    new_ann: sly.Annotation = _postprocess(api, project_id, ann_pred, project_meta, state)
+    if state["addMode"] == "merge":
+        new_ann = original_ann.add_labels(new_ann.labels)
+        new_ann = new_ann.add_tags(new_ann.img_tags)
+    else:
+        # replace
+        pass
+
     api.annotation.upload_ann(image_id, new_ann)
     fields = [
         {"field": "data.rollbackIds", "payload": list(cache.anns.keys())},
@@ -212,6 +220,5 @@ def main():
 
 
 #@TODO: filter predicted classes and tags (image + objects)
-#@TODO: merge annotations / replace annotations / undo prediction
 if __name__ == "__main__":
     sly.main_wrapper("main", main)
