@@ -28,6 +28,8 @@ def update_project_meta(api: sly.Api, project_id, project_meta: sly.ProjectMeta)
 
 
 def backup_ann(api: sly.Api, image_id, project_meta: sly.ProjectMeta):
+    if image_id in anns:
+        return
     ann_json = api.annotation.download(image_id).annotation
     ann = sly.Annotation.from_json(ann_json, project_meta)
     anns_lock.acquire()
@@ -36,6 +38,10 @@ def backup_ann(api: sly.Api, image_id, project_meta: sly.ProjectMeta):
 
 
 def restore_ann(image_id):
-    if image_id not in anns:
-        raise KeyError(f"Implementation error: image_id = {image_id}")
     return anns[image_id]
+
+
+def remove_ann(image_id):
+    anns_lock.acquire()
+    del anns[image_id]
+    anns_lock.release()

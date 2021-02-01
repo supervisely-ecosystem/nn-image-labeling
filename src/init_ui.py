@@ -5,6 +5,7 @@ def unit_ui(data, state):
     data["tags"] = []
     data["connected"] = False
     data["connectionError"] = ""
+    data["rollbackIds"] = []
 
     state["sessionId"] = "2361"  # @TODO: for debug
     state["classes"] = []

@@ -55,6 +55,12 @@
                     >
                         <i class="zmdi zmdi-fire mr5"></i>Apply model
                     </el-button>
+                    <el-button size="mini" class="mt5" style="margin-bottom: 15px;"
+                               :disabled="!data.rollbackIds.includes(context.imageId)"
+                               @click="command('rollback')"
+                    >
+                        <i class="zmdi zmdi-undo mr5"></i>Rollback
+                    </el-button>
                 </div>
                 <div>
                     <el-button type="warning" size="mini" class="mt5" style="margin-bottom: 15px;"

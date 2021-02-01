@@ -167,6 +167,10 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
     ann = sly.Annotation.from_json(ann_json, model_meta)
     new_ann = _postprocess(api, project_id, ann, project_meta, state["suffix"])
     api.annotation.upload_ann(image_id, new_ann)
+    fields = [
+        {"field": "data.rollbackIds", "payload": list(cache.anns.keys())},
+    ]
+    api.task.set_fields(task_id, fields)
 
 
 @my_app.callback("disconnect")
@@ -176,10 +180,27 @@ def disconnect(api: sly.Api, task_id, context, state, app_logger):
     new_state = {}
     unit_ui(new_data, new_state)
     fields = [
-        {"field": "data", "payload": new_data, "append": True, "recursive": True},
-        {"field": "state", "payload": new_state, "append": True, "recursive": True},
+        {"field": "data", "payload": new_data, "append": True},
+        {"field": "state", "payload": new_state, "append": True},
     ]
     api.task.set_fields(task_id, fields)
+
+
+@my_app.callback("rollback")
+@sly.timeit
+def rollback(api: sly.Api, task_id, context, state, app_logger):
+    try:
+        image_id = context["imageId"]
+        ann = cache.restore_ann(image_id)
+        api.annotation.upload_ann(image_id, ann)
+        cache.remove_ann(image_id)
+        fields = [
+            {"field": "data.rollbackIds", "payload": list(cache.anns.keys())},
+        ]
+        api.task.set_fields(task_id, fields)
+    except Exception as e:
+        app_logger.warn(repr(e))
+    return
 
 
 def main():
@@ -187,7 +208,6 @@ def main():
     state = {}
     data["ownerId"] = owner_id
     unit_ui(data, state)
-
     my_app.run(data=data, state=state)
 
 
