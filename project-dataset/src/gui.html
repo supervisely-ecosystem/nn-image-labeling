@@ -1,3 +1,19 @@
 <div>
+    <div class="fflex" style="align-items: stretch">
+        <sly-card title="Input" style="width: 50%" class="mr15">
+            <sly-field title="" description="Project">
+                <a slot="title" target="_blank"
+                   :href="`/projects/${data.projectId}/datasets`">{{data.projectName}} ({{data.projectItemsCount}} images)</a>
+                <sly-icon slot="icon" :options="{ imageUrl: `${data.projectPreviewUrl}` }"/>
+            </sly-field>
+        </sly-card>
 
+        <sly-card title="Output" style="width: 50%">
+            <sly-field :v-if="data.resProjectId" title="" description="Project">
+                <a slot="title" target="_blank"
+                   :href="`/projects/${data.resProjectId}/datasets`">{{data.resProjectName}}</a>
+                <sly-icon slot="icon" :options="{ imageUrl: `${data.resProjectPreviewUrl}` }"/>
+            </sly-field>
+        </sly-card>
+    </div>
 </div>
