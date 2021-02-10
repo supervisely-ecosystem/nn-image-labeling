@@ -26,7 +26,12 @@
                     <i class="zmdi zmdi-compass"></i>
                 </sly-icon>
                 <div class="fflex">
-                    <el-input placeholder="Please input session id" size="mini" v-model="state.sessionId"></el-input>
+<!--                    <el-input placeholder="Please input session id" size="mini" v-model="state.sessionId"></el-input>-->
+                    <sly-select-app-session :group-id="data.teamId"
+                                            :app-session-id.sync="state.sessionId"
+                                            :options="data.ssOptions"
+                                            size="mini">
+                    </sly-select-app-session>
                     <el-button class="ml5"
                                type="primary"
                                size="mini"

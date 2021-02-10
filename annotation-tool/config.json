@@ -18,6 +18,6 @@
   "headless": false,
   "integrated_into": ["image_annotation_tool"],
 
-  "icon": "https://img.icons8.com/color/96/000000/ingredients.png",
+  "icon": "https://img.icons8.com/color/100/000000/robot.png",
   "icon_background": "#FFFFFF"
 }

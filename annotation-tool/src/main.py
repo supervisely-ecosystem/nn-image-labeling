@@ -235,9 +235,11 @@ def main():
     data = {}
     state = {}
     data["ownerId"] = owner_id
+    data["teamId"] = team_id
     unit_ui(data, state)
     my_app.run(data=data, state=state)
 
 
+#@TODO: bug in merge meta
 if __name__ == "__main__":
     sly.main_wrapper("main", main)

@@ -6,6 +6,10 @@ def unit_ui(data, state):
     data["connected"] = False
     data["connectionError"] = ""
     data["rollbackIds"] = []
+    data["ssOptions"] = {
+        "sessionTags": ["deployed_nn"],
+        "showLabel": False
+    }
 
     state["sessionId"] = "2392"  # @TODO: for debug
     state["classes"] = []
@@ -14,3 +18,5 @@ def unit_ui(data, state):
     state["suffix"] = "model"
     state["settings"] = "# empty"
     state["addMode"] = "merge"
+
+
