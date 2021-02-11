@@ -29,8 +29,7 @@
 <!--                    <el-input placeholder="Please input session id" size="mini" v-model="state.sessionId"></el-input>-->
                     <sly-select-app-session :group-id="data.teamId"
                                             :app-session-id.sync="state.sessionId"
-                                            :options="data.ssOptions"
-                                            size="mini">
+                                            :options="data.ssOptions">
                     </sly-select-app-session>
                     <el-button class="ml5"
                                type="primary"

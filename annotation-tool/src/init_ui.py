@@ -8,7 +8,8 @@ def unit_ui(data, state):
     data["rollbackIds"] = []
     data["ssOptions"] = {
         "sessionTags": ["deployed_nn"],
-        "showLabel": False
+        "showLabel": False,
+        "size": "mini"
     }
 
     state["sessionId"] = "2392"  # @TODO: for debug

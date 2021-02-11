@@ -239,7 +239,7 @@ def main():
     unit_ui(data, state)
     my_app.run(data=data, state=state)
 
-
+#@TODO change icon OCR 
 #@TODO: bug in merge meta
 if __name__ == "__main__":
     sly.main_wrapper("main", main)
