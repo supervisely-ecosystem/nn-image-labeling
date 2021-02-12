@@ -1,24 +1,3 @@
-import supervisely_lib as sly
-
-
-def get_model_info(api: sly.Api, task_id, state, app_logger) -> sly.ProjectMeta:
-    #state["sessionId"] = 2392  # @TODO: FOR DEBUG
-    model_meta = None
-    try:
-        info = api.task.send_request(state["sessionId"], "get_session_info", data={})
-        info["session"] = state["sessionId"]
-        app_logger.debug("Session Info", extra={"info": info})
-
-        meta_json = api.task.send_request(state["sessionId"], "get_output_classes_and_tags", data={})
-        model_meta = sly.ProjectMeta.from_json(meta_json)
-
-        inf_settings = api.task.send_request(state["sessionId"], "get_custom_inference_settings", data={})
-
-        refresh_ui(api, task_id, model_meta, info, inf_settings)
-    except Exception as e:
-        show_error(api, task_id, e)
-
-    return model_meta
 
 
 def set_model_info(api, task_id, model_meta, model_info, inf_settings):
@@ -41,3 +20,12 @@ def set_error(api: sly.Api, task_id, e: Exception):
         {"field": "data.connectionError", "payload": repr(e)},
     ]
     api.task.set_fields(task_id, fields)
+
+
+def _get_keep_names(infos: List[dict], flags: List[bool]):
+    keep_names = []
+    for info, flag in zip(infos, flags):
+        if flag is True:
+            name = info.get("name", info["title"])
+            keep_names.append(name)
+    return keep_names

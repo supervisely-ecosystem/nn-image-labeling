@@ -6,6 +6,7 @@ import supervisely_lib as sly
 import cache
 from init_ui import unit_ui
 from shared_utils.connect import get_model_info
+from shared_utils.merge_metas import get_keep_names
 
 owner_id = int(os.environ['context.userId'])
 team_id = int(os.environ['context.teamId'])
