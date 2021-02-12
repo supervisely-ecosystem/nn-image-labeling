@@ -81,7 +81,7 @@
             <el-tabs class="small" v-model="state.tabName">
                 <el-tab-pane label="INFO" name="info">
                     <span slot="label"><i class="zmdi zmdi-info mr5"></i>INFO</span>
-                    <div v-for="v,k in data.info" class="mb5">
+                    <div v-for="v,k in data.info" class="mb5" style="word-break: break-all;">
                         <b style="color: #777777;">{{k}}</b>: {{v}}
                     </div>
                 </el-tab-pane>

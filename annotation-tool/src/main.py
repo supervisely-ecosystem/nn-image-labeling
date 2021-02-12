@@ -18,6 +18,8 @@ model_meta: sly.ProjectMeta = None
 def get_model_info(api: sly.Api, task_id, context, state, app_logger):
     global model_meta
 
+    #state["sessionId"] = 2392  # @TODO: FOR DEBUG
+
     try:
         info = api.task.send_request(state["sessionId"], "get_session_info", data={})
         info["session"] = state["sessionId"]
@@ -163,6 +165,8 @@ def _postprocess(api: sly.Api, project_id, ann: sly.Annotation, project_meta: sl
 @my_app.callback("inference")
 @sly.timeit
 def inference(api: sly.Api, task_id, context, state, app_logger):
+    #state["sessionId"] = 2392  # @TODO: FOR DEBUG
+
     global metas_lock, backup_ann_lock
     project_id = context["projectId"]
     image_id = context["imageId"]
@@ -239,7 +243,6 @@ def main():
     unit_ui(data, state)
     my_app.run(data=data, state=state)
 
-#@TODO change icon OCR 
 #@TODO: bug in merge meta
 if __name__ == "__main__":
     sly.main_wrapper("main", main)

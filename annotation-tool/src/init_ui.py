@@ -12,7 +12,7 @@ def unit_ui(data, state):
         "size": "mini"
     }
 
-    state["sessionId"] = "2392"  # @TODO: for debug
+    state["sessionId"] = ""
     state["classes"] = []
     state["tags"] = []
     state["tabName"] = "info"
