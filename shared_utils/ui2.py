@@ -1,6 +1,8 @@
+from typing import List
+import supervisely_lib as sly
 
 
-def set_model_info(api, task_id, model_meta, model_info, inf_settings):
+def set_model_info(api: sly.Api, task_id, model_meta: sly.ProjectMeta, model_info: dict, inf_settings: dict):
     fields = [
         {"field": "data.info", "payload": model_info},
         {"field": "state.classesInfo", "payload": model_meta.obj_classes.to_json()},
@@ -28,4 +30,14 @@ def _get_keep_names(infos: List[dict], flags: List[bool]):
         if flag is True:
             name = info.get("name", info["title"])
             keep_names.append(name)
+    return keep_names
+
+
+def get_keep_classes(state):
+    keep_names = _get_keep_names(state["classesInfo"], state["classes"])
+    return keep_names
+
+
+def get_keep_tags(state):
+    keep_names = _get_keep_names(state["tagsInfo"], state["tags"])
     return keep_names
