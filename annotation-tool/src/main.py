@@ -5,6 +5,7 @@ import supervisely_lib as sly
 
 import cache
 from init_ui import unit_ui
+from shared_utils.connect import get_model_info
 
 owner_id = int(os.environ['context.userId'])
 team_id = int(os.environ['context.teamId'])
@@ -13,40 +14,27 @@ my_app: sly.AppService = sly.AppService(ignore_task_id=True)
 model_meta: sly.ProjectMeta = None
 
 
-@my_app.callback("get_model_info")
+@my_app.callback("connect")
 @sly.timeit
-def get_model_info(api: sly.Api, task_id, context, state, app_logger):
+def connect(api: sly.Api, task_id, context, state, app_logger):
     global model_meta
+    model_meta = get_model_info(api, task_id, context, state)
 
-    #state["sessionId"] = 2392  # @TODO: FOR DEBUG
 
-    try:
-        info = api.task.send_request(state["sessionId"], "get_session_info", data={})
-        info["session"] = state["sessionId"]
-        app_logger.debug("Session Info", extra={"info": info})
+@my_app.callback("disconnect")
+@sly.timeit
+def disconnect(api: sly.Api, task_id, context, state, app_logger):
+    global model_meta
+    model_meta = None
 
-        meta_json = api.task.send_request(state["sessionId"], "get_output_classes_and_tags", data={})
-        model_meta = sly.ProjectMeta.from_json(meta_json)
-
-        inf_settings = api.task.send_request(state["sessionId"], "get_custom_inference_settings", data={})
-
-        fields = [
-            {"field": "data.info", "payload": info},
-            {"field": "state.classesInfo", "payload": model_meta.obj_classes.to_json()},
-            {"field": "state.classes", "payload": [True] * len(model_meta.obj_classes)},
-            {"field": "state.tagsInfo", "payload": model_meta.tag_metas.to_json()},
-            {"field": "state.tags", "payload": [True] * len(model_meta.tag_metas)},
-            {"field": "data.connected", "payload": True},
-            {"field": "data.connectionError", "payload": ""},
-            {"field": "state.settings", "payload": inf_settings["settings"]}
-        ]
-        api.task.set_fields(task_id, fields)
-    except Exception as e:
-        fields = [
-            {"field": "data.connected", "payload": False},
-            {"field": "data.connectionError", "payload": repr(e)},
-        ]
-        api.task.set_fields(task_id, fields)
+    new_data = {}
+    new_state = {}
+    unit_ui(new_data, new_state)
+    fields = [
+        {"field": "data", "payload": new_data, "append": True},
+        {"field": "state", "payload": new_state, "append": True},
+    ]
+    api.task.set_fields(task_id, fields)
 
 
 @my_app.callback("select_all_classes")
@@ -205,17 +193,6 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
     api.task.set_fields(task_id, fields)
 
 
-@my_app.callback("disconnect")
-@sly.timeit
-def disconnect(api: sly.Api, task_id, context, state, app_logger):
-    new_data = {}
-    new_state = {}
-    unit_ui(new_data, new_state)
-    fields = [
-        {"field": "data", "payload": new_data, "append": True},
-        {"field": "state", "payload": new_state, "append": True},
-    ]
-    api.task.set_fields(task_id, fields)
 
 
 @my_app.callback("rollback")
@@ -242,6 +219,7 @@ def main():
     data["teamId"] = team_id
     unit_ui(data, state)
     my_app.run(data=data, state=state)
+
 
 #@TODO: bug in merge meta
 if __name__ == "__main__":
