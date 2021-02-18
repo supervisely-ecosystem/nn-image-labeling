@@ -1,38 +1,6 @@
 import supervisely_lib as sly
 from supervisely_lib.collection.key_indexed_collection import KeyIndexedCollection
 
-# def _find_item(collection, name):
-#     free_name = name
-#     item = collection.get(free_name)
-#     if item is not None:
-#         free_name = f"{name}-{suffix}"
-#         item = collection.get(free_name)
-#     iter = 1
-#     while item is not None:
-#         free_name = f"{name}-{suffix}-{iter}"
-#         item = collection.get(free_name)
-#         iter += 1
-#     return free_name
-
-
-# def _compare_tag(res_meta: sly.ProjectMeta, tag: sly.Tag, new_tags: List):
-#     if tag.meta.name in tag_mapping:
-#         new_tags.append(tag.clone(meta=tag_mapping[tag.meta.name]))
-#         return
-#     original_tag_meta = res_meta.tag_metas.get(tag.meta.name)
-#     if original_tag_meta is None:
-#         res_meta = res_meta.add_tag_meta(tag.meta)
-#         new_tags.append(tag)
-#     elif original_tag_meta != tag.meta:  # conflict
-#         new_tag_name = _find_free_name(res_meta.tag_metas, tag.meta.name)
-#         new_tag_meta = tag.meta.clone(name=new_tag_name)
-#         tag_mapping[new_tag_name] = new_tag_meta
-#         res_meta = res_meta.add_tag_meta(new_tag_meta)
-#         new_tags.append(tag.clone(meta=new_tag_meta))
-#     else:
-#         new_tags.append(tag)
-#     return res_meta
-
 
 def find_item(collection: KeyIndexedCollection, item, suffix):
     index = 0
