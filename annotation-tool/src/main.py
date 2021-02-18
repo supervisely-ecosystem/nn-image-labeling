@@ -5,7 +5,9 @@ import supervisely_lib as sly
 
 import cache
 from init_ui import unit_ui
+import shared_utils.ui2 as ui
 from shared_utils.connect import get_model_info
+from shared_utils.merge_metas import merge_metas
 
 owner_id = int(os.environ['context.userId'])
 team_id = int(os.environ['context.teamId'])
@@ -62,17 +64,19 @@ def deselect_all_tags(api: sly.Api, task_id, context, state, app_logger):
 
 
 def _postprocess(api: sly.Api, project_id, ann: sly.Annotation, project_meta: sly.ProjectMeta, state):
-    keep_classes = []
-    for class_info, class_flag in zip(state["classesInfo"], state["classes"]):
-        if class_flag is True:
-            keep_classes.append(class_info["title"])
-
-    keep_tags = []
-    for tag_info, tag_flag in zip(state["tagsInfo"], state["tags"]):
-        if tag_flag is True:
-            keep_tags.append(tag_info["name"])
-
+    keep_classes = ['dog'] # ui.get_keep_classes(state) #@TODO: fr debug
+    keep_tags = ui.get_keep_tags(state)
     suffix = state["suffix"]
+
+    res_project_meta, class_mapping, tag_meta_mapping = merge_metas(project_meta, model_meta,
+                                                                    keep_classes, keep_tags,
+                                                                    suffix)
+
+    x = 10
+    x += 1
+    return
+
+
     def _find_free_name(collection, name):
         free_name = name
         item = collection.get(free_name)
@@ -216,6 +220,8 @@ def main():
     data["ownerId"] = owner_id
     data["teamId"] = team_id
     unit_ui(data, state)
+
+    state["sessionId"] = 2611 #@TODO: for debug
     my_app.run(data=data, state=state)
 
 

@@ -29,7 +29,7 @@ def _get_keep_names(infos: List[dict], flags: List[bool]):
     keep_names = []
     for info, flag in zip(infos, flags):
         if flag is True:
-            name = info.get("name", info["title"])
+            name = info.get("name", info.get("title", None))
             keep_names.append(name)
     return keep_names
 
