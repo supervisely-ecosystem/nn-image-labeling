@@ -6,7 +6,6 @@ import supervisely_lib as sly
 import cache
 from init_ui import unit_ui
 from shared_utils.connect import get_model_info
-from shared_utils.merge_metas import get_keep_names
 
 owner_id = int(os.environ['context.userId'])
 team_id = int(os.environ['context.teamId'])
@@ -19,7 +18,7 @@ model_meta: sly.ProjectMeta = None
 @sly.timeit
 def connect(api: sly.Api, task_id, context, state, app_logger):
     global model_meta
-    model_meta = get_model_info(api, task_id, context, state)
+    model_meta = get_model_info(api, task_id, context, state, app_logger)
 
 
 @my_app.callback("disconnect")
@@ -192,8 +191,6 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
         {"field": "data.rollbackIds", "payload": list(cache.anns.keys())},
     ]
     api.task.set_fields(task_id, fields)
-
-
 
 
 @my_app.callback("rollback")

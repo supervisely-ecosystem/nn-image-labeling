@@ -1,2 +1,2 @@
-supervisely==6.1.51
+supervisely==6.1.54
 PyYAML==5.4.1

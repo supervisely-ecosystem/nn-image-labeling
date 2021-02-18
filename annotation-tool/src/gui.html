@@ -34,7 +34,7 @@
                     <el-button class="ml5"
                                type="primary"
                                size="mini"
-                               :disabled="state.sessionId===''"
+                               :disabled="!state.sessionId"
                                @click="command('connect')"
                     >
                         <i class="zmdi zmdi-refresh mr5"></i> Connect

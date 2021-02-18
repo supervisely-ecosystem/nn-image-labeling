@@ -1,8 +1,8 @@
 import supervisely_lib as sly
+import shared_utils.ui2 as ui
 
 
-def get_model_info(api: sly.Api, task_id, state, app_logger) -> sly.ProjectMeta:
-    #state["sessionId"] = 2392  # @TODO: FOR DEBUG
+def get_model_info(api: sly.Api, task_id, context, state, app_logger) -> sly.ProjectMeta:
     model_meta = None
     try:
         info = api.task.send_request(state["sessionId"], "get_session_info", data={})
@@ -14,9 +14,9 @@ def get_model_info(api: sly.Api, task_id, state, app_logger) -> sly.ProjectMeta:
 
         inf_settings = api.task.send_request(state["sessionId"], "get_custom_inference_settings", data={})
 
-        refresh_ui(api, task_id, model_meta, info, inf_settings)
+        ui.set_model_info(api, task_id, model_meta, info, inf_settings)
     except Exception as e:
-        show_error(api, task_id, e)
+        ui.set_error(api, task_id, e)
 
     return model_meta
 
