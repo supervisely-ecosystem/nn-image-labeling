@@ -1,6 +1,5 @@
 <div id="nn-image-labeling">
     <div v-if="context.userId !== data.ownerId" style="color: red;">
-        {{context}}
         You don't have permissions to open this application session.
     </div>
 
@@ -34,8 +33,8 @@
                     <el-button class="ml5"
                                type="primary"
                                size="mini"
-                               :disabled="state.sessionId===''"
-                               @click="command('get_model_info')"
+                               :disabled="!state.sessionId"
+                               @click="command('connect')"
                     >
                         <i class="zmdi zmdi-refresh mr5"></i> Connect
                     </el-button>
@@ -58,7 +57,7 @@
                                           state.tags.filter(Boolean).length === 0"
                                @click="command('inference')"
                     >
-                        <i class="zmdi zmdi-fire mr5"></i>Apply model
+                        <i class="zmdi zmdi-fire mr5"></i>Apply model (<i class="zmdi zmdi-keyboard ml5"></i> ctrl+m)
                     </el-button>
                     <el-button size="mini" class="mt5" style="margin-bottom: 15px;"
                                :disabled="!data.rollbackIds.includes(context.imageId)"
