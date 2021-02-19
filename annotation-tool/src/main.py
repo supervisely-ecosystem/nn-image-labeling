@@ -65,12 +65,8 @@ def deselect_all_tags(api: sly.Api, task_id, context, state, app_logger):
 def _postprocess(api: sly.Api, project_id, ann: sly.Annotation, project_meta: sly.ProjectMeta, state):
     keep_classes = ui.get_keep_classes(state) #@TODO: for debug ['dog'] #
     keep_tags = ui.get_keep_tags(state)
-    suffix = state["suffix"]
-
-    res_project_meta, class_mapping, tag_meta_mapping = merge_metas(project_meta, model_meta,
-                                                                    keep_classes, keep_tags,
-                                                                    suffix)
-
+    res_project_meta, class_mapping, tag_meta_mapping = \
+        merge_metas(project_meta, model_meta, keep_classes, keep_tags, state["suffix"])
     image_tags = []
     for tag in ann.img_tags:
         if tag.meta.name not in keep_tags:
@@ -81,18 +77,15 @@ def _postprocess(api: sly.Api, project_id, ann: sly.Annotation, project_meta: sl
     for label in ann.labels:
         if label.obj_class.name not in keep_classes:
             continue
-
         label_tags = []
         for tag in label.tags:
             if tag.meta.name not in keep_tags:
                 continue
             label_tags.append(tag.clone(meta=tag_meta_mapping[tag.meta.name]))
-
         new_label = label.clone(obj_class=class_mapping[label.obj_class.name], tags=sly.TagCollection(label_tags))
         new_labels.append(new_label)
 
-    if len(res_project_meta.obj_classes) != len(project_meta.obj_classes) or \
-       len(res_project_meta.tag_metas) != len(project_meta.tag_metas):
+    if res_project_meta != project_meta:
         cache.update_project_meta(api, project_id, res_project_meta)
 
     res_ann = ann.clone(labels=new_labels, img_tags=sly.TagCollection(image_tags))
