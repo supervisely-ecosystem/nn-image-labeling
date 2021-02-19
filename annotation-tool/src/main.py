@@ -1,5 +1,4 @@
 import os
-from typing import List
 import yaml
 import supervisely_lib as sly
 
