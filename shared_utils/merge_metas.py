@@ -27,9 +27,9 @@ def merge_metas(project_meta: sly.ProjectMeta, model_meta: sly.ProjectMeta,
             model_item = model_collection.get(name)
             res_item, res_name = find_item(project_collection, model_item, suffix)
             if res_item is None:
-                res_item = res_item.clone(name=res_name)
-                mapping[model_item.name] = res_item
+                res_item = model_item.clone(name=res_name)
                 res_meta = add_method(res_item)
+            mapping[model_item.name] = res_item
         return res_meta, mapping
 
     res_meta, class_mapping = _merge(keep_model_classes, res_meta, res_meta.obj_classes, model_meta.obj_classes, res_meta.add_obj_class)
