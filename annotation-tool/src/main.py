@@ -1,6 +1,13 @@
 import os
 import yaml
+import pathlib
+import sys
+
 import supervisely_lib as sly
+
+root_source_path = str(pathlib.Path(sys.argv[0]).parents[2])
+sly.logger.info(f"Root source directory: {root_source_path}")
+sys.path.append(root_source_path)
 
 import cache
 from init_ui import unit_ui
