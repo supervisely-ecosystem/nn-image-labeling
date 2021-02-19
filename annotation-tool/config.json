@@ -16,5 +16,8 @@
   "integrated_into": ["image_annotation_tool"],
 
   "icon": "https://i.imgur.com/nnB2BqW.png",
-  "icon_background": "#FFFFFF"
+  "icon_background": "#FFFFFF",
+  "hotkeys": [
+      {"hotkey": "ctrl+m", "command": "inference"}
+  ]
 }
