@@ -165,7 +165,7 @@ def main():
     data["teamId"] = team_id
     unit_ui(data, state)
 
-    state["sessionId"] = 2614 #@TODO: for debug
+    #state["sessionId"] = 2614 #@TODO: for debug
     my_app.run(data=data, state=state)
 
 
