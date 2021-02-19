@@ -63,7 +63,7 @@ def deselect_all_tags(api: sly.Api, task_id, context, state, app_logger):
 
 
 def _postprocess(api: sly.Api, project_id, ann: sly.Annotation, project_meta: sly.ProjectMeta, state):
-    keep_classes = ['dog'] # ui.get_keep_classes(state) #@TODO: fr debug
+    keep_classes = ui.get_keep_classes(state) #@TODO: for debug ['dog'] #
     keep_tags = ui.get_keep_tags(state)
     suffix = state["suffix"]
 
