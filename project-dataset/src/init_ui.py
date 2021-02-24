@@ -5,34 +5,29 @@ def init_input_project(api, data, project_info):
     data["projectItemsCount"] = project_info.items_count
 
 
-def init(data, state):
-    data["projectId"] = None
-    data["projectName"] = None
-    data["projectPreviewUrl"] = None
-
+def init_output_project(data):
     data["resProjectId"] = None
     data["resProjectName"] = None
     data["resProjectPreviewUrl"] = None
 
 
-# def unit_ui(data, state):
-#     data["info"] = {}
-#     data["classes"] = []
-#     data["tags"] = []
-#     data["connected"] = False
-#     data["connectionError"] = ""
-#     data["rollbackIds"] = []
-#     data["ssOptions"] = {
-#         "sessionTags": ["deployed_nn"],
-#         "showLabel": False,
-#         "size": "mini"
-#     }
-#
-#     state["sessionId"] = ""
-#     state["classes"] = []
-#     state["tags"] = []
-#     state["tabName"] = "info"
-#     state["suffix"] = "model"
-#     state["settings"] = "# empty"
-#     state["addMode"] = "merge"
-#     state["processing"] = False
+def init(data, state):
+    data["info"] = {}
+    data["classes"] = []
+    data["tags"] = []
+    data["connected"] = False
+    data["connectionError"] = ""
+    data["ssOptions"] = {
+        "sessionTags": ["deployed_nn"],
+        "showLabel": False,
+        "size": "small"
+    }
+
+    state["sessionId"] = ""
+    state["classes"] = []
+    state["tags"] = []
+    state["tabName"] = "info"
+    state["suffix"] = "model"
+    state["settings"] = "# empty"
+    state["addMode"] = "merge"
+    state["processing"] = False

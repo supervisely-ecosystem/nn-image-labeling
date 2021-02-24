@@ -140,6 +140,7 @@ def main():
 
     ui.init(data, state)
     ui.init_input_project(my_app.public_api, data, project_info)
+    ui.init_output_project(data)
 
     my_app.run(data=data, state=state)
 
