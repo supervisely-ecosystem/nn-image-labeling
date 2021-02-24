@@ -18,47 +18,49 @@
         </sly-card>
     </div>
 
-    <div class="fflex mt15" style="align-items: stretch;">
-        <sly-card title="Settings" style="width: 50%" class="mr15">
-            <div v-if="data.connected === false">
-                <sly-field title="Connect to running NN"
-                           description="Define session (task id) with deployed model">
-                    <sly-icon slot="icon" :options="{ color: '#2cd26e', bgColor: '#d8f8e7', rounded: false }">
-                        <i class="zmdi zmdi-compass"></i>
-                    </sly-icon>
-                    <div class="fflex">
-                        <sly-select-app-session :group-id="data.teamId"
-                                                :app-session-id.sync="state.sessionId"
-                                                :options="data.ssOptions">
-                        </sly-select-app-session>
-                        <el-button class="ml5"
-                                   type="primary"
-                                   :disabled="!state.sessionId"
-                                   @click="command('connect')"
-                        >
-                            <i class="zmdi zmdi-refresh mr5"></i> Connect
-                        </el-button>
-                    </div>
-                </sly-field>
-                <sly-notification
-                        v-if="data.connectionError.length > 0"
-                        :options="{'name': 'Connection Error', 'type': 'error'}"
-                        :content="data.connectionError">
-                </sly-notification>
-            </div>
-            <div v-if="data.connected === true">
-                <el-tabs v-model="state.tabName">
-                    <el-tab-pane label="Info" name="info">
-                        <span slot="label"><i class="zmdi zmdi-info mr5"></i>Info</span>
+    <sly-card title="Settings" class="mt15">
+        <div v-if="data.connected === false">
+            <sly-field title="Connect to running NN"
+                       description="Define session (task id) with deployed model">
+                <sly-icon slot="icon" :options="{ color: '#2cd26e', bgColor: '#d8f8e7', rounded: false }">
+                    <i class="zmdi zmdi-compass"></i>
+                </sly-icon>
+                <div class="fflex">
+                    <sly-select-app-session :group-id="data.teamId"
+                                            :app-session-id.sync="state.sessionId"
+                                            :options="data.ssOptions">
+                    </sly-select-app-session>
+                    <el-button class="ml5"
+                               type="primary"
+                               :disabled="!state.sessionId"
+                               @click="command('connect')"
+                    >
+                        <i class="zmdi zmdi-refresh mr5"></i> Connect
+                    </el-button>
+                </div>
+            </sly-field>
+            <sly-notification
+                    v-if="data.connectionError.length > 0"
+                    :options="{'name': 'Connection Error', 'type': 'error'}"
+                    :content="data.connectionError">
+            </sly-notification>
+        </div>
+        <div v-if="data.connected === true">
+            <el-tabs v-model="state.tabName">
+                <el-tab-pane label="Info" name="info">
+                    <span slot="label"><i class="zmdi zmdi-info mr5"></i>Info</span>
+                    <div style="max-height: 350px; overflow-y: auto;">
                         <div v-for="v,k in data.info" class="mb5" style="word-break: break-all;">
                             <b style="color: #777777;">{{k}}</b>: {{v}}
                         </div>
                         <el-button type="warning" class="mt5" @click="command('disconnect')">
                             <i class="zmdi zmdi-close mr5"></i>Disconnect
                         </el-button>
-                    </el-tab-pane>
-                    <el-tab-pane label="Classes" name="classes">
-                        <span slot="label"><i class="zmdi zmdi-shape mr5"></i>Classes</span>
+                    </div>
+                </el-tab-pane>
+                <el-tab-pane label="Classes" name="classes">
+                    <span slot="label"><i class="zmdi zmdi-shape mr5"></i>Classes</span>
+                    <div style="max-height: 350px; overflow-y: auto;">
                         <div v-if="state.classesInfo.length === 0">Model does not produce classes</div>
                         <div v-if="state.classesInfo.length > 0">
                             <div class="mb10">Choose model classes that should be kept, other classes will be skipped
@@ -85,9 +87,12 @@
                                 </tbody>
                             </table>
                         </div>
-                    </el-tab-pane>
-                    <el-tab-pane label="Tags" name="tags">
-                        <span slot="label"><i class="zmdi zmdi-label mr5"></i>Tags</span>
+                    </div>
+                </el-tab-pane>
+                <el-tab-pane label="Tags" name="tags">
+                    <span slot="label"><i class="zmdi zmdi-label mr5"></i>Tags</span>
+                    <div style="max-height: 350px; overflow-y: auto;">
+
                         <div v-if="state.tagsInfo.length === 0">Model does not produce tags</div>
                         <div v-if="state.tagsInfo.length > 0">
                             <div class="mb10">Choose model tags that should be kept, other tags will be skipped</div>
@@ -113,10 +118,11 @@
                                 </tbody>
                             </table>
                         </div>
-                    </el-tab-pane>
-                    <el-tab-pane label="Inference" name="inference">
-                        <span slot="label"><i class="zmdi zmdi-settings mr5"></i></i>Inference</span>
-
+                    </div>
+                </el-tab-pane>
+                <el-tab-pane label="Inference" name="inference">
+                    <span slot="label"><i class="zmdi zmdi-settings mr5"></i></i>Inference</span>
+                    <div style="max-height: 350px; overflow-y: auto;">
                         <div class="mb15">
                             <div><b>Mode</b></div>
                             <el-select v-model="state.infMode">
@@ -154,22 +160,26 @@
                             <sly-editor v-model="state.settings"
                                         :options="{height: '200px', mode: 'ace/mode/yaml'}"></sly-editor>
                         </sly-field>
-                    </el-tab-pane>
-                </el-tabs>
-            </div>
-        </sly-card>
-        <sly-card title="Preview on random image" subtitle="Preview original annotations and predictions" style="width: 50%" >
-            <div slot="header">
-                <el-button type="primary"
-                           :disabled="!data.connected"
-                           :loading="state.processing"
-                           @click="state.processing = true; command('preview')">
-                    <i class="zmdi zmdi-grid" style="margin-right: 5px"></i> Preview
-                </el-button>
-            </div>
-            <sly-grid-gallery v-show="data.gallery"
-                              :content="data.gallery ? data.gallery.content : data.emptyGallery.content"
-                              :options="data.gallery ? data.gallery.options : data.emptyGallery.options"/>
-        </sly-card>
-    </div>
+                    </div>
+                </el-tab-pane>
+            </el-tabs>
+        </div>
+    </sly-card>
+
+    <sly-card title="Preview on random image"
+              subtitle="Preview original annotations and predictions"
+              class="mt15"
+              style="max-height: 500px">
+        <div slot="header">
+            <el-button type="primary"
+                       :disabled="!data.connected"
+                       :loading="state.processing"
+                       @click="state.processing = true; command('preview')">
+                <i class="zmdi zmdi-grid" style="margin-right: 5px"></i> Preview
+            </el-button>
+        </div>
+        <sly-grid-gallery v-show="data.gallery"
+                          :content="data.gallery ? data.gallery.content : data.emptyGallery.content"
+                          :options="data.gallery ? data.gallery.options : data.emptyGallery.options"/>
+    </sly-card>
 </div>

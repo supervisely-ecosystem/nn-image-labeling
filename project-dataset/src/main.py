@@ -123,7 +123,7 @@ def preview(api: sly.Api, task_id, context, state, app_logger):
                     }
                 }
             },
-            "layout": [["original", "prediction"]]
+            "layout": [["original"], ["prediction"]]
         },
         "options": image_grid_options,
     }
