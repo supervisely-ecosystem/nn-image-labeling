@@ -38,7 +38,7 @@ def disconnect(api: sly.Api, task_id, context, state, app_logger):
 
     new_data = {}
     new_state = {}
-    init_ui(new_data, new_state)
+    ui.init(new_data, new_state)
     fields = [
         {"field": "data", "payload": new_data, "append": True},
         {"field": "state", "payload": new_state, "append": True},

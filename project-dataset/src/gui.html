@@ -79,8 +79,8 @@
                                         <el-checkbox class="small" v-model="state.classes[index]"></el-checkbox>
                                     </td>
                                     <td><i class="zmdi zmdi-circle ml5 mr5" :style="{color: objClass.color}"></i></td>
-                                    <td><b style="color: #777777">{{objClass.title}}</b></td>
-                                    <td><span class="ml5">{{objClass.shape}}</span></td>
+                                    <td>{{objClass.title}}</td>
+                                    <td><span class="ml5" style="color: #777777">{{objClass.shape}}</span></td>
                                 </tr>
                                 </tbody>
                             </table>
@@ -107,8 +107,8 @@
                                         <el-checkbox class="small" v-model="state.tags[index]"></el-checkbox>
                                     </td>
                                     <td><i class="zmdi zmdi-label ml5 mr5" :style="{color: tagMeta.color}"></i></td>
-                                    <td><b style="color: #777777">{{tagMeta.name}}</b></td>
-                                    <td><span class="ml5">{{tagMeta['value_type']}}</span></td>
+                                    <td>{{tagMeta.name}}</td>
+                                    <td><span class="ml5" style="color: #777777">{{tagMeta['value_type']}}</span></td>
                                 </tr>
                                 </tbody>
                             </table>
@@ -158,15 +158,14 @@
                 </el-tabs>
             </div>
         </sly-card>
-        <sly-card title="Preview on random image" subtitle="123" style="width: 50%" >
-            XXX
+        <sly-card title="Preview on random image" subtitle="Preview original annotations and predictions" style="width: 50%" >
             <div slot="header">
                 <el-button type="primary" @click="command('preview')">
                     <i class="zmdi zmdi-grid" style="margin-right: 5px"></i> Preview
                 </el-button>
             </div>
-            <sly-grid-gallery v-if="data.previewProgress === 100" :content="data.preview.content"
-                              :options="data.preview.options"/>
+<!--            <sly-grid-gallery v-if="data.previewProgress === 100" :content="data.preview.content"-->
+<!--                              :options="data.preview.options"/>-->
         </sly-card>
     </div>
 </div>
