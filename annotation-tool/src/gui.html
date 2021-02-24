@@ -56,6 +56,7 @@
                                :disabled="(state.classes.filter(Boolean).length === 0 &&
                                           state.tags.filter(Boolean).length === 0) ||
                                           (state.processing === true)"
+                               :loading="state.processing"
                                @click="state.processing = true; command('inference')"
                     >
                         <i class="zmdi zmdi-fire mr5"></i>Apply model (ctrl+m)
@@ -63,6 +64,7 @@
                     <el-button size="mini" class="mt5" style="margin-bottom: 15px;"
                                :disabled="!data.rollbackIds.includes(context.imageId) ||
                                           state.processing === true"
+                               :loading="state.processing"
                                @click="state.processing = true; command('undo')"
                     >
                         <i class="zmdi zmdi-undo mr5"></i>Undo
