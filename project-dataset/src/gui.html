@@ -160,12 +160,16 @@
         </sly-card>
         <sly-card title="Preview on random image" subtitle="Preview original annotations and predictions" style="width: 50%" >
             <div slot="header">
-                <el-button type="primary" @click="command('preview')">
+                <el-button type="primary"
+                           :disabled="!data.connected"
+                           :loading="state.processing"
+                           @click="state.processing = true; command('preview')">
                     <i class="zmdi zmdi-grid" style="margin-right: 5px"></i> Preview
                 </el-button>
             </div>
-<!--            <sly-grid-gallery v-if="data.previewProgress === 100" :content="data.preview.content"-->
-<!--                              :options="data.preview.options"/>-->
+            <sly-grid-gallery v-show="data.gallery"
+                              :content="data.gallery ? data.gallery.content : data.emptyGallery.content"
+                              :options="data.gallery ? data.gallery.options : data.emptyGallery.options"/>
         </sly-card>
     </div>
 </div>

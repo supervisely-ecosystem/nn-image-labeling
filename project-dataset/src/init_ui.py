@@ -22,6 +22,7 @@ def init(data, state):
         "showLabel": False,
         "size": "small"
     }
+    data["gallery"] = None
 
     state["sessionId"] = ""
     state["classes"] = []

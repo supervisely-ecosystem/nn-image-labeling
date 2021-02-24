@@ -3,6 +3,7 @@ import yaml
 import pathlib
 import sys
 from collections import defaultdict
+import random
 import supervisely_lib as sly
 
 root_source_path = str(pathlib.Path(sys.argv[0]).parents[2])
@@ -21,6 +22,27 @@ my_app: sly.AppService = sly.AppService(ignore_task_id=True)
 model_meta: sly.ProjectMeta = None
 
 ann_cache = defaultdict(list)  # only one (current) image in cache
+project_info = None
+project_images = None
+project_meta: sly.ProjectMeta = None
+
+image_grid_options = {
+    "opacity": 0.5,
+    "fillRectangle": False,
+    "enableZoom": True,
+    "syncViews": True,
+    "showPreview": True,
+    "selectable": False
+}
+
+empty_gallery = {
+    "content": {
+        "projectMeta": {},
+        "annotations": {},
+        "layout": []
+    },
+    "options": image_grid_options,
+}
 
 
 @my_app.callback("connect")
@@ -114,19 +136,61 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
     api.task.set_fields(task_id, fields)
 
 
-@my_app.callback("undo")
+@my_app.callback("preview")
 @sly.timeit
-def undo(api: sly.Api, task_id, context, state, app_logger):
-    image_id = context["imageId"]
-    if image_id in ann_cache:
-        ann = ann_cache[image_id].pop()
-        if len(ann_cache[image_id]) == 0:
-            del ann_cache[image_id]
-        api.annotation.upload_ann(image_id, ann)
+def preview(api: sly.Api, task_id, context, state, app_logger):
+    try:
+        inference_setting = yaml.safe_load(state["settings"])
+    except Exception as e:
+        inference_setting = {}
+        app_logger.warn(repr(e))
+
+    image_info = random.choice(project_images)
+    img = api.image.download_np(image_info.id)
+
+    ann_json = api.annotation.download(image_info.id).annotation
+    ann = sly.Annotation.from_json(ann_json, project_meta)
+
+    ann_pred_json = api.task.send_request(state["sessionId"], "inference_image_id",
+                                          data={
+                                              "image_id": image_info.id,
+                                              "settings": inference_setting
+                                          })
+    ann_pred = sly.Annotation.from_json(ann_pred_json, model_meta)
+    res_ann, res_project_meta = postprocess(api, project_id, ann_pred, project_meta, model_meta, state)
+
+    if state["addMode"] == "merge":
+        res_ann = ann.merge(res_ann)
+    else:
+        pass  # replace (data prepared, nothing to do)
+
+    preview_gallery = {
+        "content": {
+            "projectMeta": res_project_meta.to_json(),
+            "annotations": {
+                "original": {
+                    "url": image_info.full_storage_url,
+                    "figures": [label.to_json() for label in ann.labels],
+                    "info": {
+                        "title": "original",
+                    }
+                },
+                "prediction": {
+                    "url": image_info.full_storage_url,
+                    "figures": [label.to_json() for label in res_ann.labels],
+                    "info": {
+                        "title": "prediction",
+                    }
+                }
+            },
+            "layout": [["original", "prediction"]]
+        },
+        "options": image_grid_options,
+    }
 
     fields = [
-        {"field": "data.rollbackIds", "payload": list(ann_cache.keys())},
-        {"field": "state.processing", "payload": False}
+        {"field": "state.processing", "payload": False},
+        {"field": "data.gallery", "payload": preview_gallery}
     ]
     api.task.set_fields(task_id, fields)
 
@@ -136,9 +200,20 @@ def main():
     state = {}
     data["ownerId"] = owner_id
     data["teamId"] = team_id
+
+    global project_info
     project_info = my_app.public_api.project.get_info_by_id(project_id)
 
+    global project_images
+    project_images = []
+    for dataset_info in my_app.public_api.dataset.get_list(project_id):
+        project_images.extend(my_app.public_api.image.get_list(dataset_info.id))
+
+    global project_meta
+    project_meta = sly.ProjectMeta.from_json(my_app.public_api.project.get_meta(project_id))
+
     ui.init(data, state)
+    data["emptyGallery"] = empty_gallery
     ui.init_input_project(my_app.public_api, data, project_info)
     ui.init_output_project(data)
 
