@@ -17,8 +17,9 @@
             </sly-field>
         </sly-card>
     </div>
-    <div class="fflex" style="align-items: stretch">
-        <sly-card title="Settings" style="width: 50%" class="mt15 mr15">
+
+    <div class="fflex mt15" style="align-items: stretch;">
+        <sly-card title="Settings" style="width: 50%" class="mr15">
             <div v-if="data.connected === false">
                 <sly-field title="Connect to running NN"
                            description="Define session (task id) with deployed model">
@@ -115,15 +116,33 @@
                     </el-tab-pane>
                     <el-tab-pane label="Inference" name="inference">
                         <span slot="label"><i class="zmdi zmdi-settings mr5"></i></i>Inference</span>
+
+                        <div class="mb15">
+                            <div><b>Mode</b></div>
+                            <el-select v-model="state.infMode">
+                                <el-option key="full image" label="full image" value="fi"></el-option>
+                                <el-option key="roi"
+                                           label="roi (image region) - coming soon"
+                                           value="roi"
+                                           :disabled="true">
+                                </el-option>
+                                <el-option key="sw"
+                                           label="sliding window - coming soon"
+                                           value="sw"
+                                           :disabled="true">
+                                </el-option>
+                            </el-select>
+                        </div>
+
                         <div class="mb15">
                             <div><b>Class/tag name suffix</b></div>
                             <div>Add suffix to model class/tag name if it has conflicts with existing one</div>
-                            <el-input placeholder="Please input" size="mini" v-model="state.suffix"></el-input>
+                            <el-input placeholder="Please input" v-model="state.suffix"></el-input>
                         </div>
 
                         <div class="mb15">
                             <div><b>How to add predictions</b></div>
-                            <el-select v-model="state.addMode" size="mini">
+                            <el-select v-model="state.addMode">
                                 <el-option key="merge" label="merge" value="merge"></el-option>
                                 <el-option key="replace" label="replace" value="replace"></el-option>
                             </el-select>
@@ -138,6 +157,16 @@
                     </el-tab-pane>
                 </el-tabs>
             </div>
+        </sly-card>
+        <sly-card title="Preview on random image" subtitle="123" style="width: 50%" >
+            XXX
+            <div slot="header">
+                <el-button type="primary" @click="command('preview')">
+                    <i class="zmdi zmdi-grid" style="margin-right: 5px"></i> Preview
+                </el-button>
+            </div>
+            <sly-grid-gallery v-if="data.previewProgress === 100" :content="data.preview.content"
+                              :options="data.preview.options"/>
         </sly-card>
     </div>
 </div>

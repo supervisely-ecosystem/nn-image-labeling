@@ -27,6 +27,7 @@ def init(data, state):
     state["classes"] = []
     state["tags"] = []
     state["tabName"] = "info"
+    state["infMode"] = "fi"  # roi, sw
     state["suffix"] = "model"
     state["settings"] = "# empty"
     state["addMode"] = "merge"
