@@ -2,24 +2,25 @@ import os
 import yaml
 import pathlib
 import sys
-
+from collections import defaultdict
 import supervisely_lib as sly
 
 root_source_path = str(pathlib.Path(sys.argv[0]).parents[2])
 sly.logger.info(f"Root source directory: {root_source_path}")
 sys.path.append(root_source_path)
 
-import cache
 from init_ui import unit_ui
-import shared_utils.ui2 as ui
 from shared_utils.connect import get_model_info
-from shared_utils.merge_metas import merge_metas
+from shared_utils.inference import postprocess
+
 
 owner_id = int(os.environ['context.userId'])
 team_id = int(os.environ['context.teamId'])
 
 my_app: sly.AppService = sly.AppService(ignore_task_id=True)
 model_meta: sly.ProjectMeta = None
+
+ann_cache = defaultdict(list)  # only one (current) image in cache
 
 
 @my_app.callback("connect")
@@ -69,92 +70,65 @@ def deselect_all_tags(api: sly.Api, task_id, context, state, app_logger):
     api.task.set_field(task_id, "state.tags", [False] * len(model_meta.tag_metas))
 
 
-def _postprocess(api: sly.Api, project_id, ann: sly.Annotation, project_meta: sly.ProjectMeta, state):
-    keep_classes = ui.get_keep_classes(state) #@TODO: for debug ['dog'] #
-    keep_tags = ui.get_keep_tags(state)
-    res_project_meta, class_mapping, tag_meta_mapping = \
-        merge_metas(project_meta, model_meta, keep_classes, keep_tags, state["suffix"])
-    image_tags = []
-    for tag in ann.img_tags:
-        if tag.meta.name not in keep_tags:
-            continue
-        image_tags.append(tag.clone(meta=tag_meta_mapping[tag.meta.name]))
-
-    new_labels = []
-    for label in ann.labels:
-        if label.obj_class.name not in keep_classes:
-            continue
-        label_tags = []
-        for tag in label.tags:
-            if tag.meta.name not in keep_tags:
-                continue
-            label_tags.append(tag.clone(meta=tag_meta_mapping[tag.meta.name]))
-        new_label = label.clone(obj_class=class_mapping[label.obj_class.name], tags=sly.TagCollection(label_tags))
-        new_labels.append(new_label)
-
-    if res_project_meta != project_meta:
-        cache.update_project_meta(api, project_id, res_project_meta)
-
-    res_ann = ann.clone(labels=new_labels, img_tags=sly.TagCollection(image_tags))
-    return res_ann
-
-
 @my_app.callback("inference")
 @sly.timeit
 def inference(api: sly.Api, task_id, context, state, app_logger):
-    global metas_lock, backup_ann_lock
     project_id = context["projectId"]
     image_id = context["imageId"]
 
-    project_meta = cache.get_project_meta(api, project_id)
-    cache.backup_ann(api, image_id, project_meta)
-
-    last_annotation_json = api.annotation.download(image_id).annotation
-    last_annotation = sly.Annotation.from_json(last_annotation_json, project_meta)
-
-    inference_setting = {}
     try:
         inference_setting = yaml.safe_load(state["settings"])
     except Exception as e:
+        inference_setting = {}
         app_logger.warn(repr(e))
 
-    ann_json = api.task.send_request(state["sessionId"],
-                                     "inference_image_id",
-                                     data={
-                                         "image_id": image_id,
-                                         "settings": inference_setting
-                                     })
-    ann_pred = sly.Annotation.from_json(ann_json, model_meta)
-    new_ann: sly.Annotation = _postprocess(api, project_id, ann_pred, project_meta, state)
-    if state["addMode"] == "merge":
-        new_ann = last_annotation.add_labels(new_ann.labels)
-        new_ann = new_ann.add_tags(new_ann.img_tags)
-    else:
-        # replace (data prepared, nothing to do)
-        pass
+    project_meta = sly.ProjectMeta.from_json(api.project.get_meta(project_id))
 
-    api.annotation.upload_ann(image_id, new_ann)
+    if image_id not in ann_cache:
+        # keep only current image for simplicity
+        ann_cache.clear()
+
+    ann_json = api.annotation.download(image_id).annotation
+    ann = sly.Annotation.from_json(ann_json, project_meta)
+    ann_cache[image_id].append(ann)
+
+    ann_pred_json = api.task.send_request(state["sessionId"],
+                                          "inference_image_id",
+                                          data={
+                                              "image_id": image_id,
+                                              "settings": inference_setting
+                                          })
+    ann_pred = sly.Annotation.from_json(ann_pred_json, model_meta)
+    res_ann: sly.Annotation = postprocess(api, project_id, ann_pred, project_meta, model_meta, state)
+
+    if state["addMode"] == "merge":
+        res_ann = ann.merge(res_ann)
+    else:
+        pass  # replace (data prepared, nothing to do)
+
+    api.annotation.upload_ann(image_id, res_ann)
     fields = [
-        {"field": "data.rollbackIds", "payload": list(cache.anns.keys())},
+        {"field": "data.rollbackIds", "payload": list(ann_cache.keys())},
+        {"field": "state.processing", "payload": False}
     ]
     api.task.set_fields(task_id, fields)
 
 
-@my_app.callback("rollback")
+@my_app.callback("undo")
 @sly.timeit
-def rollback(api: sly.Api, task_id, context, state, app_logger):
-    try:
-        image_id = context["imageId"]
-        ann = cache.restore_ann(image_id)
+def undo(api: sly.Api, task_id, context, state, app_logger):
+    image_id = context["imageId"]
+    if image_id in ann_cache:
+        ann = ann_cache[image_id].pop()
+        if len(ann_cache[image_id]) == 0:
+            del ann_cache[image_id]
         api.annotation.upload_ann(image_id, ann)
-        cache.remove_ann(image_id)
-        fields = [
-            {"field": "data.rollbackIds", "payload": list(cache.anns.keys())},
-        ]
-        api.task.set_fields(task_id, fields)
-    except Exception as e:
-        app_logger.warn(repr(e))
-    return
+
+    fields = [
+        {"field": "data.rollbackIds", "payload": list(ann_cache.keys())},
+        {"field": "state.processing", "payload": False}
+    ]
+    api.task.set_fields(task_id, fields)
 
 
 def main():
@@ -164,7 +138,6 @@ def main():
     data["teamId"] = team_id
     unit_ui(data, state)
 
-    #state["sessionId"] = 2614 #@TODO: for debug
     my_app.run(data=data, state=state)
 
 

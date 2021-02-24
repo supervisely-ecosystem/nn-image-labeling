@@ -53,17 +53,19 @@
             <div class="fflex" style="justify-content: space-between">
                 <div>
                     <el-button type="success" size="mini" class="mt5" style="margin-bottom: 15px;"
-                               :disabled="state.classes.filter(Boolean).length === 0 &&
-                                          state.tags.filter(Boolean).length === 0"
-                               @click="command('inference')"
+                               :disabled="(state.classes.filter(Boolean).length === 0 &&
+                                          state.tags.filter(Boolean).length === 0) ||
+                                          (state.processing === true)"
+                               @click="state.processing = true; command('inference')"
                     >
-                        <i class="zmdi zmdi-fire mr5"></i>Apply model <i class="zmdi zmdi-keyboard ml10"></i> ctrl+m
+                        <i class="zmdi zmdi-fire mr5"></i>Apply model (ctrl+m)
                     </el-button>
                     <el-button size="mini" class="mt5" style="margin-bottom: 15px;"
-                               :disabled="!data.rollbackIds.includes(context.imageId)"
-                               @click="command('rollback')"
+                               :disabled="!data.rollbackIds.includes(context.imageId) ||
+                                          state.processing === true"
+                               @click="state.processing = true; command('undo')"
                     >
-                        <i class="zmdi zmdi-undo mr5"></i>Rollback
+                        <i class="zmdi zmdi-undo mr5"></i>Undo
                     </el-button>
                 </div>
                 <div>

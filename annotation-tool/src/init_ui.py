@@ -19,5 +19,6 @@ def unit_ui(data, state):
     state["suffix"] = "model"
     state["settings"] = "# empty"
     state["addMode"] = "merge"
+    state["processing"] = False
 
 
