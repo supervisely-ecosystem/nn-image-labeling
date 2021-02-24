@@ -27,8 +27,8 @@ project_images = None
 project_meta: sly.ProjectMeta = None
 
 image_grid_options = {
-    "opacity": 0.5,
-    "fillRectangle": False,
+    "opacity": 0.2,
+    "fillRectangle": True, #False,
     "enableZoom": True,
     "syncViews": True,
     "showPreview": True,
@@ -92,77 +92,17 @@ def deselect_all_tags(api: sly.Api, task_id, context, state, app_logger):
     api.task.set_field(task_id, "state.tags", [False] * len(model_meta.tag_metas))
 
 
-@my_app.callback("inference")
-@sly.timeit
-def inference(api: sly.Api, task_id, context, state, app_logger):
-    project_id = context["projectId"]
-    image_id = context["imageId"]
-
-    try:
-        inference_setting = yaml.safe_load(state["settings"])
-    except Exception as e:
-        inference_setting = {}
-        app_logger.warn(repr(e))
-
-    project_meta = sly.ProjectMeta.from_json(api.project.get_meta(project_id))
-
-    if image_id not in ann_cache:
-        # keep only current image for simplicity
-        ann_cache.clear()
-
-    ann_json = api.annotation.download(image_id).annotation
-    ann = sly.Annotation.from_json(ann_json, project_meta)
-    ann_cache[image_id].append(ann)
-
-    ann_pred_json = api.task.send_request(state["sessionId"],
-                                          "inference_image_id",
-                                          data={
-                                              "image_id": image_id,
-                                              "settings": inference_setting
-                                          })
-    ann_pred = sly.Annotation.from_json(ann_pred_json, model_meta)
-    res_ann: sly.Annotation = postprocess(api, project_id, ann_pred, project_meta, model_meta, state)
-
-    if state["addMode"] == "merge":
-        res_ann = ann.merge(res_ann)
-    else:
-        pass  # replace (data prepared, nothing to do)
-
-    api.annotation.upload_ann(image_id, res_ann)
-    fields = [
-        {"field": "data.rollbackIds", "payload": list(ann_cache.keys())},
-        {"field": "state.processing", "payload": False}
-    ]
-    api.task.set_fields(task_id, fields)
-
-
 @my_app.callback("preview")
 @sly.timeit
 def preview(api: sly.Api, task_id, context, state, app_logger):
     try:
-        inference_setting = yaml.safe_load(state["settings"])
+        inf_setting = yaml.safe_load(state["settings"])
     except Exception as e:
-        inference_setting = {}
+        inf_setting = {}
         app_logger.warn(repr(e))
 
     image_info = random.choice(project_images)
-    img = api.image.download_np(image_info.id)
-
-    ann_json = api.annotation.download(image_info.id).annotation
-    ann = sly.Annotation.from_json(ann_json, project_meta)
-
-    ann_pred_json = api.task.send_request(state["sessionId"], "inference_image_id",
-                                          data={
-                                              "image_id": image_info.id,
-                                              "settings": inference_setting
-                                          })
-    ann_pred = sly.Annotation.from_json(ann_pred_json, model_meta)
-    res_ann, res_project_meta = postprocess(api, project_id, ann_pred, project_meta, model_meta, state)
-
-    if state["addMode"] == "merge":
-        res_ann = ann.merge(res_ann)
-    else:
-        pass  # replace (data prepared, nothing to do)
+    input_ann, res_ann, res_project_meta = apply_model_to_image(api, state, image_info.id,  inf_setting)
 
     preview_gallery = {
         "content": {
@@ -170,7 +110,7 @@ def preview(api: sly.Api, task_id, context, state, app_logger):
             "annotations": {
                 "original": {
                     "url": image_info.full_storage_url,
-                    "figures": [label.to_json() for label in ann.labels],
+                    "figures": [label.to_json() for label in input_ann.labels],
                     "info": {
                         "title": "original",
                     }
@@ -193,6 +133,25 @@ def preview(api: sly.Api, task_id, context, state, app_logger):
         {"field": "data.gallery", "payload": preview_gallery}
     ]
     api.task.set_fields(task_id, fields)
+
+
+def apply_model_to_image(api, state, image_id, inf_setting):
+    nn_session_id = state["sessionId"]
+    add_mode = state["addMode"]
+    ann_json = api.annotation.download(image_id).annotation
+    ann = sly.Annotation.from_json(ann_json, project_meta)
+    ann_pred_json = api.task.send_request(nn_session_id, "inference_image_id",
+                                          data={
+                                              "image_id": image_id,
+                                              "settings": inf_setting
+                                          })
+    ann_pred = sly.Annotation.from_json(ann_pred_json, model_meta)
+    res_ann, res_project_meta = postprocess(api, project_id, ann_pred, project_meta, model_meta, state)
+    if add_mode == "merge":
+        res_ann = ann.merge(res_ann)
+    else:
+        pass  # replace (data prepared, nothing to do)
+    return ann, res_ann, res_project_meta
 
 
 def main():
