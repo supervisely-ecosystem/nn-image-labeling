@@ -11,10 +11,11 @@ sys.path.append(root_source_path)
 
 from shared_utils.connect import get_model_info
 from shared_utils.inference import postprocess
-from init_ui import init_ui
+import init_ui as ui
 
 owner_id = int(os.environ['context.userId'])
 team_id = int(os.environ['context.teamId'])
+project_id = int(os.environ["modal.state.slyProjectId"])
 
 my_app: sly.AppService = sly.AppService(ignore_task_id=True)
 model_meta: sly.ProjectMeta = None
@@ -135,7 +136,10 @@ def main():
     state = {}
     data["ownerId"] = owner_id
     data["teamId"] = team_id
-    init_ui(data, state)
+    project_info = my_app.public_api.project.get_info_by_id(project_id)
+
+    ui.init(data, state)
+    ui.init_input_project(my_app.public_api, data, project_info)
 
     my_app.run(data=data, state=state)
 
