@@ -9,7 +9,7 @@ root_source_path = str(pathlib.Path(sys.argv[0]).parents[2])
 sly.logger.info(f"Root source directory: {root_source_path}")
 sys.path.append(root_source_path)
 
-from init_ui import unit_ui
+from init_ui import init_ui
 from shared_utils.connect import get_model_info
 from shared_utils.inference import postprocess
 
@@ -38,7 +38,7 @@ def disconnect(api: sly.Api, task_id, context, state, app_logger):
 
     new_data = {}
     new_state = {}
-    unit_ui(new_data, new_state)
+    init_ui(new_data, new_state)
     fields = [
         {"field": "data", "payload": new_data, "append": True},
         {"field": "state", "payload": new_state, "append": True},
@@ -136,7 +136,7 @@ def main():
     state = {}
     data["ownerId"] = owner_id
     data["teamId"] = team_id
-    unit_ui(data, state)
+    init_ui(data, state)
 
     my_app.run(data=data, state=state)
 

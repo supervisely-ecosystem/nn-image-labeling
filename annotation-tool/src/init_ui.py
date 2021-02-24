@@ -1,5 +1,5 @@
 
-def unit_ui(data, state):
+def init_ui(data, state):
     data["info"] = {}
     data["classes"] = []
     data["tags"] = []
