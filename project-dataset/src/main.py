@@ -27,7 +27,7 @@ project_images = None
 project_meta: sly.ProjectMeta = None
 
 image_grid_options = {
-    "opacity": 0.2,
+    "opacity": 0.3,
     "fillRectangle": True, #False,
     "enableZoom": True,
     "syncViews": True,
