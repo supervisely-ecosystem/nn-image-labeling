@@ -16,14 +16,22 @@ import init_ui as ui
 
 owner_id = int(os.environ['context.userId'])
 team_id = int(os.environ['context.teamId'])
-project_id = int(os.environ["modal.state.slyProjectId"])
+workspace_id = int(os.environ['context.workspaceId'])
+
+project_id = None
+dataset_id = os.environ.get("modal.state.slyDatasetId")
+input_datasets = []
+if dataset_id is not None:
+    dataset_id = int(dataset_id)
+else:
+    project_id = int(os.environ["modal.state.slyProjectId"])
 
 my_app: sly.AppService = sly.AppService(ignore_task_id=True)
 model_meta: sly.ProjectMeta = None
 
 ann_cache = defaultdict(list)  # only one (current) image in cache
 project_info = None
-project_images = None
+input_images = None
 project_meta: sly.ProjectMeta = None
 
 image_grid_options = {
@@ -105,29 +113,29 @@ def preview(api: sly.Api, task_id, context, state, app_logger):
         inf_setting = {}
         app_logger.warn(repr(e))
 
-    image_info = random.choice(project_images)
+    image_info = random.choice(input_images)
     input_ann, res_ann, res_project_meta = apply_model_to_image(api, state, image_info.id,  inf_setting)
 
     preview_gallery = {
         "content": {
             "projectMeta": res_project_meta.to_json(),
             "annotations": {
-                "original": {
+                "input": {
                     "url": image_info.full_storage_url,
                     "figures": [label.to_json() for label in input_ann.labels],
                     "info": {
-                        "title": "original",
+                        "title": "input",
                     }
                 },
-                "prediction": {
+                "output": {
                     "url": image_info.full_storage_url,
                     "figures": [label.to_json() for label in res_ann.labels],
                     "info": {
-                        "title": "prediction",
+                        "title": "output",
                     }
                 }
             },
-            "layout": [["original"], ["prediction"]]
+            "layout": [["input"], ["output"]]
         },
         "options": image_grid_options,
     }
@@ -158,19 +166,61 @@ def apply_model_to_image(api, state, image_id, inf_setting):
     return ann, res_ann, res_project_meta
 
 
+@my_app.callback("apply_model")
+@sly.timeit
+def apply_model(api: sly.Api, task_id, context, state, app_logger):
+    try:
+        inf_setting = yaml.safe_load(state["settings"])
+    except Exception as e:
+        inf_setting = {}
+        app_logger.warn(repr(e))
+
+    global project_meta
+    res_project = api.project.create(workspace_id, project_info.name + " [inf]", change_name_if_conflict=True)
+    api.project.update_meta(res_project.id, project_meta.to_json())
+
+    progress = sly.Progress("Inference", len(input_images), need_info_log=True)
+    for dataset in input_datasets:
+        res_dataset = api.dataset.create(res_project.id, dataset.name, dataset.description)
+        images = api.image.get_list(dataset.id)
+
+        for batch in sly.batched(images, batch_size=10):
+            image_ids, res_names, res_metas, res_anns = [], [], [], []
+            for image_info in batch:
+                _, res_ann, res_meta = apply_model_to_image(api, state, image_info.id, inf_setting)
+                if project_meta != res_meta:
+                    api.project.update_meta(res_project.id, res_meta.to_json())
+                    project_meta = res_meta
+                image_ids.append(image_info.id)
+                res_names.append(image_info.name)
+                res_metas.append(image_info.meta)
+                res_anns.append(res_ann)
+
+            res_images_infos = api.image.upload_ids(res_dataset.id, res_names, image_ids, metas=res_metas)
+            res_ids = [image_info.id for image_info in res_images_infos]
+            api.annotation.upload_anns(res_ids, res_anns)
+            progress.iters_done_report(len(res_ids))
+
+
 def main():
     data = {}
     state = {}
     data["ownerId"] = owner_id
     data["teamId"] = team_id
 
-    global project_info
+    global project_info, project_id, input_datasets
+    if project_id is None:
+        dataset_info = my_app.public_api.dataset.get_info_by_id(dataset_id)
+        input_datasets.append(dataset_info)
+        project_id = dataset_info.project_id
+    else:
+        input_datasets = my_app.public_api.dataset.get_list(project_id)
     project_info = my_app.public_api.project.get_info_by_id(project_id)
 
-    global project_images
-    project_images = []
-    for dataset_info in my_app.public_api.dataset.get_list(project_id):
-        project_images.extend(my_app.public_api.image.get_list(dataset_info.id))
+    global input_images
+    input_images = []
+    for dataset_info in input_datasets:
+        input_images.extend(my_app.public_api.image.get_list(dataset_info.id))
 
     global project_meta
     project_meta = sly.ProjectMeta.from_json(my_app.public_api.project.get_meta(project_id))
