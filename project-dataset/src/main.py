@@ -114,7 +114,7 @@ def preview(api: sly.Api, task_id, context, state, app_logger):
         app_logger.warn(repr(e))
 
     image_info = random.choice(input_images)
-    input_ann, res_ann, res_project_meta = apply_model_to_image(api, state, image_info.id,  inf_setting)
+    input_ann, res_ann, res_project_meta = apply_model_to_image(api, state, image_info.dataset_id, image_info.id,  inf_setting)
 
     preview_gallery = {
         "content": {
@@ -147,23 +147,43 @@ def preview(api: sly.Api, task_id, context, state, app_logger):
     api.task.set_fields(task_id, fields)
 
 
-def apply_model_to_image(api, state, image_id, inf_setting):
+def apply_model_to_image(api, state, dataset_id, image_id, inf_setting):
+    orig_anns, res_anns, res_project_meta = apply_model_to_images(api, state, dataset_id, [image_id], inf_setting)
+    if orig_anns is None:
+        orig_ann = sly.Annotation.from_json(api.annotation.download(image_id), project_meta)
+    else:
+        orig_ann = orig_anns[0]
+    return orig_ann, res_anns[0], res_project_meta
+
+
+def apply_model_to_images(api, state, dataset_id, ids, inf_setting):
     nn_session_id = state["sessionId"]
     add_mode = state["addMode"]
-    ann_json = api.annotation.download(image_id).annotation
-    ann = sly.Annotation.from_json(ann_json, project_meta)
-    ann_pred_json = api.task.send_request(nn_session_id, "inference_image_id",
+    ann_pred_json = api.task.send_request(nn_session_id, "inference_batch_ids",
                                           data={
-                                              "image_id": image_id,
+                                              "dataset_id": dataset_id,
+                                              "batch_ids": ids,
                                               "settings": inf_setting
                                           })
-    ann_pred = sly.Annotation.from_json(ann_pred_json, model_meta)
-    res_ann, res_project_meta = postprocess(api, project_id, ann_pred, project_meta, model_meta, state)
+    ann_preds = [sly.Annotation.from_json(pred_json, model_meta) for pred_json in ann_pred_json]
+    res_project_meta = project_meta.clone()
+    res_anns = []
+    for ann_pred in ann_preds:
+        res_ann, res_project_meta = postprocess(api, project_id, ann_pred, res_project_meta, model_meta, state)
+        res_anns.append(res_ann)
+
+    original_anns = None
     if add_mode == "merge":
-        res_ann = ann.merge(res_ann)
+        original_anns = api.annotation.download_batch(dataset_id, ids)
+        original_anns = [sly.Annotation.from_json(ann_info.annotation, project_meta) for ann_info in original_anns]
+
+        merged_anns = []
+        for ann, pred in zip(original_anns, res_anns):
+            merged_anns.append(ann.merge(pred))
     else:
+        merged_anns = res_anns
         pass  # replace (data prepared, nothing to do)
-    return ann, res_ann, res_project_meta
+    return original_anns, merged_anns, res_project_meta
 
 
 @my_app.callback("apply_model")
@@ -195,7 +215,7 @@ def apply_model(api: sly.Api, task_id, context, state, app_logger):
         for batch in sly.batched(images, batch_size=10):
             image_ids, res_names, res_metas, res_anns = [], [], [], []
             for image_info in batch:
-                _, res_ann, res_meta = apply_model_to_image(api, state, image_info.id, inf_setting)
+                _, res_ann, res_meta = apply_model_to_image(api, state, image_info.dataset_id, image_info.id, inf_setting)
                 if project_meta != res_meta:
                     api.project.update_meta(res_project.id, res_meta.to_json())
                     project_meta = res_meta
