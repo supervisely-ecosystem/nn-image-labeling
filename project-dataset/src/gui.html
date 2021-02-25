@@ -34,7 +34,7 @@
             <div v-for="v,k in data.info" class="mb10" style="word-break: break-all;">
                 <b>{{k}}</b>: <span>{{v}}</span>
             </div>
-            <el-button type="warning" class="mt10" @click="command('disconnect')">
+            <el-button type="warning" class="mt10" :disabled="data.started" @click="command('disconnect')">
                 <i class="zmdi zmdi-close mr5"></i>Disconnect
             </el-button>
         </div>
@@ -47,10 +47,10 @@
         <div v-if="state.classesInfo.length === 0">Model does not produce classes</div>
         <div v-if="state.classesInfo.length > 0">
             <div class="fflex">
-                <el-button type="text" @click="command('select_all_classes');">
+                <el-button type="text" :disabled="data.started" @click="command('select_all_classes');">
                     <i class="zmdi zmdi-check-all"></i> Select all
                 </el-button>
-                <el-button type="text" @click="command('deselect_all_classes');"
+                <el-button type="text" :disabled="data.started" @click="command('deselect_all_classes');"
                            style="margin-left: 25px;">
                     <i class="zmdi zmdi-square-o"></i> Deselect all
                 </el-button>
@@ -59,7 +59,7 @@
                 <tbody>
                 <tr v-for="(objClass, index) in state.classesInfo">
                     <td>
-                        <el-checkbox v-model="state.classes[index]"></el-checkbox>
+                        <el-checkbox :disabled="data.started" v-model="state.classes[index]"></el-checkbox>
                     </td>
                     <td><i class="zmdi zmdi-circle ml5 mr5" :style="{color: objClass.color}"></i>
                     </td>
@@ -79,10 +79,10 @@
         <div v-if="state.tagsInfo.length === 0">Model does not produce tags</div>
         <div v-if="state.tagsInfo.length > 0">
             <div class="fflex">
-                <el-button type="text" @click="command('select_all_tags');">
+                <el-button type="text" :disabled="data.started" @click="command('select_all_tags');">
                     <i class="zmdi zmdi-check-all"></i> Select all
                 </el-button>
-                <el-button type="text" @click="command('deselect_all_tags');"
+                <el-button type="text" :disabled="data.started" @click="command('deselect_all_tags');"
                            style="margin-left: 25px;">
                     <i class="zmdi zmdi-square-o"></i> Deselect all
                 </el-button>
@@ -91,7 +91,7 @@
                 <tbody>
                 <tr v-for="(tagMeta, index) in state.tagsInfo">
                     <td>
-                        <el-checkbox v-model="state.tags[index]"></el-checkbox>
+                        <el-checkbox :disabled="data.started" v-model="state.tags[index]"></el-checkbox>
                     </td>
                     <td><i class="zmdi zmdi-label ml5 mr5" :style="{color: tagMeta.color}"></i></td>
                     <td>{{tagMeta.name}}</td>
@@ -108,7 +108,7 @@
               subtitle="How to apply model (full image / roi / sliding window) and how to merge predictions with existing labels">
         <div class="mb15">
             <div><b>Mode</b></div>
-            <el-select v-model="state.infMode">
+            <el-select :disabled="data.started" v-model="state.infMode">
                 <el-option key="full image" label="full image" value="fi"></el-option>
                 <el-option key="roi"
                            label="roi (image region) - coming soon"
@@ -125,12 +125,12 @@
 
         <sly-field title="Class/tag name suffix"
                    description="Add suffix to model class/tag name if it has conflicts with existing one">
-            <el-input v-model="state.suffix" style="width: 193px"></el-input>
+            <el-input :disabled="data.started" v-model="state.suffix" style="width: 193px"></el-input>
         </sly-field>
 
         <sly-field title="How to add predictions"
                    description="Original annotations are not modified. New project with predictions will be created.">
-            <el-select v-model="state.addMode" style="width: 250px;">
+            <el-select :disabled="data.started" v-model="state.addMode" style="width: 250px;" :disabled="data.started">
                 <el-option key="merge" label="merge with existing labels" value="merge"></el-option>
                 <el-option key="replace" label="replace existing labels" value="replace"></el-option>
             </el-select>
@@ -149,7 +149,7 @@
               subtitle="Compare original labels and final prediction">
         <div slot="header">
             <el-button type="primary"
-                       :disabled="!data.connected"
+                       :disabled="!data.connected || data.started"
                        :loading="state.processing"
                        @click="state.processing = true; command('preview')">
                 <i class="zmdi zmdi-grid" style="margin-right: 5px"></i> Preview

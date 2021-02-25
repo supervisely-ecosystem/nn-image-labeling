@@ -235,11 +235,13 @@ def apply_model(api: sly.Api, task_id, context, state, app_logger):
 
     res_project = api.project.get_info_by_id(res_project.id)  # to refresh reference_image_url
     fields = [
-        {"field": "data.projectId", "payload": res_project.id},
-        {"field": "data.projectName", "payload": res_project.name},
-        {"field": "data.projectPreviewUrl", "payload": api.image.preview_url(res_project.reference_image_url, 100, 100)},
+        {"field": "data.resProjectId", "payload": res_project.id},
+        {"field": "data.resProjectName", "payload": res_project.name},
+        {"field": "data.resProjectPreviewUrl", "payload": api.image.preview_url(res_project.reference_image_url, 100, 100)},
     ]
     api.task.set_fields(task_id, fields)
+    api.task.set_output_project(task_id, res_project.id, res_project.name)
+    my_app.stop()
 
 
 def main():
