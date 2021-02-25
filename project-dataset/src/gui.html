@@ -1,6 +1,6 @@
 <div>
-    <sly-card title="Input Project" subtitle="Link to input project">
-        <sly-field title="" description="Input Project">
+    <sly-card title="Input Data" subtitle="Input project URL">
+        <sly-field title="" description="Input Data">
             <a slot="title" target="_blank"
                :href="`/projects/${data.projectId}/datasets`">{{data.projectName}} ({{data.projectItemsCount}}
                 images)</a>
@@ -155,7 +155,7 @@
                 <i class="zmdi zmdi-grid" style="margin-right: 5px"></i> Preview
             </el-button>
         </div>
-        <sly-grid-gallery v-if="data.gallery"
+        <sly-grid-gallery v-show="data.gallery"
                           :content="data.gallery ? data.gallery.content : data.emptyGallery.content"
                           :options="data.gallery ? data.gallery.options : data.emptyGallery.options">
             <template v-slot:card-footer="{ annotation }">
@@ -170,9 +170,12 @@
               class="mt15"
               title="Output"
               subtitle="Apply model to the input data and monitor progress">
-        <el-button v-if="!data.resProjectId" type="primary" @click="command('apply_model')">
-            <i class="zmdi zmdi-fire" style="margin-right: 5px"></i> Apply model to input data
-        </el-button>
+        <div v-if="!data.resProjectId">
+            <el-button type="primary" v-if="!data.started" @click="data.started = true; command('apply_model')">
+                <i class="zmdi zmdi-fire" style="margin-right: 5px"></i> Apply model to input data
+            </el-button>
+            <el-progress v-if="data.started === true" :percentage="data.progress"></el-progress>
+        </div>
         <sly-field v-if="data.resProjectId" title="" description="Project">
             <a slot="title" target="_blank"
                :href="`/projects/${data.resProjectId}/datasets`">{{data.resProjectName}}</a>

@@ -201,6 +201,13 @@ def apply_model(api: sly.Api, task_id, context, state, app_logger):
             api.annotation.upload_anns(res_ids, res_anns)
             progress.iters_done_report(len(res_ids))
 
+    fields = [
+        {"field": "data.projectId", "payload": res_project.id},
+        {"field": "data.projectName", "payload": res_project.name},
+        {"field": "data.projectPreviewUrl", "payload": api.image.preview_url(res_project.reference_image_url, 100, 100)},
+    ]
+    api.task.set_fields(task_id, fields)
+
 
 def main():
     data = {}
@@ -209,6 +216,7 @@ def main():
     data["teamId"] = team_id
 
     global project_info, project_id, input_datasets
+    dataset_info = None
     if project_id is None:
         dataset_info = my_app.public_api.dataset.get_info_by_id(dataset_id)
         input_datasets.append(dataset_info)
@@ -219,16 +227,16 @@ def main():
 
     global input_images
     input_images = []
-    for dataset_info in input_datasets:
-        input_images.extend(my_app.public_api.image.get_list(dataset_info.id))
+    for ds_info in input_datasets:
+        input_images.extend(my_app.public_api.image.get_list(ds_info.id))
 
     global project_meta
     project_meta = sly.ProjectMeta.from_json(my_app.public_api.project.get_meta(project_id))
 
     ui.init(data, state)
     data["emptyGallery"] = empty_gallery
-    ui.init_input_project(my_app.public_api, data, project_info)
-    ui.init_output_project(data)
+    ui.init_input_project(my_app.public_api, data, project_info, len(input_images), dataset_info)
+    ui.init_output_project(my_app.public_api, data)
 
     my_app.run(data=data, state=state)
 
