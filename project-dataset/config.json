@@ -15,5 +15,10 @@
   "headless": false,
 
   "icon": "https://i.imgur.com/KdCigmp.png",
-  "icon_background": "#FFFFFF"
+  "icon_background": "#FFFFFF",
+
+  "context_menu": {
+    "target": ["images_project", "images_dataset"],
+    "context_root": "Neural Networks"
+  }
 }
