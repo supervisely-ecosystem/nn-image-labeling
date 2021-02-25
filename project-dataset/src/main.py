@@ -176,7 +176,7 @@ def apply_model(api: sly.Api, task_id, context, state, app_logger):
         app_logger.warn(repr(e))
 
     global project_meta
-    res_project = api.project.create(workspace_id, project_info.name + " [inf]", change_name_if_conflict=True)
+    res_project = api.project.create(workspace_id, state["resProjectName"], change_name_if_conflict=True)
     api.project.update_meta(res_project.id, project_meta.to_json())
 
     progress = sly.Progress("Inference", len(input_images), need_info_log=True)
@@ -236,7 +236,8 @@ def main():
     ui.init(data, state)
     data["emptyGallery"] = empty_gallery
     ui.init_input_project(my_app.public_api, data, project_info, len(input_images), dataset_info)
-    ui.init_output_project(my_app.public_api, data)
+    state["resProjectName"] = project_info.name + " (inf)"
+    ui.init_output_project(data)
 
     my_app.run(data=data, state=state)
 

@@ -128,13 +128,13 @@
             <el-input v-model="state.suffix" style="width: 193px"></el-input>
         </sly-field>
 
-        <div class="mb15">
-            <div><b>How to add predictions</b></div>
+        <sly-field title="How to add predictions"
+                   description="Original annotations are not modified. New project with predictions will be created.">
             <el-select v-model="state.addMode" style="width: 250px;">
                 <el-option key="merge" label="merge with existing labels" value="merge"></el-option>
                 <el-option key="replace" label="replace existing labels" value="replace"></el-option>
             </el-select>
-        </div>
+        </sly-field>
 
         <sly-field title="Additional settings"
                    description="Model specific inference settings in YAML format">
@@ -171,6 +171,10 @@
               title="Output"
               subtitle="Apply model to the input data and monitor progress">
         <div v-if="!data.resProjectId">
+            <sly-field title="Result project name"
+                       description="New project with predictions will be created. Original annotations remain unchanged.">
+                <el-input v-model="state.resProjectName" style="width: 193px"></el-input>
+            </sly-field>
             <el-button type="primary" v-if="!data.started" @click="data.started = true; command('apply_model')">
                 <i class="zmdi zmdi-fire" style="margin-right: 5px"></i> Apply model to input data
             </el-button>
