@@ -26,6 +26,9 @@ def init(data, state):
     }
     data["gallery"] = None
     data["started"] = False
+    data["progress"] = 0
+    data["progressCurrent"] = 0
+    data["progressTotal"] = 0
 
     state["sessionId"] = ""
     state["classes"] = []

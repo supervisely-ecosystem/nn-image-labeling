@@ -169,6 +169,14 @@ def apply_model_to_image(api, state, image_id, inf_setting):
 @my_app.callback("apply_model")
 @sly.timeit
 def apply_model(api: sly.Api, task_id, context, state, app_logger):
+    def _update_progress(progress):
+        fields = [
+            {"field": "data.progress", "payload": int(progress.current * 100 / progress.total)},
+            {"field": "data.progressCurrent", "payload": progress.current},
+            {"field": "data.progressTotal", "payload": progress.total},
+        ]
+        api.task.set_fields(task_id, fields)
+
     try:
         inf_setting = yaml.safe_load(state["settings"])
     except Exception as e:
@@ -200,7 +208,10 @@ def apply_model(api: sly.Api, task_id, context, state, app_logger):
             res_ids = [image_info.id for image_info in res_images_infos]
             api.annotation.upload_anns(res_ids, res_anns)
             progress.iters_done_report(len(res_ids))
+            if progress.need_report():
+                _update_progress(progress)
 
+    res_project = api.project.get_info_by_id(res_project.id)  # to refresh reference_image_url
     fields = [
         {"field": "data.projectId", "payload": res_project.id},
         {"field": "data.projectName", "payload": res_project.name},
@@ -241,6 +252,7 @@ def main():
 
     my_app.run(data=data, state=state)
 
-
+#@TODO: bulk inference
+#@TODO: progress bar пропал после обновления страницы и снова появилась кнопка
 if __name__ == "__main__":
     sly.main_wrapper("main", main)

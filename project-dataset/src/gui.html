@@ -173,12 +173,15 @@
         <div v-if="!data.resProjectId">
             <sly-field title="Result project name"
                        description="New project with predictions will be created. Original annotations remain unchanged.">
-                <el-input v-model="state.resProjectName" style="width: 193px"></el-input>
+                <el-input v-model="state.resProjectName" :disabled="data.started" style="width: 193px"></el-input>
             </sly-field>
             <el-button type="primary" v-if="!data.started" @click="data.started = true; command('apply_model')">
                 <i class="zmdi zmdi-fire" style="margin-right: 5px"></i> Apply model to input data
             </el-button>
-            <el-progress v-if="data.started === true" :percentage="data.progress"></el-progress>
+            <div class="fflex" v-if="data.started === true">
+                <el-progress :percentage="data.progress" style="flex: 1"></el-progress>
+                <div class="ml10" style="flex: none;">[{{data.progressCurrent}} / {{data.progressTotal}}]</div>
+            </div>
         </div>
         <sly-field v-if="data.resProjectId" title="" description="Project">
             <a slot="title" target="_blank"
