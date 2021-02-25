@@ -204,25 +204,27 @@ def apply_model(api: sly.Api, task_id, context, state, app_logger):
         app_logger.warn(repr(e))
 
     global project_meta
+    res_project_meta = project_meta.clone()
     res_project = api.project.create(workspace_id, state["resProjectName"], change_name_if_conflict=True)
-    api.project.update_meta(res_project.id, project_meta.to_json())
+    api.project.update_meta(res_project.id, res_project_meta.to_json())
 
     progress = sly.Progress("Inference", len(input_images), need_info_log=True)
+
     for dataset in input_datasets:
         res_dataset = api.dataset.create(res_project.id, dataset.name, dataset.description)
         images = api.image.get_list(dataset.id)
 
         for batch in sly.batched(images, batch_size=10):
-            image_ids, res_names, res_metas, res_anns = [], [], [], []
+            image_ids, res_names, res_metas = [], [], []
+
             for image_info in batch:
-                _, res_ann, res_meta = apply_model_to_image(api, state, image_info.dataset_id, image_info.id, inf_setting)
-                if project_meta != res_meta:
-                    api.project.update_meta(res_project.id, res_meta.to_json())
-                    project_meta = res_meta
                 image_ids.append(image_info.id)
                 res_names.append(image_info.name)
                 res_metas.append(image_info.meta)
-                res_anns.append(res_ann)
+            _, res_anns, final_project_meta = apply_model_to_images(api, state, dataset.id, image_ids, inf_setting)
+            if res_project_meta != final_project_meta:
+                res_project_meta = final_project_meta
+                api.project.update_meta(res_project.id, res_project_meta.to_json())
 
             res_images_infos = api.image.upload_ids(res_dataset.id, res_names, image_ids, metas=res_metas)
             res_ids = [image_info.id for image_info in res_images_infos]
@@ -272,7 +274,7 @@ def main():
 
     my_app.run(data=data, state=state)
 
-#@TODO: bulk inference
+
 #@TODO: progress bar пропал после обновления страницы и снова появилась кнопка
 if __name__ == "__main__":
     sly.main_wrapper("main", main)
