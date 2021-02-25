@@ -1,8 +1,10 @@
-def init_input_project(api, data, project_info):
+def init_input_project(api, data, project_info, count, dataset_info):
     data["projectId"] = project_info.id
     data["projectName"] = project_info.name
+    if dataset_info is not None:
+        data["projectName"] += f" / {dataset_info.name}"
     data["projectPreviewUrl"] = api.image.preview_url(project_info.reference_image_url, 100, 100)
-    data["projectItemsCount"] = project_info.items_count
+    data["projectItemsCount"] = count
 
 
 def init_output_project(data):
@@ -22,6 +24,11 @@ def init(data, state):
         "showLabel": False,
         "size": "small"
     }
+    data["gallery"] = None
+    data["started"] = False
+    data["progress"] = 0
+    data["progressCurrent"] = 0
+    data["progressTotal"] = 0
 
     state["sessionId"] = ""
     state["classes"] = []

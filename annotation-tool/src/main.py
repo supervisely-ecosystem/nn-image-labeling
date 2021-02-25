@@ -99,13 +99,15 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
                                               "settings": inference_setting
                                           })
     ann_pred = sly.Annotation.from_json(ann_pred_json, model_meta)
-    res_ann: sly.Annotation = postprocess(api, project_id, ann_pred, project_meta, model_meta, state)
+    res_ann, res_project_meta = postprocess(api, project_id, ann_pred, project_meta, model_meta, state)
 
     if state["addMode"] == "merge":
         res_ann = ann.merge(res_ann)
     else:
         pass  # replace (data prepared, nothing to do)
 
+    if res_project_meta != project_meta:
+        api.project.update_meta(project_id, res_project_meta)
     api.annotation.upload_ann(image_id, res_ann)
     fields = [
         {"field": "data.rollbackIds", "payload": list(ann_cache.keys())},

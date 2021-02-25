@@ -29,8 +29,5 @@ def postprocess(api: sly.Api, project_id, ann: sly.Annotation,
         new_label = label.clone(obj_class=class_mapping[label.obj_class.name], tags=sly.TagCollection(label_tags))
         new_labels.append(new_label)
 
-    if res_project_meta != project_meta:
-        api.project.update_meta(project_id, res_project_meta)
-
     res_ann = ann.clone(labels=new_labels, img_tags=sly.TagCollection(image_tags))
-    return res_ann
+    return res_ann, res_project_meta
