@@ -50,6 +50,8 @@ empty_gallery = {
 def connect(api: sly.Api, task_id, context, state, app_logger):
     global model_meta
     model_meta = get_model_info(api, task_id, context, state, app_logger)
+    actual_ui_state = api.task.get_field(task_id, "state")
+    preview(api, task_id, context, actual_ui_state, app_logger)
 
 
 @my_app.callback("disconnect")
@@ -95,6 +97,8 @@ def deselect_all_tags(api: sly.Api, task_id, context, state, app_logger):
 @my_app.callback("preview")
 @sly.timeit
 def preview(api: sly.Api, task_id, context, state, app_logger):
+    api.task.set_field(task_id, "state.processing", True)
+
     try:
         inf_setting = yaml.safe_load(state["settings"])
     except Exception as e:
