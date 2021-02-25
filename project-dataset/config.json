@@ -1,0 +1,19 @@
+{
+  "name": "Apply NN to images project",
+  "type": "app",
+  "categories": [
+    "neural network",
+    "labeling"
+  ],
+  "description": "NN Inference on images in project or dataset",
+  "docker_image": "supervisely/base-py-sdk:6.1.56",
+  "main_script": "annotation-tool/src/main.py",
+  "gui_template": "annotation-tool/src/gui.html",
+
+  "task_location": "workspace_tasks",
+  "isolate": true,
+  "headless": false,
+
+  "icon": "https://i.imgur.com/KdCigmp.png",
+  "icon_background": "#FFFFFF"
+}
