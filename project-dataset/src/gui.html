@@ -34,7 +34,7 @@
             <div v-for="v,k in data.info" class="mb10" style="word-break: break-all;">
                 <b>{{k}}</b>: <span>{{v}}</span>
             </div>
-            <el-button type="warning" class="mt10" :disabled="data.started" @click="command('disconnect')">
+            <el-button class="mt10" type="primary" :disabled="data.started" @click="command('disconnect')">
                 <i class="zmdi zmdi-close mr5"></i>Disconnect
             </el-button>
         </div>
