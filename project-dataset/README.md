@@ -1,11 +1,11 @@
 <div align="center" markdown>
-<img src="https://i.imgur.com/AFv8KQa.png"/>
+<img src="https://i.imgur.com/sZHxHEW.png"/>
 
 # NN Image Labeling
 
 <p align="center">
   <a href="#Overview">Overview</a> •
-  <a href="#How-To-Run">How To Use</a>
+  <a href="#How-To-Run">How To Run</a>
 </p>
 
 
@@ -20,21 +20,15 @@
 
 # Overview
 
-Any NN can be integrated into Labeling interface if it has properly implemented serving app (for example: Serve YOLOv5).
+App connects to the deployed Neural Network and applies it to the images project. It allows to configure inference settings, model output classes and tags, and preview predictions.
 
-<a data-key="sly-embeded-video-link" href="https://youtu.be/eWAvbmkm6JQ" data-video-code="eWAvbmkm6JQ">
-    <img src="https://i.imgur.com/ODlVoBh.png" alt="SLY_EMBEDED_VIDEO_LINK"  style="max-width:100%;">
+<a data-key="sly-embeded-video-link" href="https://youtu.be/DUQgr_SLVR4" data-video-code="DUQgr_SLVR4">
+    <img src="https://i.imgur.com/Edy7B1H.png" alt="SLY_EMBEDED_VIDEO_LINK"  style="max-width:50%;">
 </a>
 
-# How To Use
+# How To Run
 
 0. Add this app to your team from Ecosystem
 1. Be sure that NN you are going to use is deployed in your team
-2. To start using app, user has to run it (from Team Apps page or directly in labeling UI) or open already running session. App doesn't support multiuser mode: it means that every user has to run its own session, BUT multiple sessions can connect to a single NN. 
-   
-    For example: There are 5 labelers in your team and you would like to use YOLOv5. In that case you should have at least one session of the deployed NN and run separate sessions for every user.
-
-
-
-
+2. Start app from the context menu of the images project or dataset. 
 
