@@ -107,7 +107,7 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
         pass  # replace (data prepared, nothing to do)
 
     if res_project_meta != project_meta:
-        api.project.update_meta(project_id, res_project_meta)
+        api.project.update_meta(project_id, res_project_meta.to_json())
     api.annotation.upload_ann(image_id, res_ann)
     fields = [
         {"field": "data.rollbackIds", "payload": list(ann_cache.keys())},
