@@ -23,7 +23,7 @@
 App connects to the deployed Neural Network and applies it to the images project. It allows to configure inference settings, model output classes and tags, and preview predictions.
 
 <a data-key="sly-embeded-video-link" href="https://youtu.be/DUQgr_SLVR4" data-video-code="DUQgr_SLVR4">
-    <img src="https://i.imgur.com/Edy7B1H.png" alt="SLY_EMBEDED_VIDEO_LINK"  style="max-width:100%;">
+    <img src="https://i.imgur.com/Edy7B1H.png" alt="SLY_EMBEDED_VIDEO_LINK"  style="max-width:50%;">
 </a>
 
 # How To Run
