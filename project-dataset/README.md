@@ -20,7 +20,7 @@
 
 # Overview
 
-App connects to the deployed Neural Network and applies it to the images project. It allows to configure inference settings, model output classes and tags, and preview predictions.
+App connects to the deployed Neural Network and applies it to the images project. It allows to configure inference settings, model output classes and tags, and preview predictions. App adds classes and tags to project automatically.
 
 <a data-key="sly-embeded-video-link" href="https://youtu.be/DUQgr_SLVR4" data-video-code="DUQgr_SLVR4">
     <img src="https://i.imgur.com/Edy7B1H.png" alt="SLY_EMBEDED_VIDEO_LINK"  style="max-width:50%;">

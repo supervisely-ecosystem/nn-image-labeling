@@ -20,7 +20,7 @@
 
 # Overview
 
-Any NN can be integrated into Labeling interface if it has properly implemented serving app (for example: Serve YOLOv5).
+Any NN can be integrated into Labeling interface if it has properly implemented serving app (for example: Serve YOLOv5). App adds classes and tags to project automatically.
 
 <a data-key="sly-embeded-video-link" href="https://youtu.be/eWAvbmkm6JQ" data-video-code="eWAvbmkm6JQ">
     <img src="https://i.imgur.com/ODlVoBh.png" alt="SLY_EMBEDED_VIDEO_LINK"  style="max-width:100%;">
