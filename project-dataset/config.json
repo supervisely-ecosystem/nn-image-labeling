@@ -6,7 +6,7 @@
     "labeling"
   ],
   "description": "NN Inference on images in project or dataset",
-  "docker_image": "supervisely/base-py-sdk:6.1.56",
+  "docker_image": "supervisely/base-py-sdk:6.1.79",
   "main_script": "project-dataset/src/main.py",
   "gui_template": "project-dataset/src/gui.html",
 
