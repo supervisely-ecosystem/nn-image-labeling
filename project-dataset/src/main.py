@@ -165,12 +165,7 @@ def apply_model_to_images(api, state, dataset_id, ids, inf_setting):
                                               "batch_ids": ids,
                                               "settings": inf_setting
                                           })
-    # ann_preds = [sly.Annotation.from_json(pred_json, model_meta) for pred_json in ann_pred_json]
-    ann_preds = []
-    for pred_json in ann_pred_json:
-        print('pred_json =', pred_json)
-        print('model_meta =', model_meta)
-        ann_preds.append(sly.Annotation.from_json(pred_json, model_meta))
+    ann_preds = [sly.Annotation.from_json(pred_json, model_meta) for pred_json in ann_pred_json]
 
     res_project_meta = project_meta.clone()
     res_anns = []
