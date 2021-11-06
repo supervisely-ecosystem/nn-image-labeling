@@ -150,7 +150,7 @@ def preview(api: sly.Api, task_id, context, state, app_logger):
 def apply_model_to_image(api, state, dataset_id, image_id, inf_setting):
     orig_anns, res_anns, res_project_meta = apply_model_to_images(api, state, dataset_id, [image_id], inf_setting)
     if orig_anns is None:
-        orig_ann = sly.Annotation.from_json(api.annotation.download(image_id), project_meta)
+        orig_ann = sly.Annotation.from_json(api.annotation.download(image_id).annotation, project_meta)
     else:
         orig_ann = orig_anns[0]
     return orig_ann, res_anns[0], res_project_meta
