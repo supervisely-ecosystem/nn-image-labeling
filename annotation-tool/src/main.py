@@ -23,6 +23,34 @@ model_meta: sly.ProjectMeta = None
 ann_cache = defaultdict(list)  # only one (current) image in cache
 
 
+@my_app.callback("manual_selected_figure_changed")
+def get_selected_figure(api: sly.Api, task_id, context, state, app_logger):
+    project_id, image_id, figure_id = context["projectId"], context["imageId"], context["figureId"]
+
+    if figure_id is None:
+        fields = [
+            {"field": "state.selectedFigureBbox", "payload": None},
+            {"field": "state.selectedFigureId", "payload": None},
+        ]
+        api.task.set_fields(task_id, fields)
+        return
+
+    meta_json = api.project.get_meta(project_id)
+    meta = sly.ProjectMeta.from_json(meta_json)
+
+    ann_json = api.annotation.download(image_id).annotation
+    ann = sly.Annotation.from_json(ann_json, meta)
+
+    label_annotation = ann.get_label_by_id(figure_id)
+    rect: sly.Rectangle = label_annotation.geometry.to_bbox()
+
+    fields = [
+        {"field": "state.selectedFigureBbox", "payload": rect.to_json()},
+        {"field": "state.selectedFigureId", "payload": figure_id},
+    ]
+    api.task.set_fields(task_id, fields)
+
+
 @my_app.callback("connect")
 @sly.timeit
 def connect(api: sly.Api, task_id, context, state, app_logger):
@@ -92,12 +120,17 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
     ann = sly.Annotation.from_json(ann_json, project_meta)
     ann_cache[image_id].append(ann)
 
+    data = {
+        "image_id": image_id,
+        "settings": inference_setting
+    }
+
+    if "selectedFigureBbox" in state.keys():
+        data["rectangle_crop"] = state["selectedFigureBbox"]
+
     ann_pred_json = api.task.send_request(state["sessionId"],
                                           "inference_image_id",
-                                          data={
-                                              "image_id": image_id,
-                                              "settings": inference_setting
-                                          })
+                                          data=data)
     ann_pred = sly.Annotation.from_json(ann_pred_json, model_meta)
     res_ann, res_project_meta = postprocess(api, project_id, ann_pred, project_meta, model_meta, state)
 
