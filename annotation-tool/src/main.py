@@ -26,13 +26,8 @@ ann_cache = defaultdict(list)  # only one (current) image in cache
 @my_app.callback("manual_selected_figure_changed")
 def get_selected_figure(api: sly.Api, task_id, context, state, app_logger):
     project_id, image_id, figure_id = context["projectId"], context["imageId"], context["figureId"]
-
     if figure_id is None:
-        fields = [
-            {"field": "state.selectedFigureBbox", "payload": None},
-            {"field": "state.selectedFigureId", "payload": None},
-        ]
-        api.task.set_fields(task_id, fields)
+        api.task.set_field(task_id, "state.selectedFigureBbox", None)
         return
 
     meta_json = api.project.get_meta(project_id)
@@ -43,12 +38,7 @@ def get_selected_figure(api: sly.Api, task_id, context, state, app_logger):
 
     label_annotation = ann.get_label_by_id(figure_id)
     rect: sly.Rectangle = label_annotation.geometry.to_bbox()
-
-    fields = [
-        {"field": "state.selectedFigureBbox", "payload": rect.to_json()},
-        {"field": "state.selectedFigureId", "payload": figure_id},
-    ]
-    api.task.set_fields(task_id, fields)
+    api.task.set_field(task_id, "state.selectedFigureBbox", rect.to_json())
 
 
 @my_app.callback("connect")
