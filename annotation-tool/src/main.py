@@ -27,7 +27,6 @@ ann_cache = defaultdict(list)  # only one (current) image in cache
 def get_selected_figure(api: sly.Api, task_id, context, state, app_logger):
     project_id, image_id, figure_id = context["projectId"], context["imageId"], context["figureId"]
     if figure_id is None:
-        api.task.set_field(task_id, "state.selectedFigureBbox", None)
         return
 
     meta_json = api.project.get_meta(project_id)
