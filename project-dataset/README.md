@@ -1,7 +1,7 @@
 <div align="center" markdown>
 <img src="https://i.imgur.com/sZHxHEW.png"/>
 
-# NN Image Labeling
+# Apply NN to Images Project
 
 <p align="center">
   <a href="#Overview">Overview</a> •
