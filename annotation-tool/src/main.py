@@ -25,19 +25,19 @@ ann_cache = defaultdict(list)  # only one (current) image in cache
 
 @my_app.callback("manual_selected_figure_changed")
 def get_selected_figure(api: sly.Api, task_id, context, state, app_logger):
-    project_id, image_id, figure_id = context["projectId"], context["imageId"], context["figureId"]
-    if figure_id is None:
-        return
+    project_id, image_id, figure_id = context.get("projectId"), context.get("imageId"), context.get("figureId")
+    if figure_id is not None:
+        meta_json = api.project.get_meta(project_id)
+        meta = sly.ProjectMeta.from_json(meta_json)
 
-    meta_json = api.project.get_meta(project_id)
-    meta = sly.ProjectMeta.from_json(meta_json)
+        ann_json = api.annotation.download(image_id).annotation
+        ann = sly.Annotation.from_json(ann_json, meta)
 
-    ann_json = api.annotation.download(image_id).annotation
-    ann = sly.Annotation.from_json(ann_json, meta)
-
-    label_annotation = ann.get_label_by_id(figure_id)
-    rect: sly.Rectangle = label_annotation.geometry.to_bbox()
-    api.task.set_field(task_id, "state.selectedFigureBbox", rect.to_json())
+        label_annotation = ann.get_label_by_id(figure_id)
+        rect: sly.Rectangle = label_annotation.geometry.to_bbox()
+        api.task.set_field(task_id, "state.selectedFigureBbox", rect.to_json())
+    else:
+        api.task.set_field(task_id, "state.selectedFigureBbox", None)
 
 
 @my_app.callback("connect")
@@ -114,7 +114,7 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
         "settings": inference_setting
     }
 
-    if "selectedFigureBbox" in state.keys():
+    if state.get("selectedFigureBbox") is not None:
         data["rectangle_crop"] = state["selectedFigureBbox"]
 
     ann_pred_json = api.task.send_request(state["sessionId"],
