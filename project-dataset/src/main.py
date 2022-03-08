@@ -111,7 +111,7 @@ def preview(api: sly.Api, task_id, context, state, app_logger):
         inf_setting = yaml.safe_load(state["settings"])
     except Exception as e:
         inf_setting = {}
-        app_logger.warn(repr(e))
+        app_logger.info(f'Inference settings set to default: {e}', exc_info=True)
 
     image_info = random.choice(input_images)
     input_ann, res_ann, res_project_meta = apply_model_to_image(api, state, image_info.dataset_id, image_info.id,  inf_setting)
@@ -202,7 +202,7 @@ def apply_model(api: sly.Api, task_id, context, state, app_logger):
         inf_setting = yaml.safe_load(state["settings"])
     except Exception as e:
         inf_setting = {}
-        app_logger.warn(repr(e))
+        app_logger.info(f'Inference settings set to default: {e}', exc_info=True)
 
     global project_meta
     res_project_meta = project_meta.clone()
