@@ -106,12 +106,13 @@ def deselect_all_tags(api: sly.Api, task_id, context, state, app_logger):
 @sly.timeit
 def preview(api: sly.Api, task_id, context, state, app_logger):
     api.task.set_field(task_id, "state.processing", True)
+    inf_setting = {}
 
     try:
-        inf_setting = yaml.safe_load(state["settings"])
+        if state["settings"] != {}:
+            inf_setting = yaml.safe_load(state["settings"])
     except Exception as e:
-        inf_setting = {}
-        app_logger.warn(repr(e))
+        app_logger.warn(f'Inference settings set to default: {e}', exc_info=True)
 
     image_info = random.choice(input_images)
     input_ann, res_ann, res_project_meta = apply_model_to_image(api, state, image_info.dataset_id, image_info.id,  inf_setting)
@@ -198,11 +199,12 @@ def apply_model(api: sly.Api, task_id, context, state, app_logger):
         ]
         api.task.set_fields(task_id, fields)
 
+    inf_setting = {}
     try:
-        inf_setting = yaml.safe_load(state["settings"])
+        if state["settings"] != {}:
+            inf_setting = yaml.safe_load(state["settings"])
     except Exception as e:
-        inf_setting = {}
-        app_logger.warn(repr(e))
+        app_logger.warn(f'Inference settings set to default: {e}', exc_info=True)
 
     global project_meta
     res_project_meta = project_meta.clone()
