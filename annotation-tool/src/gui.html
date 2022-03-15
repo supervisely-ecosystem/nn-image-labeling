@@ -51,14 +51,16 @@
             <div><b>ACTIONS:</b></div>
             <div class="fflex" style="justify-content: space-between">
                 <div>
-                    <el-button type="success" size="mini" class="mt5" style="margin-bottom: 15px;"
-                               :disabled="(state.classes.filter(Boolean).length === 0 &&
+                        <el-button type="success" size="mini" class="mt5" style="margin-bottom: 15px;"
+                                   :disabled="(state.classes.filter(Boolean).length === 0 &&
                                           state.tags.filter(Boolean).length === 0) ||
                                           (state.processing === true)"
-                               :loading="state.processing"
-                               @click="state.processing = true; command('inference')"
-                    >
-                        <i class="zmdi zmdi-fire mr5"></i>Apply model (ctrl+m)
+                                   :loading="state.processing"
+                                   @click="state.processing = true; command('inference')">
+                            <span v-if="!context.figureId"><i class="zmdi zmdi-fire mr5"></i>Apply model to image (ctrl+m)</span>
+                            <span v-if="context.figureId"><i class="zmdi zmdi-fire mr5"></i>Apply model to ROI (ctrl+m)</span>
+                        </el-button>
+
                     </el-button>
                     <el-button size="mini" class="mt5" style="margin-bottom: 15px;"
                                :disabled="!data.rollbackIds.includes(context.imageId) ||
