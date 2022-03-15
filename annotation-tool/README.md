@@ -39,8 +39,6 @@ Any NN can be integrated into Labeling interface if it has properly implemented 
 
 # Demo
 
-Prediction for image URL (full image):
-
 Full Image  |  ROI
 :-------------------------:|:-----------------------------------:
 <img src="https://github.com/supervisely-ecosystem/nn-image-labeling/releases/download/v1.0.0/det_full_image-min.gif"/>  |  <img src="https://github.com/supervisely-ecosystem/nn-image-labeling/releases/download/v1.0.0/det_obj_roi-min.gif"/>
