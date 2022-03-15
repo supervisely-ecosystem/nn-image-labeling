@@ -35,7 +35,7 @@ Any NN can be integrated into Labeling interface if it has properly implemented 
    
     For example: There are 5 labelers in your team and you would like to use YOLOv5. In that case you should have at least one session of the deployed NN and run separate sessions of this app for every user.
     
-3. Apply model to image area defined by object bbox
+3. Apply model to image area defined by object bbox. If user selects object of interest, app creates bounding box around object and applies model to this image area (ROI).
 
 # Demo
 
