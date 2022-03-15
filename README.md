@@ -1,6 +1,6 @@
 # Apps for NN inference in Supervisely:
 
-- [apply model in labeling UI to a single image or object](./annotation-tool/README.md)
+- [apply model in labeling UI to a single image or or ROI defined by object bbox](./annotation-tool/README.md)
 
 <img src="https://i.imgur.com/AFv8KQa.png"/>
 
