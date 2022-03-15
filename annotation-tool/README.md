@@ -33,7 +33,8 @@ Any NN can be integrated into Labeling interface if it has properly implemented 
 2. To start using app, user has to run it (from Team Apps page or directly in labeling UI) or open already running session. App doesn't support multiuser mode: it means that every user has to run its own session, BUT multiple sessions can connect to a single NN. 
    
     For example: There are 5 labelers in your team and you would like to use YOLOv5. In that case you should have at least one session of the deployed NN and run separate sessions for every user.
-3. To apply model to single object simply select this object and press `Apply model to ROI`
+    
+3. Apply model to image area defined by object bbox
 
 <p>
   <img src="https://github.com/supervisely-ecosystem/nn-image-labeling/releases/download/v1.0.0/apply-to-object-highlighted-min.gif" style="width:80%;"/>
