@@ -5,7 +5,8 @@
 
 <p align="center">
   <a href="#Overview">Overview</a> •
-  <a href="#How-To-Run">How To Use</a>
+  <a href="#How-To-Run">How To Use</a> •
+  <a href="#Demo">Demo</a>
 </p>
 
 
@@ -36,9 +37,16 @@ Any NN can be integrated into Labeling interface if it has properly implemented 
     
 3. Apply model to image area defined by object bbox
 
-<p>
-  <img src="https://github.com/supervisely-ecosystem/nn-image-labeling/releases/download/v1.0.0/apply-to-object-highlighted-min.gif" style="width:80%;"/>
-</p>  
+# Demo
+
+Prediction for image URL (full image):
+
+Full Image  |  ROI
+:-------------------------:|:-----------------------------------:
+<img src="https://github.com/supervisely-ecosystem/nn-image-labeling/releases/download/v1.0.0/det_full_image-min.gif"/>  |  <img src="https://github.com/supervisely-ecosystem/nn-image-labeling/releases/download/v1.0.0/det_obj_roi-min.gif"/>
+<img src="https://github.com/supervisely-ecosystem/nn-image-labeling/releases/download/v1.0.0/seg_full_image-min.gif"/>  |  <img src="https://github.com/supervisely-ecosystem/nn-image-labeling/releases/download/v1.0.0/seg_obj_roi-min.gif"/>
+
+
 
 
 
