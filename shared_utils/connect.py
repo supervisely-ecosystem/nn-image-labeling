@@ -12,7 +12,15 @@ def get_model_info(api: sly.Api, task_id, context, state, app_logger) -> sly.Pro
         meta_json = api.task.send_request(state["sessionId"], "get_output_classes_and_tags", data={})
         model_meta = sly.ProjectMeta.from_json(meta_json)
 
-        inf_settings = api.task.send_request(state["sessionId"], "get_custom_inference_settings", data={})
+        try:
+            inf_settings = api.task.send_request(state["sessionId"], "get_custom_inference_settings", data={})
+            if inf_settings['settings'] is None or len(inf_settings['settings']) == 0:
+                inf_settings['settings'] = ''
+                sly.logger.info("Model doesn't support custom inference settings.")
+        except Exception as ex:
+            inf_settings = {'settings': ''}
+            sly.logger.info("Model doesn't support custom inference settings.\n"
+                            f"Reason: {repr(ex)}")
 
         ui.set_model_info(api, task_id, model_meta, info, inf_settings)
     except Exception as e:

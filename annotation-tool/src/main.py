@@ -81,7 +81,8 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
         inference_setting = yaml.safe_load(state["settings"])
     except Exception as e:
         inference_setting = {}
-        app_logger.warn(repr(e))
+        app_logger.warn(f'Model Inference launched without additional settings. \n'
+                        f'Reason: {e}', exc_info=True)
 
     project_meta = sly.ProjectMeta.from_json(api.project.get_meta(project_id))
 
