@@ -16,6 +16,7 @@ def get_model_info(api: sly.Api, task_id, context, state, app_logger) -> sly.Pro
             inf_settings = api.task.send_request(state["sessionId"], "get_custom_inference_settings", data={})
             if inf_settings['settings'] is None or len(inf_settings['settings']) == 0:
                 inf_settings['settings'] = ''
+                sly.logger.info("Model doesn't support custom inference settings.")
         except Exception as ex:
             inf_settings = {'settings': ''}
             sly.logger.info("Model doesn't support custom inference settings.\n"
