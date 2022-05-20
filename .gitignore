@@ -1,3 +1,6 @@
 .idea
 venv
 supervisely_lib
+project-dataset/debug_secret.env
+annotation-tool/debug_secret.env
+.DS_Store

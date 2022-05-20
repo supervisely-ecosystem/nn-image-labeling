@@ -1,0 +1,13 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "project-dataset",
+            "type": "python",
+            "request": "launch",
+            "program": "project-dataset/src/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        }
+    ]
+}
