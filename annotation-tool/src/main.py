@@ -3,22 +3,30 @@ import yaml
 import pathlib
 import sys
 from collections import defaultdict
-import supervisely_lib as sly
+import supervisely as sly
+from supervisely.app.v1.app_service import AppService
+from dotenv import load_dotenv
 
 root_source_path = str(pathlib.Path(sys.argv[0]).parents[2])
 sly.logger.info(f"Root source directory: {root_source_path}")
 sys.path.append(root_source_path)
 
+# debug
+root_source_app = str(pathlib.Path(sys.argv[0]).parents[1])
+debug_env_path = os.path.join(root_source_app, "debug.env")
+secret_debug_env_path = os.path.join(root_source_app, "secret_debug.env")
+load_dotenv(debug_env_path)
+load_dotenv(secret_debug_env_path, override=True)
+
 from init_ui import init_ui
 from shared_utils.connect import get_model_info
 from shared_utils.inference import postprocess
 
-
 owner_id = int(os.environ['context.userId'])
 team_id = int(os.environ['context.teamId'])
 
-my_app: sly.AppService = sly.AppService(ignore_task_id=True)
-model_meta: sly.ProjectMeta = None
+api: sly.Api = sly.Api.from_env()
+my_app: AppService = AppService(ignore_task_id=True)
 
 ann_cache = defaultdict(list)  # only one (current) image in cache
 
@@ -103,6 +111,16 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
         label_annotation = ann.get_label_by_id(figure_id)
         object_roi: sly.Rectangle = label_annotation.geometry.to_bbox()
         data["rectangle"] = object_roi.to_json()
+
+    if state["appSettings"] == 'slidingWindow':
+        data["sliding_window_settings"] = {
+            "windowHeight": state["windowHeight"],
+            "windowWidth": state["windowWidth"],
+            "overlapY": state["overlapY"],
+            "overlapX": state["overlapX"],
+            "borderStrategy": state["borderStrategy"]
+        }
+        data["sliding_window_debug"] = state["debugSlidingWindow"]
 
     ann_pred_json = api.task.send_request(state["sessionId"],
                                           "inference_image_id",

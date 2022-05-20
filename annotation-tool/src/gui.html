@@ -51,15 +51,17 @@
             <div><b>ACTIONS:</b></div>
             <div class="fflex" style="justify-content: space-between">
                 <div>
-                        <el-button type="success" size="mini" class="mt5" style="margin-bottom: 15px;"
-                                   :disabled="(state.classes.filter(Boolean).length === 0 &&
+                    <el-button type="success" size="mini" class="mt5" style="margin-bottom: 15px;"
+                               :disabled="(state.classes.filter(Boolean).length === 0 &&
                                           state.tags.filter(Boolean).length === 0) ||
                                           (state.processing === true)"
-                                   :loading="state.processing"
-                                   @click="state.processing = true; command('inference')">
-                            <span v-if="!context.figureId"><i class="zmdi zmdi-fire mr5"></i>Apply model to image (ctrl+m)</span>
-                            <span v-if="context.figureId"><i class="zmdi zmdi-fire mr5"></i>Apply model to ROI (ctrl+m)</span>
-                        </el-button>
+                               :loading="state.processing"
+                               @click="state.processing = true; command('inference')">
+                        <span v-if="!context.figureId"><i
+                                class="zmdi zmdi-fire mr5"></i>Apply model to image (ctrl+m)</span>
+                        <span v-if="context.figureId"><i
+                                class="zmdi zmdi-fire mr5"></i>Apply model to ROI (ctrl+m)</span>
+                    </el-button>
 
                     </el-button>
                     <el-button size="mini" class="mt5" style="margin-bottom: 15px;"
@@ -162,10 +164,73 @@
                     </div>
 
 
-                    <sly-field title="Settings"
+                    <sly-field title="Model settings"
                                description="Model specific inference settings in YAML format">
-                        <sly-editor v-model="state.settings"
+                        <sly-editor v-model="state.modelSettings"
                                     :options="{height: '200px', mode: 'ace/mode/yaml'}"></sly-editor>
+                    </sly-field>
+
+                    <sly-field title="Application settings"
+                               description="Application specific inference configuration">
+                        <el-select v-model="state.appSettings">
+                            <el-option key="imageOrRoi" label="full image / object area" value="imageOrRoi"></el-option>
+                            <el-option key="slidingWindow" label="sliding window" value="slidingWindow"></el-option>
+                        </el-select>
+
+                        <div v-if="state.appSettings === 'slidingWindow'">
+                            <sly-field title="Sliding windows settings"
+                                       subtitle="Configure sliding windows parameters"
+                                       style="min-width: 310px; max-width: 310px;">
+                                <div><b>Window height</b></div>
+                                <el-input-number class="mt5" v-model="state.windowHeight" :min="1"
+                                                 :max="10000"></el-input-number>
+                                <span class="ml10" style="color: gray">pixels</span>
+                                <div class="mt15"><b>Window width</b></div>
+                                <el-input-number class="mt5" v-model="state.windowWidth" :min="1"
+                                                 :max="10000"></el-input-number>
+                                <span class="ml10" style="color: gray">pixels</span>
+                                <div class="mt15"><b>Vertical overlap (y axis)</b></div>
+                                <el-input-number class="mt5" v-model="state.overlapY" :min="1"
+                                                 :max="10000"></el-input-number>
+                                <span class="ml10" style="color: gray">pixels</span>
+                                <div class="mt15"><b>Horizontal overlap (x axis)</b></div>
+                                <el-input-number class="mt5" v-model="state.overlapX" :min="1"
+                                                 :max="10000"></el-input-number>
+                                <span class="ml10" style="color: gray">pixels</span>
+                                <sly-field style="margin-top: 15px;" title="Border strategy">
+                                    <el-radio-group class="fflex"
+                                                    v-model="state.borderStrategy"
+                                                    style="flex-direction: column; align-items: flex-start">
+                                        <sly-field class="field-radio"
+                                                   title="Shift window"
+                                                   description="Window is shifted to fit into image">
+                                            <el-radio label="shift_window">
+                                            </el-radio>
+                                        </sly-field>
+                                        <sly-field class="field-radio"
+                                                   title="Add padding"
+                                                   description="Pad image at the bottom right">
+                                            <el-radio style="margin-left: 0" label="add_padding">
+                                            </el-radio>
+                                        </sly-field>
+                                        <sly-field class="field-radio"
+                                                   title="Change size"
+                                                   description="Resize window without keeping aspect ratio">
+                                            <el-radio style="margin-left: 0" label="change_size">
+                                            </el-radio>
+                                        </sly-field>
+                                    </el-radio-group>
+                                </sly-field>
+                                <div class="fflex align-start">
+                                    <el-checkbox v-model="state.debugSlidingWindow" class="mt10 mr10">
+                                    </el-checkbox>
+                                    <sly-field class="mt20"
+                                               title="visualize sliding windows"
+                                               description="all sliding windows will be added as rectangles of class 'sliding window'">
+                                    </sly-field>
+                                </div>
+                            </sly-field>
+                        </div>
                     </sly-field>
                 </el-tab-pane>
             </el-tabs>

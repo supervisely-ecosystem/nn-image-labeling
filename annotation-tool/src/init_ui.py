@@ -17,8 +17,15 @@ def init_ui(data, state):
     state["tags"] = []
     state["tabName"] = "info"
     state["suffix"] = "model"
-    state["settings"] = "# empty"
+    state["modelSettings"] = "# empty"
     state["addMode"] = "merge"
     state["processing"] = False
 
+    state["appSettings"] = "imageOrRoi"  # "slidingWindow"
+    state["windowHeight"] = 256
+    state["windowWidth"] = 256
+    state["overlapY"] = 32
+    state["overlapX"] = 32
+    state["borderStrategy"] = "shift_window"
 
+    state["debugSlidingWindow"] = False
