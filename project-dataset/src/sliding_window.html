@@ -1,0 +1,134 @@
+<sly-style>
+  #sliding-window .field-radio { margin-bottom: 5px; display: inline-flex;
+  width: calc(100% - 20px); white-space: normal; }
+</sly-style>
+<div class="fflex mt15" style="align-items: stretch">
+  <sly-card
+    class="mr15"
+    title="Settings"
+    subtitle="Configure sliding windows parameters"
+    style="min-width: 310px; max-width: 310px"
+  >
+    <div><b>Window height</b></div>
+    <el-input-number
+      class="mt5"
+      v-model="state.windowHeight"
+      :min="1"
+      :max="10000"
+    ></el-input-number>
+    <span class="ml10" style="color: gray">pixels</span>
+    <div class="mt15"><b>Window width</b></div>
+    <el-input-number
+      class="mt5"
+      v-model="state.windowWidth"
+      :min="1"
+      :max="10000"
+    ></el-input-number>
+    <span class="ml10" style="color: gray">pixels</span>
+    <div class="mt15"><b>Vertical overlap (y axis)</b></div>
+    <el-input-number
+      class="mt5"
+      v-model="state.overlapY"
+      :min="1"
+      :max="10000"
+    ></el-input-number>
+    <span class="ml10" style="color: gray">pixels</span>
+    <div class="mt15"><b>Horizontal overlap (x axis)</b></div>
+    <el-input-number
+      class="mt5"
+      v-model="state.overlapX"
+      :min="1"
+      :max="10000"
+    ></el-input-number>
+    <span class="ml10" style="color: gray">pixels</span>
+    <sly-field style="margin-top: 15px" title="Border strategy">
+      <el-radio-group
+        class="fflex"
+        v-model="state.borderStrategy"
+        style="flex-direction: column; align-items: flex-start"
+      >
+        <el-radio label="shift_window">
+          <sly-field
+            class="field-radio"
+            title="Shift window"
+            description="Window is shifted to fit into image"
+          >
+          </sly-field>
+        </el-radio>
+        <el-radio style="margin-left: 0" label="add_padding">
+          <sly-field
+            class="field-radio"
+            title="Add padding"
+            description="Pad image at the bottom right"
+          >
+          </sly-field>
+        </el-radio>
+        <el-radio style="margin-left: 0" label="change_size">
+          <sly-field
+            class="field-radio"
+            title="Change size"
+            description="Resize window without keeping aspect ratio"
+          >
+          </sly-field>
+        </el-radio>
+      </el-radio-group>
+    </sly-field>
+    <div><b>Visualization FPS</b></div>
+    <el-input-number
+      class="mt5"
+      v-model="state.fps"
+      :min="1"
+      :max="20"
+    ></el-input-number>
+    <div class="mt15"><b>Draw labels on preview</b></div>
+    <el-checkbox class="mt5" v-model="state.drawLabels"
+      >Draw labels</el-checkbox
+    >
+  </sly-card>
+  <sly-card
+    title="Random Preview"
+    subtitle="Visualize sliding windows on random image as video"
+    style="width: 100%"
+  >
+    <div slot="header">
+      <el-button
+        type="primary"
+        @click="state.previewLoading = true; command('preview')"
+        :loading="state.previewLoading"
+        :disabled="data.resProjectId || data.started"
+      >
+        <i class="zmdi zmdi-slideshow" style="margin-right: 5px"></i> Preview
+      </el-button>
+    </div>
+    <video
+      v-if="data.videoUrl"
+      controls
+      style="max-height: 650px; max-width: 100%"
+    >
+      <!--                <source src="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4">-->
+      <source :src="data.videoUrl" type="video/mp4" />
+      Your browser does not support the video tag.
+    </video>
+    <div v-if="!data.videoUrl && state.previewLoading === false">
+      Press preview to watch demo video
+    </div>
+    <div v-if=""></div>
+
+    <div
+      class="fflex mt10"
+      v-if="state.previewLoading === true"
+      style="align-items: baseline"
+    >
+      <div class="mr10" style="width: 120px">
+        {{data.progressPreviewMessage}}:
+      </div>
+      <el-progress
+        :percentage="data.progressPreview"
+        style="flex: 1"
+      ></el-progress>
+      <div class="ml10" style="flex: none">
+        [{{data.progressPreviewCurrent}} / {{data.progressPreviewTotal}}]
+      </div>
+    </div>
+  </sly-card>
+</div>

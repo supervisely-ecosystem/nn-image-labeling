@@ -4,11 +4,16 @@ import pathlib
 import sys
 from collections import defaultdict
 import random
+from dotenv import load_dotenv
 import supervisely_lib as sly
 
-root_source_path = str(pathlib.Path(sys.argv[0]).parents[2])
-sly.logger.info(f"Root source directory: {root_source_path}")
-sys.path.append(root_source_path)
+app_root_directory = os.getcwd()
+sly.logger.info(f"App root directory: {app_root_directory}")
+sys.path.append(app_root_directory)
+
+# order matters
+load_dotenv(os.path.join(app_root_directory, "project-dataset/debug_secret.env"))
+load_dotenv(os.path.join(app_root_directory, "project-dataset/debug.env"))
 
 from shared_utils.connect import get_model_info
 from shared_utils.inference import postprocess
@@ -308,6 +313,7 @@ def main():
     state["resProjectName"] = project_info.name + " (inf)"
     ui.init_output_project(data)
 
+    my_app.compile_template(app_root_directory)
     my_app.run(data=data, state=state)
 
 

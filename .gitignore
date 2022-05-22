@@ -6,3 +6,4 @@ annotation-tool/debug_secret.env
 .DS_Store
 .venv
 *.pyc
+supervisely
