@@ -1,6 +1,6 @@
 {
-  "python.pythonPath": "venv/bin/python",
-  "python.defaultInterpreterPath": "venv/bin/python",
+  "python.pythonPath": ".venv/bin/python",
+  "python.defaultInterpreterPath": ".venv/bin/python",
   "files.exclude": {
     "**/__pycache__": true,
     "venv": true
