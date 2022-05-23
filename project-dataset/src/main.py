@@ -314,9 +314,15 @@ def main():
     ui.init_output_project(data)
 
     my_app.compile_template(app_root_directory)
-    my_app.run(data=data, state=state)
+
+    # auto connect to deployed model for convenient debug
+    initial_events = None
+    if state["sessionId"] != "":
+        sly.logger.info("Debug mode is activ, connecting to NN automatically ...")
+        initial_events = [{"state": state, "context": None, "command": "connect"}]
+
+    my_app.run(data=data, state=state, initial_events=initial_events)
 
 
-# @TODO: progress bar пропал после обновления страницы и снова появилась кнопка
 if __name__ == "__main__":
     sly.main_wrapper("main", main)

@@ -170,11 +170,13 @@
       <el-select :disabled="data.started" v-model="state.infMode">
         <el-option key="full image" label="full image" value="fi"></el-option>
         <el-option key="sw" label="sliding window" value="sw"> </el-option>
-        <!-- <el-option key="roi"
-                           label="roi (image region) - coming soon"
-                           value="roi"
-                           :disabled="true">
-                </el-option> -->
+        <el-option
+          key="roi"
+          label="region of interest (ROI) - coming soon"
+          value="roi"
+          :disabled="true"
+        >
+        </el-option>
       </el-select>
     </div>
 
@@ -223,7 +225,9 @@
     </sly-field>
   </sly-card>
 
-  {% include 'project-dataset/src/sliding_window.html' %}
+  <div v-if="data.connected === true && state.infMode == 'sw'">
+    {% include 'project-dataset/src/sliding_window.html' %}
+  </div>
 
   <sly-card
     v-if="data.connected === true"
