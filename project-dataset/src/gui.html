@@ -1,4 +1,4 @@
-<div>
+<div id="apply-nn-to-images-project">
   <sly-card title="Input Data" subtitle="Input project URL">
     <sly-field title="" description="Input Data">
       <a
@@ -242,7 +242,8 @@
         :loading="state.processing"
         @click="state.processing = true; command('preview')"
       >
-        <i class="zmdi zmdi-grid" style="margin-right: 5px"></i> Preview
+        <i class="zmdi zmdi-grid" style="margin-right: 5px"></i> Inference
+        preview
       </el-button>
     </div>
     <sly-grid-gallery

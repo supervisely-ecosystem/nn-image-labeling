@@ -324,5 +324,6 @@ def main():
     my_app.run(data=data, state=state, initial_events=initial_events)
 
 
+# @TODO: check model supports sliding window
 if __name__ == "__main__":
     sly.main_wrapper("main", main)

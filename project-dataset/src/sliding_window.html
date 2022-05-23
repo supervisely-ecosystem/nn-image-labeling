@@ -1,11 +1,11 @@
 <sly-style>
-  #sliding-window .field-radio { margin-bottom: 5px; display: inline-flex;
-  width: calc(100% - 20px); white-space: normal; }
+  #apply-nn-to-images-project .field-radio { margin-bottom: 5px; display:
+  inline-flex; width: calc(100% - 20px); white-space: normal; }
 </sly-style>
 <div class="fflex mt15" style="align-items: stretch">
   <sly-card
     class="mr15"
-    title="Settings"
+    title="Sliding window settings"
     subtitle="Configure sliding windows parameters"
     style="min-width: 310px; max-width: 310px"
   >
@@ -86,7 +86,7 @@
     >
   </sly-card>
   <sly-card
-    title="Random Preview"
+    title="Sliding window preview"
     subtitle="Visualize sliding windows on random image as video"
     style="width: 100%"
   >
@@ -97,7 +97,8 @@
         :loading="state.previewLoading"
         :disabled="data.resProjectId || data.started"
       >
-        <i class="zmdi zmdi-slideshow" style="margin-right: 5px"></i> Preview
+        <i class="zmdi zmdi-slideshow" style="margin-right: 5px"></i> Sliding
+        windows preview
       </el-button>
     </div>
     <video
