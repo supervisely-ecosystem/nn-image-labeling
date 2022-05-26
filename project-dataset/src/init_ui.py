@@ -20,6 +20,7 @@ def init_sliding_window_settings(state):
     state["borderStrategy"] = "shift_window"  # "add_padding"
     state["fps"] = 4
     state["drawLabels"] = True
+    state["slidingWindowSupport"] = False  # for connected model
 
 
 def init_output_project(data):

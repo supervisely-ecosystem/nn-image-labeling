@@ -2,7 +2,13 @@ from typing import List
 import supervisely_lib as sly
 
 
-def set_model_info(api: sly.Api, task_id, model_meta: sly.ProjectMeta, model_info: dict, inf_settings: dict):
+def set_model_info(
+    api: sly.Api,
+    task_id,
+    model_meta: sly.ProjectMeta,
+    model_info: dict,
+    inf_settings: dict,
+):
     fields = [
         {"field": "data.info", "payload": model_info},
         {"field": "state.classesInfo", "payload": model_meta.obj_classes.to_json()},
@@ -11,7 +17,11 @@ def set_model_info(api: sly.Api, task_id, model_meta: sly.ProjectMeta, model_inf
         {"field": "state.tags", "payload": [True] * len(model_meta.tag_metas)},
         {"field": "data.connected", "payload": True},
         {"field": "data.connectionError", "payload": ""},
-        {"field": "state.settings", "payload": inf_settings["settings"]}
+        {"field": "state.settings", "payload": inf_settings["settings"]},
+        {
+            "field": "state.slidingWindowSupport",
+            "payload": model_info.get("sliding_window_support", False),
+        },
     ]
     api.task.set_fields(task_id, fields)
 

@@ -169,7 +169,13 @@
       <div><b>Mode</b></div>
       <el-select :disabled="data.started" v-model="state.infMode">
         <el-option key="full image" label="full image" value="fi"></el-option>
-        <el-option key="sw" label="sliding window" value="sw"> </el-option>
+        <el-option
+          key="sw"
+          :label="state.slidingWindowSupport === true ? 'sliding window' : 'sliding window (selected model does not support it)'"
+          value="sw"
+          :disabled="state.slidingWindowSupport === true"
+        >
+        </el-option>
         <el-option
           key="roi"
           label="region of interest (ROI) - coming soon"
