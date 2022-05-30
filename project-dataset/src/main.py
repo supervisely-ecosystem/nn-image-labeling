@@ -6,67 +6,28 @@ from collections import defaultdict
 import random
 import supervisely_lib as sly
 
-root_source_path = str(pathlib.Path(sys.argv[0]).parents[2])
-sly.logger.info(f"Root source directory: {root_source_path}")
-sys.path.append(root_source_path)
 
 from shared_utils.connect import get_model_info
 from shared_utils.inference import postprocess
 import init_ui as ui
 
-owner_id = int(os.environ['context.userId'])
-team_id = int(os.environ['context.teamId'])
-workspace_id = int(os.environ['context.workspaceId'])
+import src.sliding_window as sliding_window
 
-project_id = None
-dataset_id = os.environ.get("modal.state.slyDatasetId")
-input_datasets = []
-if dataset_id is not None:
-    dataset_id = int(dataset_id)
-else:
-    project_id = int(os.environ["modal.state.slyProjectId"])
-
-my_app: sly.AppService = sly.AppService(ignore_task_id=True)
-model_meta: sly.ProjectMeta = None
-
-ann_cache = defaultdict(list)  # only one (current) image in cache
-project_info = None
-input_images = None
-project_meta: sly.ProjectMeta = None
-
-image_grid_options = {
-    "opacity": 0.3,
-    "fillRectangle": True, #False,
-    "enableZoom": True,
-    "syncViews": True,
-    "showPreview": True,
-    "selectable": False
-}
-
-empty_gallery = {
-    "content": {
-        "projectMeta": {},
-        "annotations": {},
-        "layout": []
-    },
-    "options": image_grid_options,
-}
+import sly_globals as g
 
 
-@my_app.callback("connect")
+@g.my_app.callback("connect")
 @sly.timeit
 def connect(api: sly.Api, task_id, context, state, app_logger):
-    global model_meta
-    model_meta = get_model_info(api, task_id, context, state, app_logger)
+    g.model_meta = get_model_info(api, task_id, context, state, app_logger)
     actual_ui_state = api.task.get_field(task_id, "state")
     preview(api, task_id, context, actual_ui_state, app_logger)
 
 
-@my_app.callback("disconnect")
+@g.my_app.callback("disconnect")
 @sly.timeit
 def disconnect(api: sly.Api, task_id, context, state, app_logger):
-    global model_meta
-    model_meta = None
+    g.model_meta = None
 
     new_data = {}
     new_state = {}
@@ -78,31 +39,31 @@ def disconnect(api: sly.Api, task_id, context, state, app_logger):
     api.task.set_fields(task_id, fields)
 
 
-@my_app.callback("select_all_classes")
+@g.my_app.callback("select_all_classes")
 @sly.timeit
 def select_all_classes(api: sly.Api, task_id, context, state, app_logger):
-    api.task.set_field(task_id, "state.classes", [True] * len(model_meta.obj_classes))
+    api.task.set_field(task_id, "state.classes", [True] * len(g.model_meta.obj_classes))
 
 
-@my_app.callback("deselect_all_classes")
+@g.my_app.callback("deselect_all_classes")
 @sly.timeit
 def deselect_all_classes(api: sly.Api, task_id, context, state, app_logger):
-    api.task.set_field(task_id, "state.classes", [False] * len(model_meta.obj_classes))
+    api.task.set_field(task_id, "state.classes", [False] * len(g.model_meta.obj_classes))
 
 
-@my_app.callback("select_all_tags")
+@g.my_app.callback("select_all_tags")
 @sly.timeit
 def select_all_tags(api: sly.Api, task_id, context, state, app_logger):
-    api.task.set_field(task_id, "state.tags", [True] * len(model_meta.tag_metas))
+    api.task.set_field(task_id, "state.tags", [True] * len(g.model_meta.tag_metas))
 
 
-@my_app.callback("deselect_all_tags")
+@g.my_app.callback("deselect_all_tags")
 @sly.timeit
 def deselect_all_tags(api: sly.Api, task_id, context, state, app_logger):
-    api.task.set_field(task_id, "state.tags", [False] * len(model_meta.tag_metas))
+    api.task.set_field(task_id, "state.tags", [False] * len(g.model_meta.tag_metas))
 
 
-@my_app.callback("preview")
+@g.my_app.callback("preview")
 @sly.timeit
 def preview(api: sly.Api, task_id, context, state, app_logger):
     api.task.set_field(task_id, "state.processing", True)
@@ -113,7 +74,7 @@ def preview(api: sly.Api, task_id, context, state, app_logger):
         app_logger.warn(f'Model Inference launched without additional settings. \n'
                         f'Reason: {e}', exc_info=True)
 
-    image_info = random.choice(input_images)
+    image_info = random.choice(g.input_images)
     input_ann, res_ann, res_project_meta = apply_model_to_image(api, state, image_info.dataset_id, image_info.id,  inf_setting)
 
     preview_gallery = {
@@ -137,7 +98,7 @@ def preview(api: sly.Api, task_id, context, state, app_logger):
             },
             "layout": [["input"], ["output"]]
         },
-        "options": image_grid_options,
+        "options": g.image_grid_options,
     }
 
     fields = [
@@ -150,7 +111,7 @@ def preview(api: sly.Api, task_id, context, state, app_logger):
 def apply_model_to_image(api, state, dataset_id, image_id, inf_setting):
     orig_anns, res_anns, res_project_meta = apply_model_to_images(api, state, dataset_id, [image_id], inf_setting)
     if orig_anns is None:
-        orig_ann = sly.Annotation.from_json(api.annotation.download(image_id).annotation, project_meta)
+        orig_ann = sly.Annotation.from_json(api.annotation.download(image_id).annotation, g.project_meta)
     else:
         orig_ann = orig_anns[0]
     return orig_ann, res_anns[0], res_project_meta
@@ -165,18 +126,18 @@ def apply_model_to_images(api, state, dataset_id, ids, inf_setting):
                                               "batch_ids": ids,
                                               "settings": inf_setting
                                           })
-    ann_preds = [sly.Annotation.from_json(pred_json, model_meta) for pred_json in ann_pred_json]
+    ann_preds = [sly.Annotation.from_json(pred_json, g.model_meta) for pred_json in ann_pred_json]
 
-    res_project_meta = project_meta.clone()
+    res_project_meta = g.project_meta.clone()
     res_anns = []
     for ann_pred in ann_preds:
-        res_ann, res_project_meta = postprocess(api, project_id, ann_pred, res_project_meta, model_meta, state)
+        res_ann, res_project_meta = postprocess(api, g.project_id, ann_pred, res_project_meta, g.model_meta, state)
         res_anns.append(res_ann)
 
     original_anns = None
     if add_mode == "merge":
         original_anns = api.annotation.download_batch(dataset_id, ids)
-        original_anns = [sly.Annotation.from_json(ann_info.annotation, project_meta) for ann_info in original_anns]
+        original_anns = [sly.Annotation.from_json(ann_info.annotation, g.project_meta) for ann_info in original_anns]
 
         merged_anns = []
         for ann, pred in zip(original_anns, res_anns):
@@ -187,7 +148,7 @@ def apply_model_to_images(api, state, dataset_id, ids, inf_setting):
     return original_anns, merged_anns, res_project_meta
 
 
-@my_app.callback("apply_model")
+@g.my_app.callback("apply_model")
 @sly.timeit
 def apply_model(api: sly.Api, task_id, context, state, app_logger):
     def _update_progress(progress):
@@ -205,14 +166,13 @@ def apply_model(api: sly.Api, task_id, context, state, app_logger):
         app_logger.warn(f'Model Inference launched without additional settings. \n'
                         f'Reason: {e}', exc_info=True)
 
-    global project_meta
-    res_project_meta = project_meta.clone()
-    res_project = api.project.create(workspace_id, state["resProjectName"], change_name_if_conflict=True)
+    res_project_meta = g.project_meta.clone()
+    res_project = api.project.create(g.workspace_id, state["resProjectName"], change_name_if_conflict=True)
     api.project.update_meta(res_project.id, res_project_meta.to_json())
 
-    progress = sly.Progress("Inference", len(input_images), need_info_log=True)
+    progress = sly.Progress("Inference", len(g.input_images), need_info_log=True)
 
-    for dataset in input_datasets:
+    for dataset in g.input_datasets:
         res_dataset = api.dataset.create(res_project.id, dataset.name, dataset.description)
         images = api.image.get_list(dataset.id)
 
@@ -243,40 +203,39 @@ def apply_model(api: sly.Api, task_id, context, state, app_logger):
     ]
     api.task.set_fields(task_id, fields)
     api.task.set_output_project(task_id, res_project.id, res_project.name)
-    my_app.stop()
+    g.my_app.stop()
 
 
 def main():
     data = {}
     state = {}
-    data["ownerId"] = owner_id
-    data["teamId"] = team_id
+    data["ownerId"] = g.owner_id
+    data["teamId"] = g.team_id
 
-    global project_info, project_id, input_datasets
     dataset_info = None
-    if project_id is None:
-        dataset_info = my_app.public_api.dataset.get_info_by_id(dataset_id)
-        input_datasets.append(dataset_info)
-        project_id = dataset_info.project_id
+    if g.project_id is None:
+        dataset_info = g.my_app.public_api.dataset.get_info_by_id(g.dataset_id)
+        g.input_datasets.append(dataset_info)
+        g.project_id = dataset_info.project_id
     else:
-        input_datasets = my_app.public_api.dataset.get_list(project_id)
-    project_info = my_app.public_api.project.get_info_by_id(project_id)
+        g.input_datasets = g.my_app.public_api.dataset.get_list(g.project_id)
+    project_info = g.my_app.public_api.project.get_info_by_id(g.project_id)
 
-    global input_images
-    input_images = []
-    for ds_info in input_datasets:
-        input_images.extend(my_app.public_api.image.get_list(ds_info.id))
+    g.input_images = []
+    for ds_info in g.input_datasets:
+        g.input_images.extend(g.my_app.public_api.image.get_list(ds_info.id))
 
-    global project_meta
-    project_meta = sly.ProjectMeta.from_json(my_app.public_api.project.get_meta(project_id))
+    g.project_meta = sly.ProjectMeta.from_json(g.my_app.public_api.project.get_meta(g.project_id))
 
     ui.init(data, state)
-    data["emptyGallery"] = empty_gallery
-    ui.init_input_project(my_app.public_api, data, project_info, len(input_images), dataset_info)
+    data["emptyGallery"] = g.empty_gallery
+    ui.init_input_project(g.my_app.public_api, data, project_info, len(g.input_images), dataset_info)
     state["resProjectName"] = project_info.name + " (inf)"
     ui.init_output_project(data)
 
-    my_app.run(data=data, state=state)
+    sliding_window.init(data, state)
+
+    g.my_app.run(data=data, state=state)
 
 
 #@TODO: progress bar пропал после обновления страницы и снова появилась кнопка
