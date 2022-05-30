@@ -158,7 +158,7 @@
     </sly-card>
     <div id="inference-mode" v-if="state.infMode === 'sw'" class="fflex mt15" style="align-items: stretch">
         <sly-card class="mr15"
-                  title="Settings"
+                  title="Sliding Window Settings"
                   subtitle="Configure sliding windows parameters"
                   style="min-width: 310px; max-width: 310px;">
             <div><b>Window height</b></div>
@@ -199,17 +199,17 @@
             </sly-field>
             <div><b>Visualization FPS</b></div>
             <el-input-number class="mt5" v-model="state.fps" :min="1" :max="20"></el-input-number>
-            <div class="mt15"><b>Draw labels on preview</b></div>
-            <el-checkbox class="mt5" v-model="state.drawLabels">Draw labels</el-checkbox>
+<!--            <div class="mt15"><b>Draw labels on preview</b></div>-->
+<!--            <el-checkbox class="mt5" v-model="state.drawLabels">Draw labels</el-checkbox>-->
 
         </sly-card>
-        <sly-card title="Random Preview"
-                  subtitle="Visualize sliding windows on random image as video"
+        <sly-card title="Sliding Window Inference Preview"
+                  subtitle="Visualize sliding windows on random image with Raw Predictions"
                   style="width: 100%">
             <div slot="header">
                 <el-button
                         type="primary"
-                        @click="state.previewLoading = true; command('preview')"
+                        @click="state.previewLoading = true; command('sliding-window-preview')"
                         :loading="state.previewLoading"
                         :disabled="data.resProjectId || data.started"
                 >
@@ -235,7 +235,7 @@
 
     <sly-card v-if="data.connected === true"
               class="mt15"
-              title="Preview on random image"
+              title="Final Inference preview on random image"
               subtitle="Compare original labels and final prediction">
         <div slot="header">
             <el-button type="primary"

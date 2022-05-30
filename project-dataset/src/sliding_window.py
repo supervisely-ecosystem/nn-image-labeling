@@ -79,7 +79,7 @@ def write_video(state, img, predictions, last_two_frames_copies=8, max_video_siz
             rect = rect.scale(scale_ratio)
         labels = pred["labels"]
         for label_ind, label in enumerate(labels):
-            labels[label_ind] = sly.Label.from_json(label, g.det_model_meta)
+            labels[label_ind] = sly.Label.from_json(label, g.model_meta)
 
         frame = img.copy()
         rect.draw_contour(frame, [255, 0, 0], thickness=5)
@@ -115,7 +115,7 @@ def write_video(state, img, predictions, last_two_frames_copies=8, max_video_siz
     return file_info
 
 
-@g.my_app.callback("preview")
+@g.my_app.callback("sliding-window-preview")
 @sly.timeit
 def preview(api: sly.Api, task_id, context, state, app_logger):
     fields = [
@@ -126,8 +126,8 @@ def preview(api: sly.Api, task_id, context, state, app_logger):
 
     image_info = random.choice(g.input_images)
     check_sliding_sizes_by_image(image_info, state)
-    inf_setting = {
-        "inference_mode": state["inference_mode"],
+    inf_setting = {  # @TODO: discuss with nikita unified naming
+        "inference_mode": "sliding_window" if state["infMode"] == "sw" else state["inference_mode"],
         "sliding_window_params": {
             "windowHeight": state["windowHeight"],
             "windowWidth": state["windowWidth"],
