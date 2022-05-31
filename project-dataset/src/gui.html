@@ -1,5 +1,3 @@
-
-
 <div>
     <sly-style>
         #inference-mode .field-radio {
@@ -8,9 +6,17 @@
         width: calc(100% - 20px);
         white-space: normal;
         }
+
+        .field-with-checkbox-container {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        margin-bottom: 10px;
+        }
     </sly-style>
 
-
+    {{data.imagesForPreview}}
     <sly-card title="Input Data" subtitle="Input project URL">
         <sly-field title="" description="Input Data">
             <a slot="title" target="_blank"
@@ -161,6 +167,8 @@
                   title="Sliding Window Settings"
                   subtitle="Configure sliding windows parameters"
                   style="min-width: 310px; max-width: 310px;">
+
+
             <div><b>Window height</b></div>
             <el-input-number class="mt5" v-model="state.windowHeight" :min="1" :max="10000"></el-input-number>
             <span class="ml10" style="color: gray">pixels</span>
@@ -199,22 +207,53 @@
             </sly-field>
             <div><b>Visualization FPS</b></div>
             <el-input-number class="mt5" v-model="state.fps" :min="1" :max="20"></el-input-number>
-<!--            <div class="mt15"><b>Draw labels on preview</b></div>-->
-<!--            <el-checkbox class="mt5" v-model="state.drawLabels">Draw labels</el-checkbox>-->
+            <!--            <div class="mt15"><b>Draw labels on preview</b></div>-->
+            <!--            <el-checkbox class="mt5" v-model="state.drawLabels">Draw labels</el-checkbox>-->
 
         </sly-card>
         <sly-card title="Sliding Window Inference Preview"
-                  subtitle="Visualize sliding windows on random image with Raw Predictions"
+                  subtitle="Raw Predictions"
                   style="width: 100%">
             <div slot="header">
-                <el-button
-                        type="primary"
-                        @click="state.previewLoading = true; command('sliding-window-preview')"
-                        :loading="state.previewLoading"
-                        :disabled="data.resProjectId || data.started"
-                >
-                    <i class="zmdi zmdi-slideshow" style="margin-right: 5px"></i> Preview
-                </el-button>
+
+                <div class="field-with-checkbox-container">
+                    <!--                    <div style="display:flex; flex-direction: column">-->
+                    <!--                        <div style="display:flex; flex-direction: row">-->
+                    <el-checkbox v-model="state.randomImagePreview"
+                                 style="margin: 4px 6px 0 0">
+                    </el-checkbox>
+
+                    <sly-field title="Random Image"
+                               style="margin: 3px 10px 0 0">
+                    </sly-field>
+                    <!--                        </div>-->
+                    <el-select v-model="state.previewOnImageId"
+                               size="small"
+                               :disabled="state.randomImagePreview"
+                               placeholder="select image"
+                               filterable>
+                        <el-option
+                                v-for="item in data.imagesForPreview"
+                                :key="item.value"
+                                :label="item.label"
+                                :value="item.value">
+                        </el-option>
+                    </el-select>
+                    <!--                    </div>-->
+
+
+                    <el-button
+                            type="primary"
+                            size="small"
+                            style="margin-left: 10px"
+                            @click="state.previewLoading = true; command('sliding-window-preview')"
+                            :loading="state.previewLoading"
+                            :disabled="!data.connected || data.started">
+                        <i class="zmdi zmdi-slideshow" style="margin-right: 5px"></i> Preview
+                    </el-button>
+                </div>
+
+
             </div>
             <video v-if="data.videoUrl" controls style="max-height: 650px; max-width: 100%;">
                 <!--                <source src="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4">-->
@@ -235,15 +274,46 @@
 
     <sly-card v-if="data.connected === true"
               class="mt15"
-              title="Final Inference preview on random image"
+              title="Final Inference Preview"
               subtitle="Compare original labels and final prediction">
         <div slot="header">
-            <el-button type="primary"
-                       :disabled="!data.connected || data.started"
-                       :loading="state.processing"
-                       @click="state.processing = true; command('preview')">
-                <i class="zmdi zmdi-grid" style="margin-right: 5px"></i> Preview
-            </el-button>
+            <div class="field-with-checkbox-container">
+                <!--                    <div style="display:flex; flex-direction: column">-->
+                <!--                        <div style="display:flex; flex-direction: row">-->
+                <el-checkbox v-model="state.randomImagePreview"
+                             style="margin: 4px 6px 0 0">
+                </el-checkbox>
+
+                <sly-field title="Random Image"
+                           style="margin: 3px 10px 0 0">
+                </sly-field>
+                <!--                        </div>-->
+                <el-select v-model="state.previewOnImageId"
+                           size="small"
+                           :disabled="state.randomImagePreview"
+                           placeholder="select image"
+                           filterable>
+                    <el-option
+                            v-for="item in data.imagesForPreview"
+                            :key="item.value"
+                            :label="item.label"
+                            :value="item.value">
+                    </el-option>
+                </el-select>
+                <!--                    </div>-->
+
+
+                <el-button
+                        type="primary"
+                        size="small"
+                        style="margin-left: 10px"
+                        @click="state.processing = true; command('preview')"
+                        :loading="state.processing"
+                        :disabled="!data.connected || data.started">
+                    <i class="zmdi zmdi-slideshow" style="margin-right: 5px"></i> Preview
+                </el-button>
+            </div>
+
         </div>
         <sly-grid-gallery v-show="data.gallery"
                           :content="data.gallery ? data.gallery.content : data.emptyGallery.content"

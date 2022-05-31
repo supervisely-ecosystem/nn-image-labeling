@@ -74,7 +74,11 @@ def preview(api: sly.Api, task_id, context, state, app_logger):
         app_logger.warn(f'Model Inference launched without additional settings. \n'
                         f'Reason: {e}', exc_info=True)
 
-    image_info = random.choice(g.input_images)
+    if state['randomImagePreview'] is True:
+        image_info = random.choice(g.input_images)
+    else:
+        image_info = [image_info for image_info in g.input_images if image_info.id == state['previewOnImageId']][0]
+
     input_ann, res_ann, res_project_meta = apply_model_to_image(api, state, image_info.dataset_id, image_info.id,  inf_setting)
 
     preview_gallery = {
@@ -156,6 +160,16 @@ def apply_model_to_images(api, state, dataset_id, ids, inf_setting):
     return original_anns, merged_anns, res_project_meta
 
 
+def get_images_for_preview_list():
+    images_for_preview_list = []
+    for image_info in g.input_images:
+        images_for_preview_list.append({
+            'label': image_info.name,
+            'value': image_info.id,
+        })
+    return images_for_preview_list
+
+
 @g.my_app.callback("apply_model")
 @sly.timeit
 def apply_model(api: sly.Api, task_id, context, state, app_logger):
@@ -232,6 +246,9 @@ def main():
     g.input_images = []
     for ds_info in g.input_datasets:
         g.input_images.extend(g.my_app.public_api.image.get_list(ds_info.id))
+
+    data["imagesForPreview"] = get_images_for_preview_list()
+    state["previewOnImageId"] = g.input_images[0].id if len(g.input_images) > 0 else None
 
     g.project_meta = sly.ProjectMeta.from_json(g.my_app.public_api.project.get_meta(g.project_id))
 

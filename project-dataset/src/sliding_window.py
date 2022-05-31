@@ -108,7 +108,7 @@ def write_video(state, img, predictions, last_two_frames_copies=8, max_video_siz
     progress = sly.Progress("Uploading video", 1)
     progress.iter_done_report()
     refresh_progress_preview(progress)
-    remote_video_path = os.path.join(f"/apply_det_and_cls_to_project/{g.task_id}", "preview.mp4")
+    remote_video_path = os.path.join(f"/apply_det_and_cls_to_project", "preview.mp4")
     if g.api.file.exists(g.team_id, remote_video_path):
         g.api.file.remove(g.team_id, remote_video_path)
     file_info = g.api.file.upload(g.team_id, video_path, remote_video_path)
@@ -138,7 +138,11 @@ def preview(api: sly.Api, task_id, context, state, app_logger):
     ]
     api.task.set_fields(task_id, fields)
 
-    image_info = random.choice(g.input_images)
+    if state['randomImagePreview'] is True:
+        image_info = random.choice(g.input_images)
+    else:
+        image_info = [image_info for image_info in g.input_images if image_info.id == state['previewOnImageId']][0]
+
     check_sliding_sizes_by_image(image_info, state)
     inf_setting = get_sliding_window_params_from_state(state)
 
