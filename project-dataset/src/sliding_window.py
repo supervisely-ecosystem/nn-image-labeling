@@ -115,6 +115,20 @@ def write_video(state, img, predictions, last_two_frames_copies=8, max_video_siz
     return file_info
 
 
+def get_sliding_window_params_from_state(state):
+    return {
+        "inference_mode": state["infMode"],
+        "sliding_window_params": {
+            "windowHeight": state["windowHeight"],
+            "windowWidth": state["windowWidth"],
+            "overlapY": state["overlapY"],
+            "overlapX": state["overlapX"],
+            "borderStrategy": state["borderStrategy"],
+            "naive": False
+        }
+    }
+
+
 @g.my_app.callback("sliding-window-preview")
 @sly.timeit
 def preview(api: sly.Api, task_id, context, state, app_logger):
@@ -126,17 +140,8 @@ def preview(api: sly.Api, task_id, context, state, app_logger):
 
     image_info = random.choice(g.input_images)
     check_sliding_sizes_by_image(image_info, state)
-    inf_setting = {  # @TODO: discuss with nikita unified naming
-        "inference_mode": "sliding_window" if state["infMode"] == "sw" else state["inference_mode"],
-        "sliding_window_params": {
-            "windowHeight": state["windowHeight"],
-            "windowWidth": state["windowWidth"],
-            "overlapY": state["overlapY"],
-            "overlapX": state["overlapX"],
-            "borderStrategy": state["borderStrategy"],
-            "naive": False
-        }
-    }
+    inf_setting = get_sliding_window_params_from_state(state)
+
     ann_pred_res = api.task.send_request(state['sessionId'], "inference_image_id",
                                          data={
                                              "image_id": image_info.id,

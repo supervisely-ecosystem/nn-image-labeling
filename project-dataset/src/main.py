@@ -120,12 +120,20 @@ def apply_model_to_image(api, state, dataset_id, image_id, inf_setting):
 def apply_model_to_images(api, state, dataset_id, ids, inf_setting):
     nn_session_id = state["sessionId"]
     add_mode = state["addMode"]
+
+    if state['infMode'] == 'sliding_window':
+        inf_setting.update(sliding_window.get_sliding_window_params_from_state(state))
+
     ann_pred_json = api.task.send_request(nn_session_id, "inference_batch_ids",
                                           data={
                                               "dataset_id": dataset_id,
                                               "batch_ids": ids,
-                                              "settings": inf_setting
+                                              "settings": inf_setting,
                                           })
+
+    if state['infMode'] == 'sliding_window':
+        ann_pred_json = [pred_data_for_image['annotation'] for pred_data_for_image in ann_pred_json]
+
     ann_preds = [sly.Annotation.from_json(pred_json, g.model_meta) for pred_json in ann_pred_json]
 
     res_project_meta = g.project_meta.clone()

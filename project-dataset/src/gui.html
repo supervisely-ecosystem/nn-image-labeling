@@ -120,11 +120,11 @@
               subtitle="How to apply model (full image / roi / sliding window) and how to merge predictions with existing labels">
         <div class="mb15">
             <div><b>Mode</b></div>
-            <el-select :disabled="data.started" v-model="state.infMode">
+            <el-select :disabled="data.started" v-model="state.infMode" @change="command('preview')">
                 <el-option key="full image" label="full image" value="fi"></el-option>
                 <el-option key="sw"
                            label="sliding window"
-                           value="sw"
+                           value="sliding_window"
                            :disabled="!(data.info && data.info.sliding_window_support && data.info.sliding_window_support === true)">
                 </el-option>
                 <el-option key="roi"
@@ -156,7 +156,7 @@
         </sly-field>
 
     </sly-card>
-    <div id="inference-mode" v-if="state.infMode === 'sw'" class="fflex mt15" style="align-items: stretch">
+    <div id="inference-mode" v-if="state.infMode === 'sliding_window'" class="fflex mt15" style="align-items: stretch">
         <sly-card class="mr15"
                   title="Sliding Window Settings"
                   subtitle="Configure sliding windows parameters"
