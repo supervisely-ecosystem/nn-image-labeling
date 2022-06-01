@@ -11,7 +11,7 @@ from shared_utils.connect import get_model_info
 from shared_utils.inference import postprocess
 import init_ui as ui
 
-import src.sliding_window as sliding_window
+import sliding_window
 
 import sly_globals as g
 
