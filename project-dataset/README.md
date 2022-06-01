@@ -34,25 +34,14 @@ App connects to the deployed Neural Network and applies it to the images project
 
 ### v1.2.3
 
-- Sliding Window mode added:
+- Configurable sliding window mode with preview, mode enables automatically if the connected neural network supports it
 
 https://user-images.githubusercontent.com/33942379/171401791-f389eee4-4fdc-4fed-bbcc-409dc306e045.mp4
 
 
-- Select specific image for preview added:
+- Inference preview ob both random or specific image
 
 https://user-images.githubusercontent.com/33942379/171401798-0b425683-4138-4b01-b008-50f0fc98eb0e.mp4
-
-
-
-
-
-
-# Common Apps
-### Servings:
-
-- Sliding Window mode supported:
-  - [YOLOv5 Serve](https://ecosystem.supervise.ly/apps/supervisely-ecosystem/yolov5/supervisely/serve)
 
 
 # How To Run
