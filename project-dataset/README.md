@@ -7,6 +7,8 @@
 
 <p align="center">
   <a href="#Overview">Overview</a> •
+  <a href="#whats's-new">What's New</a> •
+  <a href="#common-apps">Common Apps</a> •
   <a href="#How-To-Run">How To Run</a>
 </p>
 
@@ -26,6 +28,22 @@ App connects to the deployed Neural Network and applies it to the images project
 <a data-key="sly-embeded-video-link" href="https://youtu.be/DUQgr_SLVR4" data-video-code="DUQgr_SLVR4">
     <img src="https://i.imgur.com/Edy7B1H.png" alt="SLY_EMBEDED_VIDEO_LINK"  style="max-width:50%;">
 </a>
+
+
+# What's New
+
+### v1.2.3
+
+- Sliding Window mode added:
+- Select specific image for preview added:
+
+
+# Common Apps
+### Servings:
+
+- Sliding Window mode supported:
+  - [YOLOv5 Serve](https://ecosystem.supervise.ly/apps/supervisely-ecosystem/yolov5/supervisely/serve)
+
 
 # How To Run
 
