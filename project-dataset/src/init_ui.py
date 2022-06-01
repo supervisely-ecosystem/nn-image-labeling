@@ -39,3 +39,6 @@ def init(data, state):
     state["settings"] = "# empty"
     state["addMode"] = "merge"
     state["processing"] = False
+
+    state["randomImagePreview"] = True
+
