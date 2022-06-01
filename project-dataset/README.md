@@ -7,7 +7,7 @@
 
 <p align="center">
   <a href="#Overview">Overview</a> •
-  <a href="#whats's-new">What's New</a> •
+  <a href="#whats-new">What's New</a> •
   <a href="#common-apps">Common Apps</a> •
   <a href="#How-To-Run">How To Run</a>
 </p>
@@ -35,7 +35,17 @@ App connects to the deployed Neural Network and applies it to the images project
 ### v1.2.3
 
 - Sliding Window mode added:
+
+https://user-images.githubusercontent.com/33942379/171401791-f389eee4-4fdc-4fed-bbcc-409dc306e045.mp4
+
+
 - Select specific image for preview added:
+
+https://user-images.githubusercontent.com/33942379/171401798-0b425683-4138-4b01-b008-50f0fc98eb0e.mp4
+
+
+
+
 
 
 # Common Apps
