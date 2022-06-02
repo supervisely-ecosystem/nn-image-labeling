@@ -160,13 +160,18 @@ def apply_model_to_images(api, state, dataset_id, ids, inf_setting):
     return original_anns, merged_anns, res_project_meta
 
 
-def get_images_for_preview_list():
+def get_images_for_preview_list(max_size=100):
     images_for_preview_list = []
-    for image_info in g.input_images:
+
+    for index, image_info in enumerate(g.input_images):
         images_for_preview_list.append({
             'label': image_info.name,
             'value': image_info.id,
         })
+
+        if len(images_for_preview_list) >= max_size:
+            break
+
     return images_for_preview_list
 
 
