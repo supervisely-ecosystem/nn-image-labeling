@@ -3,7 +3,11 @@
   "type": "app",
   "categories": [
     "neural network",
-    "labeling"
+    "images",
+    "object detection",
+    "semantic segmentation",
+    "instance segmentation",
+    "inference interfaces"
   ],
   "description": "Use deployed neural network in labeling interface",
   "docker_image": "supervisely/base-py-sdk:6.1.79",
