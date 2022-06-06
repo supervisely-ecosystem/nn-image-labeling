@@ -5,7 +5,7 @@ import shared_utils.ui2 as ui
 def get_model_info(api: sly.Api, task_id, context, state, app_logger) -> sly.ProjectMeta:
     model_meta = None
     try:
-        info = api.task.send_request(state["sessionId"], "get_session_info", data={})
+        info = api.task.send_request(state["sessionId"], "get_session_info", data={}, skip_response=False)
         info["session"] = state["sessionId"]
         app_logger.debug("Session Info", extra={"info": info})
 
