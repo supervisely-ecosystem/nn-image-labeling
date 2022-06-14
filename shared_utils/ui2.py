@@ -1,5 +1,5 @@
 from typing import List
-import supervisely_lib as sly
+import supervisely as sly
 
 
 def set_model_info(api: sly.Api, task_id, model_meta: sly.ProjectMeta, model_info: dict, inf_settings: dict):

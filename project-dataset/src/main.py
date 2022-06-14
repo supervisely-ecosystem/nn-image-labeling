@@ -4,7 +4,7 @@ import pathlib
 import sys
 from collections import defaultdict
 import random
-import supervisely_lib as sly
+import supervisely as sly
 
 
 from shared_utils.connect import get_model_info
@@ -86,14 +86,14 @@ def preview(api: sly.Api, task_id, context, state, app_logger):
             "projectMeta": res_project_meta.to_json(),
             "annotations": {
                 "input": {
-                    "url": image_info.full_storage_url,
+                    "url": image_info.path_original,
                     "figures": [label.to_json() for label in input_ann.labels],
                     "info": {
                         "title": "input",
                     }
                 },
                 "output": {
-                    "url": image_info.full_storage_url,
+                    "url": image_info.path_original,
                     "figures": [label.to_json() for label in res_ann.labels],
                     "info": {
                         "title": "output",

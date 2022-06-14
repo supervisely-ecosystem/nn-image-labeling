@@ -10,7 +10,8 @@
     "inference interfaces"
   ],
   "description": "Use deployed neural network in labeling interface",
-  "docker_image": "supervisely/base-py-sdk:6.1.79",
+  "docker_image": "supervisely/base-py-sdk:6.23.1",
+  "instance_version": "6.4.57",
   "main_script": "annotation-tool/src/main.py",
   "gui_template": "annotation-tool/src/gui.html",
   "task_location": "application_sessions",

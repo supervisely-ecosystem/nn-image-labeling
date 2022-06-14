@@ -1,5 +1,5 @@
-import supervisely_lib as sly
-from supervisely_lib.collection.key_indexed_collection import KeyIndexedCollection
+import supervisely as sly
+from supervisely.collection.key_indexed_collection import KeyIndexedCollection
 
 
 def find_item(collection: KeyIndexedCollection, item, suffix):

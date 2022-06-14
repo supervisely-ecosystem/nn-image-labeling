@@ -162,6 +162,6 @@ def preview(api: sly.Api, task_id, context, state, app_logger):
 
     fields = [
         {"field": "state.previewLoading", "payload": False},
-        {"field": "data.videoUrl", "payload": file_info.full_storage_url},
+        {"field": "data.videoUrl", "payload": file_info.storage_path},
     ]
     api.task.set_fields(task_id, fields)
