@@ -3,7 +3,7 @@ import yaml
 import pathlib
 import sys
 from collections import defaultdict
-import supervisely_lib as sly
+import supervisely as sly
 
 root_source_path = str(pathlib.Path(sys.argv[0]).parents[2])
 sly.logger.info(f"Root source directory: {root_source_path}")

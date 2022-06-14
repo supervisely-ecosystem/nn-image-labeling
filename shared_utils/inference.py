@@ -1,4 +1,4 @@
-import supervisely_lib as sly
+import supervisely as sly
 import shared_utils.ui2 as ui
 from shared_utils.merge_metas import merge_metas
 

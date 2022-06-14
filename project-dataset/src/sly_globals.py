@@ -4,6 +4,7 @@ import sys
 from collections import defaultdict
 
 import supervisely as sly
+from supervisely.app.v1.app_service import AppService
 
 root_source_path = str(pathlib.Path(sys.argv[0]).parents[2])
 sly.logger.info(f"Root source directory: {root_source_path}")
@@ -25,7 +26,7 @@ if dataset_id is not None:
 else:
     project_id = int(os.environ["modal.state.slyProjectId"])
 
-my_app: sly.AppService = sly.AppService(ignore_task_id=True)
+my_app: AppService = AppService(ignore_task_id=True)
 api = my_app.public_api
 
 model_meta: sly.ProjectMeta = None
