@@ -18,6 +18,7 @@ import sly_globals as g
 
 @g.my_app.callback("connect")
 @sly.timeit
+@g.my_app.ignore_errors_and_show_dialog_window()
 def connect(api: sly.Api, task_id, context, state, app_logger):
     g.model_meta = get_model_info(api, task_id, context, state, app_logger)
     actual_ui_state = api.task.get_field(task_id, "state")
