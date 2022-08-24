@@ -37,12 +37,13 @@ input_images = None
 project_meta: sly.ProjectMeta = None
 
 image_grid_options = {
-    "opacity": 0.3,
+    "opacity": 0.5,
     "fillRectangle": True, #False,
     "enableZoom": True,
     "syncViews": True,
     "showPreview": True,
-    "selectable": False
+    "selectable": False,
+    "showOpacityInHeader": True,
 }
 
 empty_gallery = {
