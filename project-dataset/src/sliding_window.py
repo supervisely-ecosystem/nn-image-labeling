@@ -131,6 +131,7 @@ def get_sliding_window_params_from_state(state):
 
 @g.my_app.callback("sliding-window-preview")
 @sly.timeit
+@g.my_app.ignore_errors_and_show_dialog_window()
 def preview(api: sly.Api, task_id, context, state, app_logger):
     fields = [
         {"field": "data.videoUrl", "payload": None},
