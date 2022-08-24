@@ -130,13 +130,15 @@
                 <el-option key="sw"
                            label="sliding window"
                            value="sliding_window"
-                           :disabled="!(data.info && data.info.sliding_window_support && data.info.sliding_window_support === true)">
+                           :disabled="!(data.info && data.info.sliding_window_support && data.info.sliding_window_support !== false)">
                 </el-option>
+                <!--
                 <el-option key="roi"
                            label="roi (image region) - coming soon"
                            value="roi"
                            :disabled="true">
                 </el-option>
+                -->
 
             </el-select>
         </div>
