@@ -66,6 +66,7 @@ def deselect_all_tags(api: sly.Api, task_id, context, state, app_logger):
 
 @g.my_app.callback("preview")
 @sly.timeit
+@g.my_app.ignore_errors_and_show_dialog_window()
 def preview(api: sly.Api, task_id, context, state, app_logger):
     api.task.set_field(task_id, "state.processing", True)
     try:
