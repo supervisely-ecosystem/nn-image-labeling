@@ -1,5 +1,5 @@
 <div align="center" markdown>
-<img src="https://i.imgur.com/AFv8KQa.png"/>
+<img src="https://user-images.githubusercontent.com/106374579/187226641-dce1a180-66b8-45ad-840e-ab5e445ee342.png"/>
 
 # NN Image Labeling
 
