@@ -1,5 +1,5 @@
 <div align="center" markdown>
-<img src="https://i.imgur.com/sZHxHEW.png"/>
+<img src="https://user-images.githubusercontent.com/106374579/187227957-ea4fd452-35ef-4969-9e55-cd7a5a4873ee.png"/>
 
 
 # Apply NN to Images Project
