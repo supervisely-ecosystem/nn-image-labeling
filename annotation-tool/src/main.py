@@ -107,7 +107,13 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
     ann_pred_json = api.task.send_request(state["sessionId"],
                                           "inference_image_id",
                                           data=data)
-    ann_pred = sly.Annotation.from_json(ann_pred_json, model_meta)
+
+    try:
+        ann_pred = sly.Annotation.from_json(ann_pred_json, model_meta)
+    except Exception as e:
+        sly.logger.warn(f"Couldn't process prediction for the image {image_id} id. Empty Annotation generated. Error: {e}")
+        ann_pred = sly.Annotation(img_size=ann.img_size)
+
     res_ann, res_project_meta = postprocess(api, project_id, ann_pred, project_meta, model_meta, state)
 
     if state["addMode"] == "merge":
