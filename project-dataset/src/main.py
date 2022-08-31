@@ -141,9 +141,6 @@ def apply_model_to_images(api, state, dataset_id, ids, inf_setting):
     #     # ann_pred_json = [pred_data_for_image['annotation'] for pred_data_for_image in ann_pred_json]
     # ann_preds = [sly.Annotation.from_json(pred_json, g.model_meta) for pred_json in ann_pred_json]
 
-    ann_pred_json.pop()
-    ann_pred_json.append({})
-
     ann_preds = []
     for img_id, pred_json in zip(ids, ann_pred_json):
         try:
