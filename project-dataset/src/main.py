@@ -137,10 +137,26 @@ def apply_model_to_images(api, state, dataset_id, ids, inf_setting):
                                               "settings": inf_setting,
                                           })
 
-    if state['infMode'] == 'sliding_window':
-        ann_pred_json = [pred_data_for_image['annotation'] for pred_data_for_image in ann_pred_json]
+    # if state['infMode'] == 'sliding_window':
+    #     # ann_pred_json = [pred_data_for_image['annotation'] for pred_data_for_image in ann_pred_json]
+    # ann_preds = [sly.Annotation.from_json(pred_json, g.model_meta) for pred_json in ann_pred_json]
 
-    ann_preds = [sly.Annotation.from_json(pred_json, g.model_meta) for pred_json in ann_pred_json]
+    ann_pred_json.pop()
+    ann_pred_json.append({})
+
+    ann_preds = []
+    for img_id, pred_json in zip(ids, ann_pred_json):
+        try:
+            if state['infMode'] == 'sliding_window':
+                pred_json = pred_json['annotation']
+            ann_pred = sly.Annotation.from_json(pred_json, g.model_meta)
+            ann_preds.append(ann_pred)
+        except Exception as e:
+            sly.logger.warn("Can not process predictions from serving", extra={"image_id": img_id, "details": repr(e)})
+            sly.logger.debug("Response from serving app", extra={"serving_response": pred_json})
+            img_info = api.image.get_info_by_id(img_id)
+            ann_pred = sly.Annotation(img_size=(img_info.height, img_info.width))
+            ann_preds.append(ann_pred)
 
     res_project_meta = g.project_meta.clone()
     res_anns = []
@@ -164,7 +180,6 @@ def apply_model_to_images(api, state, dataset_id, ids, inf_setting):
 
 def get_images_for_preview_list(max_size=100):
     images_for_preview_list = []
-
     for index, image_info in enumerate(g.input_images):
         images_for_preview_list.append({
             'label': image_info.name,
