@@ -110,8 +110,8 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
     try:
         ann_pred = sly.Annotation.from_json(ann_pred_json, model_meta)
     except Exception as e:
-        sly.logger.warn(f"Couldn't process prediction for the image {image_id} id. Empty Annotation generated. Error: {e}")
-        sly.logger.debug(f"Prediction ann data: {ann_pred_json}")
+        sly.logger.warn("Can not process predictions from serving", extra={"image_id": image_id, "details": repr(e)})
+        sly.logger.debug("Response from serving app", extra={"serving_response": ann_pred_json})
         ann_pred = sly.Annotation(img_size=ann.img_size)
 
     res_ann, res_project_meta = postprocess(api, project_id, ann_pred, project_meta, model_meta, state)
