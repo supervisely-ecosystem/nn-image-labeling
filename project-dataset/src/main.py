@@ -138,17 +138,31 @@ def apply_model_to_images(api, state, dataset_id, ids, inf_setting):
                                           })
 
     if state['infMode'] == 'sliding_window':
-        ann_pred_json = [pred_data_for_image['annotation'] for pred_data_for_image in ann_pred_json]
+        # ann_pred_json = [pred_data_for_image['annotation'] for pred_data_for_image in ann_pred_json]
+        res = []
+        for img_id, pred_data_for_image in zip(ids, ann_pred_json):
+            try:
+                pred_data = pred_data_for_image['annotation']
+                res.append(pred_data)
+            except Exception as e:
+                sly.logger.warn(f"Couldn't process prediction for {img_id} image id. Empty annotation generated. Error: {e}")
+                sly.logger.debug(f"Prediction ann data: {pred_data_for_image}")
+                img_info = api.image.get_info_by_id(img_id)
+                pred_data = sly.Annotation(img_size=(img_info.height, img_info.width)).to_json()
+                res.append(pred_data)
+        ann_pred_json = res
+
 
     # ann_preds = [sly.Annotation.from_json(pred_json, g.model_meta) for pred_json in ann_pred_json]
     ann_preds = []
-    for id, pred_json in zip(ids, ann_pred_json):
+    for img_id, pred_json in zip(ids, ann_pred_json):
         try:
             ann_pred = sly.Annotation.from_json(pred_json, g.model_meta)
             ann_preds.append(ann_pred)
         except Exception as e:
-            sly.logger.warn(f"Couldn't process prediction for {id} image id. Empty annotation generated. Error: {e}")
-            img_info = api.image.get_info_by_id(id)
+            sly.logger.warn(f"Couldn't process prediction for {img_id} image id. Empty annotation generated. Error: {e}")
+            sly.logger.debug(f"Prediction ann data: {pred_json}")
+            img_info = api.image.get_info_by_id(img_id)
             ann_pred = sly.Annotation(img_size=(img_info.height, img_info.width))
             ann_preds.append(ann_pred)
 
