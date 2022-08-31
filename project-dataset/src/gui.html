@@ -125,7 +125,7 @@
               subtitle="How to apply model (full image / roi / sliding window) and how to merge predictions with existing labels">
         <div class="mb15">
             <div><b>Mode</b></div>
-            <el-select :disabled="data.started" v-model="state.infMode" @change="command('preview')">
+            <el-select :disabled="data.started" v-model="state.infMode"><!--@change="command('preview')">-->
                 <el-option key="full image" label="full image" value="fi"></el-option>
                 <el-option key="sw"
                            label="sliding window"
