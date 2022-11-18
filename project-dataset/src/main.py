@@ -267,7 +267,7 @@ def apply_model(api: sly.Api, task_id, context, state, app_logger):
                 )
             except Exception as e:
                 sly.logger.warn(
-                    msg=f"Couldn't process images by batch, items will be processed one by one, error: {e}."
+                    msg=f"Couldn't process images by batch, images will be processed one by one, error: {e}."
                 )
                 try:
                     image_ids, res_names, res_anns, res_metas = [], [], [], []
@@ -282,7 +282,7 @@ def apply_model(api: sly.Api, task_id, context, state, app_logger):
                         res_anns.append(res_ann)
                 except Exception as e:
                     sly.logger.warn(
-                        msg=f"Image: {image_info.name} (ID: {image_info.id}) couldn't be processed, item will be skipped, error: {e}.",
+                        msg=f"Image: {image_info.name} (ID: {image_info.id}) couldn't be processed, image will be skipped, error: {e}.",
                         extra={
                             "image_name": image_info.name,
                             "image_id": image_info.id,
