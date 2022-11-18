@@ -10,8 +10,11 @@ root_source_path = str(pathlib.Path(sys.argv[0]).parents[2])
 sly.logger.info(f"Root source directory: {root_source_path}")
 sys.path.append(root_source_path)
 
+from dotenv import load_dotenv
+load_dotenv(os.path.expanduser("~/supervisely.env"))
+load_dotenv("project-dataset/debug.env")
 
-task_id = int(os.getenv('TASK_ID'))
+task_id = int(os.environ['TASK_ID'])
 
 owner_id = int(os.environ['context.userId'])
 team_id = int(os.environ['context.teamId'])
