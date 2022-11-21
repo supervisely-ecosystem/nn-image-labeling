@@ -360,13 +360,12 @@ def apply_model(api: sly.Api, task_id, context, state, app_logger):
             try:
                 api.annotation.upload_anns(res_ids, res_anns)
             except:
-                res_ids = []
                 for res_img_info, ann in zip(res_images_infos, res_anns):
                     try:
                         api.annotation.upload_ann(res_img_info.id, ann)
                     except Exception as e:
                         sly.logger.warn(
-                            msg=f"Image: {res_img_info.name} (Original Image ID: {res_img_info.id}) couldn't be uploaded, image will be skipped, error: {e}.",
+                            msg=f"Image: {res_img_info.name} (Image ID: {res_img_info.id}) couldn't be uploaded, image will be skipped, error: {e}.",
                             extra={
                                 "image_name": res_img_info.name,
                                 "image_id": res_img_info.id,
