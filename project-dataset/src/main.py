@@ -202,13 +202,7 @@ def apply_model_to_images(api, state, dataset_id, ids, inf_setting):
                 image_info = api.image.get_info_by_id(id=img_id)
                 sly.logger.warn(
                     f"Couldn't process annotation prediction for image: {image_info.name} (ID: {img_id}). Image remain unchanged. Error: {e}")
-                pred_json = {
-                    "description": '',
-                    "size": {"height": image_info.height, "width": image_info.width},
-                    "tags": [],
-                    "objects": [],
-                    "customBigData": {}
-                }
+                pred_json = sly.Annotation(img_size=(image_info.height, image_info.width)).to_json()
                 ann_pred_json.append(pred_json)
 
     # if state['infMode'] == 'sliding_window':
