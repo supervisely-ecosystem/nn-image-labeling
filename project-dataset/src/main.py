@@ -178,7 +178,6 @@ def apply_model_to_images(api, state, dataset_id, ids, inf_setting):
                 "settings": inf_setting,
             },
         )
-        ann_pred_json = str(ann_pred_json)
         if type(ann_pred_json) != list:
             raise ValueError(f"Sequence with annotation predictions must be a 'list'. Predictions: '{ann_pred_json}'")
     except Exception as e:
