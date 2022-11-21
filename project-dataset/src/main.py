@@ -168,47 +168,48 @@ def apply_model_to_images(api, state, dataset_id, ids, inf_setting):
     if state["infMode"] == "sliding_window":
         inf_setting.update(sliding_window.get_sliding_window_params_from_state(state))
 
-    ann_pred_json = api.task.send_request(
-        nn_session_id,
-        "inference_batch_ids",
-        data={
-            "dataset_id": dataset_id,
-            "batch_ids": ids,
-            "settings": inf_setting,
-        },
-    )
-
-    if not isinstance(ann_pred_json, list):
-        raise ValueError(
-            f"Sequence with annotation predictions must be a 'list', not '{type(ann_pred_json)}'")
-
-    if len(ann_pred_json) != len(ids):
-        ann_pred_json = []
-        for img_id in ids:
-            pred_json = api.task.send_request(
-                nn_session_id,
-                "inference_batch_ids",
-                data={
-                    "dataset_id": dataset_id,
-                    "batch_ids": [img_id],
-                    "settings": inf_setting,
-                },
-            )[0]
-            try:
-                validate_ann_pred_json(pred_json)
-                ann_pred_json.append(pred_json)
-            except Exception as e:
-                image_info = api.image.get_info_by_id(id=img_id)
-                sly.logger.warn(
-                    f"Couldn't process annotation prediction for image: {image_info.name} (ID: {img_id}). Image remain unchanged. Error: {e}")
-                pred_json = {
-                    "description": '',
-                    "size": {"height": image_info.height, "width": image_info.width},
-                    "tags": [],
-                    "objects": [],
-                    "customBigData": {}
-                }
-                ann_pred_json.append(pred_json)
+    try:
+        ann_pred_json = api.task.send_request(
+            nn_session_id,
+            "inference_batch_ids",
+            data={
+                "dataset_id": dataset_id,
+                "batch_ids": ids,
+                "settings": inf_setting,
+            },
+        )
+        ann_pred_json = str(ann_pred_json)
+        if type(ann_pred_json) != list:
+            raise ValueError(f"Sequence with annotation predictions must be a 'list'. Predictions: '{ann_pred_json}'")
+    except Exception as e:
+        sly.logger.warn(f"Couldn't process predictions by batch. Attempting to process predictions one by one. Error: {e}")
+        if len(ann_pred_json) != len(ids):
+            ann_pred_json = []
+            for img_id in ids:
+                pred_json = api.task.send_request(
+                    nn_session_id,
+                    "inference_batch_ids",
+                    data={
+                        "dataset_id": dataset_id,
+                        "batch_ids": [img_id],
+                        "settings": inf_setting,
+                    },
+                )[0]
+                try:
+                    validate_ann_pred_json(pred_json)
+                    ann_pred_json.append(pred_json)
+                except Exception as e:
+                    image_info = api.image.get_info_by_id(id=img_id)
+                    sly.logger.warn(
+                        f"Couldn't process annotation prediction for image: {image_info.name} (ID: {img_id}). Image remain unchanged. Error: {e}")
+                    pred_json = {
+                        "description": '',
+                        "size": {"height": image_info.height, "width": image_info.width},
+                        "tags": [],
+                        "objects": [],
+                        "customBigData": {}
+                    }
+                    ann_pred_json.append(pred_json)
 
     # if state['infMode'] == 'sliding_window':
     #     # ann_pred_json = [pred_data_for_image['annotation'] for pred_data_for_image in ann_pred_json]
