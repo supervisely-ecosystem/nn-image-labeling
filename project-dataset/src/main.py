@@ -137,6 +137,30 @@ def apply_model_to_image(api, state, dataset_id, image_id, inf_setting):
     return orig_ann, res_anns[0], res_project_meta
 
 
+def validate_ann_pred_json(ann_pred_json: dict):
+    if (not isinstance(ann_pred_json["description"], str)
+        and not isinstance(ann_pred_json["size"], dict)
+        and not isinstance(ann_pred_json["tags"], list)
+        and not isinstance(ann_pred_json["objects"], list)
+            and not isinstance(ann_pred_json["customBigData"], dict)):
+        raise ValueError(
+            "Some of the received annotation prediction values are invalid:"
+            f"description: {ann_pred_json.get('description', None)}"
+            f"size: {ann_pred_json.get('size', None)}"
+            f"tags: {ann_pred_json.get('tags', None)}"
+            f"objects: {ann_pred_json.get('objects', None)}"
+            f"customBigData: {ann_pred_json.get('customBigData', None)}"
+        )
+
+    if not isinstance(ann_pred_json["size"]["height"], int):
+        raise ValueError(
+            f"Image 'height' must be 'int', not {type(ann_pred_json['size']['height'])}")
+
+    if not isinstance(ann_pred_json["size"]["width"], int):
+        raise ValueError(
+            f"Image 'width' must be 'int', not {type(ann_pred_json['size']['width'])}")
+
+
 def apply_model_to_images(api, state, dataset_id, ids, inf_setting):
     nn_session_id = state["sessionId"]
     add_mode = state["addMode"]
@@ -153,6 +177,38 @@ def apply_model_to_images(api, state, dataset_id, ids, inf_setting):
             "settings": inf_setting,
         },
     )
+
+    if not isinstance(ann_pred_json, list):
+        raise ValueError(
+            f"Sequence with annotation predictions must be a 'list', not '{type(ann_pred_json)}'")
+
+    if len(ann_pred_json) != len(ids):
+        ann_pred_json = []
+        for img_id in ids:
+            pred_json = api.task.send_request(
+                nn_session_id,
+                "inference_batch_ids",
+                data={
+                    "dataset_id": dataset_id,
+                    "batch_ids": [img_id],
+                    "settings": inf_setting,
+                },
+            )[0]
+            try:
+                validate_ann_pred_json(pred_json)
+                ann_pred_json.append(pred_json)
+            except Exception as e:
+                image_info = api.image.get_info_by_id(id=img_id)
+                sly.logger.warn(
+                    f"Couldn't process annotation prediction for image: {image_info.name} (ID: {img_id}). Image remain unchanged. Error: {e}")
+                pred_json = {
+                    "description": '',
+                    "size": {"height": image_info.height, "width": image_info.width},
+                    "tags": [],
+                    "objects": [],
+                    "customBigData": {}
+                }
+                ann_pred_json.append(pred_json)
 
     # if state['infMode'] == 'sliding_window':
     #     # ann_pred_json = [pred_data_for_image['annotation'] for pred_data_for_image in ann_pred_json]
@@ -269,28 +325,29 @@ def apply_model(api: sly.Api, task_id, context, state, app_logger):
                 sly.logger.warn(
                     msg=f"Couldn't process images by batch, images will be processed one by one, error: {e}."
                 )
-                try:
-                    image_ids, res_names, res_anns, res_metas = [], [], [], []
-                    for image_info in batch:
+
+                image_ids, res_names, res_anns, res_metas = [], [], [], []
+                for image_info in batch:
+                    try:
                         _, res_ann, final_project_meta = apply_model_to_image(
                             api, state, dataset.id, image_info.id, inf_setting
                         )
 
                         image_ids.append(image_info.id)
                         res_names.append(image_info.name)
-                        res_metas.append(image_info.meta)
                         res_anns.append(res_ann)
-                except Exception as e:
-                    sly.logger.warn(
-                        msg=f"Image: {image_info.name} (ID: {image_info.id}) couldn't be processed, image will be skipped, error: {e}.",
-                        extra={
-                            "image_name": image_info.name,
-                            "image_id": image_info.id,
-                            "image_meta": image_info.meta,
-                            "image_ann": res_ann,
-                        },
-                    )
-                    continue
+                        res_metas.append(image_info.meta)
+                    except Exception as e:
+                        sly.logger.warn(
+                            msg=f"Image: {image_info.name} (ID: {image_info.id}) couldn't be processed, image will be skipped, error: {e}.",
+                            extra={
+                                "image_name": image_info.name,
+                                "image_id": image_info.id,
+                                "image_meta": image_info.meta,
+                                "image_ann": res_ann,
+                            },
+                        )
+                        continue
 
             if res_project_meta != final_project_meta:
                 res_project_meta = final_project_meta
@@ -300,7 +357,25 @@ def apply_model(api: sly.Api, task_id, context, state, app_logger):
                 res_dataset.id, res_names, image_ids, metas=res_metas
             )
             res_ids = [image_info.id for image_info in res_images_infos]
-            api.annotation.upload_anns(res_ids, res_anns)
+            try:
+                api.annotation.upload_anns(res_ids, res_anns)
+            except:
+                res_ids = []
+                for res_img_info, ann in zip(res_images_infos, res_anns):
+                    try:
+                        api.annotation.upload_ann(res_img_info.id, ann)
+                    except Exception as e:
+                        sly.logger.warn(
+                            msg=f"Image: {res_img_info.name} (Original Image ID: {res_img_info.id}) couldn't be uploaded, image will be skipped, error: {e}.",
+                            extra={
+                                "image_name": res_img_info.name,
+                                "image_id": res_img_info.id,
+                                "image_meta": res_img_info.meta,
+                                "image_ann": ann,
+                            },
+                        )
+                        continue
+
             progress.iters_done_report(len(res_ids))
             if progress.need_report():
                 _update_progress(progress)
