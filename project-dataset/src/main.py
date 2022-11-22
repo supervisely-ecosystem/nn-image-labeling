@@ -339,7 +339,6 @@ def apply_model(api: sly.Api, task_id, context, state, app_logger):
                                 "image_name": image_info.name,
                                 "image_id": image_info.id,
                                 "image_meta": image_info.meta,
-                                "image_ann": res_ann,
                             },
                         )
                         continue
