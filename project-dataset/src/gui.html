@@ -130,7 +130,7 @@
                 <el-option key="sw"
                            label="sliding window"
                            value="sliding_window"
-                           :disabled="!(data.info && data.info.sliding_window_support && data.info.sliding_window_support !== false)">
+                           :disabled="state.disbledSW">
                 </el-option>
                 <!--
                 <el-option key="roi"

@@ -1,5 +1,6 @@
 import supervisely as sly
 import shared_utils.ui2 as ui
+import yaml
 
 
 def get_model_info(
@@ -21,9 +22,12 @@ def get_model_info(
             inf_settings = api.task.send_request(
                 state["sessionId"], "get_custom_inference_settings", data={}
             )
+
             if inf_settings["settings"] is None or len(inf_settings["settings"]) == 0:
                 inf_settings["settings"] = ""
                 sly.logger.info("Model doesn't support custom inference settings.")
+            elif isinstance(inf_settings["settings"], dict):
+                inf_settings["settings"] = yaml.dump(inf_settings["settings"], allow_unicode=True)
         except Exception as ex:
             inf_settings = {"settings": ""}
             sly.logger.info(
@@ -40,6 +44,14 @@ def get_model_info(
 
 
 def set_model_info(api, task_id, model_meta, model_info, inf_settings):
+    disabledSW = True
+    if "sliding_window_support" in model_info.keys() and model_info["sliding_window_support"] is not None:
+        if isinstance(model_info["sliding_window_support"], bool):
+            if model_info["sliding_window_support"]:
+                disabledSW = False
+        elif isinstance(model_info["sliding_window_support"], str):
+            disabledSW = False
+
     fields = [
         {"field": "data.info", "payload": model_info},
         {"field": "state.classesInfo", "payload": model_meta.obj_classes.to_json()},
@@ -49,6 +61,7 @@ def set_model_info(api, task_id, model_meta, model_info, inf_settings):
         {"field": "data.connected", "payload": True},
         {"field": "data.connectionError", "payload": ""},
         {"field": "state.settings", "payload": inf_settings["settings"]},
+        {"field": "state.disbledSW", "payload": disabledSW},
     ]
     api.task.set_fields(task_id, fields)
 
