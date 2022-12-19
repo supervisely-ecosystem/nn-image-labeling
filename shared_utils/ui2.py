@@ -3,6 +3,14 @@ import supervisely as sly
 
 
 def set_model_info(api: sly.Api, task_id, model_meta: sly.ProjectMeta, model_info: dict, inf_settings: dict):
+    disabledSW = True
+    if "sliding_window_support" in model_info.keys() and model_info["sliding_window_support"] is not None:
+        if isinstance(model_info["sliding_window_support"], bool):
+            if model_info["sliding_window_support"]:
+                disabledSW = False
+        elif isinstance(model_info["sliding_window_support"], str):
+            if model_info["sliding_window_support"] != "none":
+                disabledSW = False
     fields = [
         {"field": "data.info", "payload": model_info},
         {"field": "state.classesInfo", "payload": model_meta.obj_classes.to_json()},
@@ -11,7 +19,8 @@ def set_model_info(api: sly.Api, task_id, model_meta: sly.ProjectMeta, model_inf
         {"field": "state.tags", "payload": [True] * len(model_meta.tag_metas)},
         {"field": "data.connected", "payload": True},
         {"field": "data.connectionError", "payload": ""},
-        {"field": "state.settings", "payload": inf_settings["settings"]}
+        {"field": "state.settings", "payload": inf_settings["settings"]},
+        {"field": "state.disabledSW", "payload": disabledSW}
     ]
     api.task.set_fields(task_id, fields)
 

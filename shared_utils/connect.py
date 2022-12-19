@@ -50,7 +50,8 @@ def set_model_info(api, task_id, model_meta, model_info, inf_settings):
             if model_info["sliding_window_support"]:
                 disabledSW = False
         elif isinstance(model_info["sliding_window_support"], str):
-            disabledSW = False
+            if model_info["sliding_window_support"] != "none":
+                disabledSW = False
 
     fields = [
         {"field": "data.info", "payload": model_info},
