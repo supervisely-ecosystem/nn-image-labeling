@@ -39,7 +39,7 @@ def init(data, state):
     state["settings"] = "# empty"
     state["addMode"] = "merge"
     state["processing"] = False
-    state["disbledSW"] = True
+    state["disabledSW"] = True
 
     state["randomImagePreview"] = True
 

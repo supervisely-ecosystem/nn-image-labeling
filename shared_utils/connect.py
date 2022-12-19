@@ -61,7 +61,7 @@ def set_model_info(api, task_id, model_meta, model_info, inf_settings):
         {"field": "data.connected", "payload": True},
         {"field": "data.connectionError", "payload": ""},
         {"field": "state.settings", "payload": inf_settings["settings"]},
-        {"field": "state.disbledSW", "payload": disabledSW},
+        {"field": "state.disabledSW", "payload": disabledSW},
     ]
     api.task.set_fields(task_id, fields)
 
