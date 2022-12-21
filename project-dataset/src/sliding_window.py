@@ -108,7 +108,7 @@ def write_video(state, img, predictions, last_two_frames_copies=8, max_video_siz
     progress = sly.Progress("Uploading video", 1)
     progress.iter_done_report()
     refresh_progress_preview(progress)
-    remote_video_path = os.path.join(f"/apply_det_and_cls_to_project", "preview.mp4")
+    remote_video_path = os.path.join(f"/video_preview", "preview.mp4")
     if g.api.file.exists(g.team_id, remote_video_path):
         g.api.file.remove(g.team_id, remote_video_path)
     file_info = g.api.file.upload(g.team_id, video_path, remote_video_path)
