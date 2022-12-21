@@ -107,6 +107,8 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
     ann_pred_json = api.task.send_request(state["sessionId"],
                                           "inference_image_id",
                                           data=data)
+    if isinstance(ann_pred_json, dict) and "annotation" in ann_pred_json.keys():
+        ann_pred_json = ann_pred_json["annotation"]
     try:
         ann_pred = sly.Annotation.from_json(ann_pred_json, model_meta)
     except Exception as e:
