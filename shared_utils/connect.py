@@ -16,6 +16,7 @@ def get_model_info(
         meta_json = api.task.send_request(
             state["sessionId"], "get_output_classes_and_tags", data={}
         )
+        sly.logger.info(f"Model meta: {str(meta_json)}")
         model_meta = sly.ProjectMeta.from_json(meta_json)
 
         try:

@@ -184,21 +184,34 @@ def apply_model_to_images(api, state, dataset_id, ids, inf_setting):
             raise RuntimeError("Can not match number of images ids and number of predictions, len(img_ids) != len(ann_pred_json)")
     except Exception as e:
         sly.logger.warn(f"Couldn't process predictions by batch. Attempting to process predictions one by one. Error: {e}")
+        sly.logger.info("INFERENCE DEBUG INFO (BATCH)", extra ={
+            "nn_session_id": nn_session_id,
+            "dataset_id": dataset_id,
+            "batch_ids": ids,
+            "settings": str(inf_setting),
+        })
         ann_pred_json = []
         for img_id in ids:
-            pred_json = api.task.send_request(
-                nn_session_id,
-                "inference_batch_ids",
-                data={
-                    "dataset_id": dataset_id,
-                    "batch_ids": [img_id],
-                    "settings": inf_setting,
-                },
-            )[0]
             try:
+                pred_json = api.task.send_request(
+                    nn_session_id,
+                    "inference_batch_ids",
+                    data={
+                        "dataset_id": dataset_id,
+                        "batch_ids": [img_id],
+                        "settings": inf_setting,
+                    },
+                )[0]
+            
                 validate_ann_pred_json(pred_json)
                 ann_pred_json.append(pred_json)
             except Exception as e:
+                sly.logger.info("INFERENCE DEBUG INFO (PER IMG)", extra ={
+                    "nn_session_id": nn_session_id,
+                    "dataset_id": dataset_id,
+                    "image_id": img_id,
+                    "settings": str(inf_setting),
+                })
                 image_info = api.image.get_info_by_id(id=img_id)
                 sly.logger.warn(
                     f"Couldn't process annotation prediction for image: {image_info.name} (ID: {img_id}). Image remain unchanged. Error: {e}")
