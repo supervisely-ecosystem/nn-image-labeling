@@ -1,4 +1,3 @@
-
 def init_ui(data, state):
     data["info"] = {}
     data["classes"] = []
@@ -7,9 +6,9 @@ def init_ui(data, state):
     data["connectionError"] = ""
     data["rollbackIds"] = []
     data["ssOptions"] = {
-        "sessionTags": ["deployed_nn"],
+        "sessionTags": ["deployed_nn", "deployed_nn_keypoints"],
         "showLabel": False,
-        "size": "mini"
+        "size": "mini",
     }
 
     state["sessionId"] = ""
@@ -20,5 +19,3 @@ def init_ui(data, state):
     state["settings"] = "# empty"
     state["addMode"] = "merge"
     state["processing"] = False
-
-
