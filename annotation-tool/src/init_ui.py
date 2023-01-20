@@ -6,7 +6,7 @@ def init_ui(data, state):
     data["connectionError"] = ""
     data["rollbackIds"] = []
     data["ssOptions"] = {
-        "sessionTags": ["deployed_nn", "deployed_nn_keypoints"],
+        "sessionTags": ["deployed_nn"],
         "showLabel": False,
         "size": "mini",
     }
