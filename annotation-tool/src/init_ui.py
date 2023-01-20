@@ -9,6 +9,7 @@ def init_ui(data, state):
         "sessionTags": ["deployed_nn", "deployed_nn_keypoints"],
         "showLabel": False,
         "size": "mini",
+        "sessionTagsCombination": False,
     }
 
     state["sessionId"] = ""
