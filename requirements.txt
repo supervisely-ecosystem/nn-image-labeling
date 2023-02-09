@@ -1,2 +1,2 @@
-supervisely==6.69.6
+supervisely==6.69.46
 PyYAML
