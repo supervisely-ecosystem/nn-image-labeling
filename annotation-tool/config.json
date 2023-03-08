@@ -7,6 +7,8 @@
     "object detection",
     "semantic segmentation",
     "instance segmentation",
+    "pose estimation",
+    "salient object segmentation",
     "inference interfaces",
     "labeling"
   ],
