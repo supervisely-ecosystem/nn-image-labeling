@@ -28,7 +28,7 @@ ann_cache = defaultdict(list)  # only one (current) image in cache
 @sly.timeit
 def connect(api: sly.Api, task_id, context, state, app_logger):
     global model_meta, session_info
-    model_meta = get_model_info(api, task_id, context, state, app_logger)
+    model_meta, session_info = get_model_info(api, task_id, context, state, app_logger)
 
 
 @my_app.callback("disconnect")
