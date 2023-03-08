@@ -3,9 +3,7 @@ import shared_utils.ui2 as ui
 import yaml
 
 
-def get_model_info(
-    api: sly.Api, task_id, context, state, app_logger
-) -> sly.ProjectMeta:
+def get_model_info(api: sly.Api, task_id, context, state, app_logger) -> sly.ProjectMeta:
     model_meta = None
     try:
         info = api.task.send_request(state["sessionId"], "get_session_info", data={})
@@ -32,8 +30,7 @@ def get_model_info(
         except Exception as ex:
             inf_settings = {"settings": ""}
             sly.logger.info(
-                "Model doesn't support custom inference settings.\n"
-                f"Reason: {repr(ex)}"
+                "Model doesn't support custom inference settings.\n" f"Reason: {repr(ex)}"
             )
 
         log_settings(settings=inf_settings, msg="⚙️INFERENCE SETTINGS⚙️")
@@ -41,12 +38,15 @@ def get_model_info(
     except Exception as e:
         ui.set_error(api, task_id, e)
 
-    return model_meta
+    return model_meta, info
 
 
 def set_model_info(api, task_id, model_meta, model_info, inf_settings):
     disabledSW = True
-    if "sliding_window_support" in model_info.keys() and model_info["sliding_window_support"] is not None:
+    if (
+        "sliding_window_support" in model_info.keys()
+        and model_info["sliding_window_support"] is not None
+    ):
         if isinstance(model_info["sliding_window_support"], bool):
             if model_info["sliding_window_support"]:
                 disabledSW = False

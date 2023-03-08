@@ -14,11 +14,12 @@ from shared_utils.connect import get_model_info
 from shared_utils.inference import postprocess
 
 
-owner_id = int(os.environ['context.userId'])
-team_id = int(os.environ['context.teamId'])
+owner_id = int(os.environ["context.userId"])
+team_id = int(os.environ["context.teamId"])
 
 my_app: sly.AppService = sly.AppService(ignore_task_id=True)
 model_meta: sly.ProjectMeta = None
+session_info: dict = None
 
 ann_cache = defaultdict(list)  # only one (current) image in cache
 
@@ -26,8 +27,8 @@ ann_cache = defaultdict(list)  # only one (current) image in cache
 @my_app.callback("connect")
 @sly.timeit
 def connect(api: sly.Api, task_id, context, state, app_logger):
-    global model_meta
-    model_meta = get_model_info(api, task_id, context, state, app_logger)
+    global model_meta, session_info
+    model_meta, session_info = get_model_info(api, task_id, context, state, app_logger)
 
 
 @my_app.callback("disconnect")
@@ -81,8 +82,10 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
         inference_setting = yaml.safe_load(state["settings"])
     except Exception as e:
         inference_setting = {}
-        app_logger.warn(f'Model Inference launched without additional settings. \n'
-                        f'Reason: {e}', exc_info=True)
+        app_logger.warn(
+            f"Model Inference launched without additional settings. \n" f"Reason: {e}",
+            exc_info=True,
+        )
 
     project_meta = sly.ProjectMeta.from_json(api.project.get_meta(project_id))
 
@@ -94,29 +97,40 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
     ann = sly.Annotation.from_json(ann_json, project_meta)
     ann_cache[image_id].append(ann)
 
-    data = {
-        "image_id": image_id,
-        "settings": inference_setting
-    }
+    data = {"image_id": image_id, "settings": inference_setting}
 
     if figure_id is not None:
         label_annotation = ann.get_label_by_id(figure_id)
         object_roi: sly.Rectangle = label_annotation.geometry.to_bbox()
         data["rectangle"] = object_roi.to_json()
 
-    ann_pred_json = api.task.send_request(state["sessionId"],
-                                          "inference_image_id",
-                                          data=data)
+    ann_pred_json = api.task.send_request(state["sessionId"], "inference_image_id", data=data)
+
+    # update model meta if needed
+    if session_info.get("task type") == "salient object segmentation" and figure_id is not None:
+        # add new obj class to model meta if needed
+        rectangle_data = data["rectangle"]
+        objclass_info = api.object_class.get_info_by_id(id=rectangle_data["classId"])
+        class_name = objclass_info.name + "_mask"
+        global model_meta
+        if not model_meta.get_obj_class(class_name):  # if obj class is not in model meta
+            model_meta = model_meta.add_obj_class(sly.ObjClass(class_name, sly.Bitmap, [255, 0, 0]))
+
     if isinstance(ann_pred_json, dict) and "annotation" in ann_pred_json.keys():
         ann_pred_json = ann_pred_json["annotation"]
     try:
         ann_pred = sly.Annotation.from_json(ann_pred_json, model_meta)
     except Exception as e:
-        sly.logger.warn("Can not process predictions from serving", extra={"image_id": image_id, "details": repr(e)})
+        sly.logger.warn(
+            "Can not process predictions from serving",
+            extra={"image_id": image_id, "details": repr(e)},
+        )
         sly.logger.debug("Response from serving app", extra={"serving_response": ann_pred_json})
         ann_pred = sly.Annotation(img_size=ann.img_size)
 
-    res_ann, res_project_meta = postprocess(api, project_id, ann_pred, project_meta, model_meta, state)
+    res_ann, res_project_meta = postprocess(
+        api, project_id, ann_pred, project_meta, model_meta, state
+    )
 
     if state["addMode"] == "merge":
         res_ann = ann.merge(res_ann)
@@ -128,7 +142,7 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
     api.annotation.upload_ann(image_id, res_ann)
     fields = [
         {"field": "data.rollbackIds", "payload": list(ann_cache.keys())},
-        {"field": "state.processing", "payload": False}
+        {"field": "state.processing", "payload": False},
     ]
     api.task.set_fields(task_id, fields)
 
@@ -145,7 +159,7 @@ def undo(api: sly.Api, task_id, context, state, app_logger):
 
     fields = [
         {"field": "data.rollbackIds", "payload": list(ann_cache.keys())},
-        {"field": "state.processing", "payload": False}
+        {"field": "state.processing", "payload": False},
     ]
     api.task.set_fields(task_id, fields)
 
