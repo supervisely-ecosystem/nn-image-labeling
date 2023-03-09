@@ -10,7 +10,7 @@ sly.logger.info(f"Root source directory: {root_source_path}")
 sys.path.append(root_source_path)
 
 from init_ui import init_ui
-from shared_utils.connect import get_model_info
+from shared_utils.connect import get_model_info, add_classes_to_meta
 from shared_utils.inference import postprocess
 
 
@@ -29,6 +29,8 @@ ann_cache = defaultdict(list)  # only one (current) image in cache
 def connect(api: sly.Api, task_id, context, state, app_logger):
     global model_meta, session_info
     model_meta, session_info = get_model_info(api, task_id, context, state, app_logger)
+    if session_info.get("task type") == "salient object segmentation":
+        model_meta = add_classes_to_meta(model_meta, api, context, task_id, session_info)
 
 
 @my_app.callback("disconnect")
@@ -104,17 +106,19 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
         object_roi: sly.Rectangle = label_annotation.geometry.to_bbox()
         data["rectangle"] = object_roi.to_json()
 
-    ann_pred_json = api.task.send_request(state["sessionId"], "inference_image_id", data=data)
-
-    # update model meta if needed
+    # update project meta if needed
     if session_info.get("task type") == "salient object segmentation" and figure_id is not None:
-        # add new obj class to model meta if needed
+        # add new obj class to project meta if needed
         rectangle_data = data["rectangle"]
         objclass_info = api.object_class.get_info_by_id(id=rectangle_data["classId"])
         class_name = objclass_info.name + "_mask"
-        global model_meta
-        if not model_meta.get_obj_class(class_name):  # if obj class is not in model meta
-            model_meta = model_meta.add_obj_class(sly.ObjClass(class_name, sly.Bitmap, [255, 0, 0]))
+        if not project_meta.get_obj_class(class_name):  # if obj class is not in project meta
+            project_meta = project_meta.add_obj_class(
+                sly.ObjClass(class_name, sly.Bitmap, [255, 0, 0])
+            )
+            api.project.update_meta(project_id, project_meta.to_json())
+
+    ann_pred_json = api.task.send_request(state["sessionId"], "inference_image_id", data=data)
 
     if isinstance(ann_pred_json, dict) and "annotation" in ann_pred_json.keys():
         ann_pred_json = ann_pred_json["annotation"]
@@ -137,7 +141,10 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
     else:
         pass  # replace (data prepared, nothing to do)
 
-    if res_project_meta != project_meta:
+    if (
+        res_project_meta != project_meta
+        and session_info.get("task type") != "salient object segmentation"
+    ):
         api.project.update_meta(project_id, res_project_meta.to_json())
     api.annotation.upload_ann(image_id, res_ann)
     fields = [

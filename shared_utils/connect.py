@@ -80,3 +80,34 @@ def log_settings(settings, msg):
     sly.logger.info(msg=msg)
     for key, value in settings.items():
         sly.logger.info(f"{key}: {value}")
+
+# function for adding object classes to model meta
+# some nn serving apps use dynamic model meta (for example, serve is-net)
+# this function is necessary to make usage of such nn serving apps available in nn image labeling app
+def add_classes_to_meta(meta, api, context, task_id, info):
+    # define project info
+    project_id = context.get("projectId")
+    project_meta = sly.ProjectMeta.from_json(api.project.get_meta(project_id))
+    # define images info
+    images_info = []
+    for dataset_info in api.dataset.get_list(project_id):
+        images_info.extend(api.image.get_list(dataset_info.id))
+    for image_info in images_info:
+        image_ann_json = api.annotation.download(image_info.id).annotation
+        image_ann = sly.Annotation.from_json(image_ann_json, project_meta)
+        image_labels = image_ann.labels
+        for label in image_labels:
+            if label.geometry.geometry_name() == "rectangle": # check if label is a bounding box
+                box_name = label.obj_class.name
+                class_name = box_name + "_mask"
+                obj_class = sly.ObjClass(class_name, sly.Bitmap, [255, 0, 0])
+                if not meta.get_obj_class(class_name):  # if obj class is not in meta
+                    meta = meta.add_obj_class(obj_class)
+    info["number_of_classes"] = len(meta.obj_classes) # update number of classes
+    fields = [
+        {"field": "data.info", "payload": info},
+        {"field": "state.classesInfo", "payload": meta.obj_classes.to_json()},
+        {"field": "state.classes", "payload": [True] * len(meta.obj_classes)},
+    ]
+    api.task.set_fields(task_id, fields) # update necessary fields
+    return meta
