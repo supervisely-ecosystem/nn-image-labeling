@@ -27,7 +27,7 @@ ann_cache = defaultdict(list)  # only one (current) image in cache
 @my_app.callback("connect")
 @sly.timeit
 def connect(api: sly.Api, task_id, context, state, app_logger):
-    global model_meta
+    global model_meta, session_info
     model_meta, session_info = get_model_info(api, task_id, context, state, app_logger)
 
 
