@@ -129,16 +129,6 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
             final_labels.append(label.clone(obj_class=target_class))  # only one object
         ann_pred = ann_pred.clone(labels=final_labels)
 
-        session_info["number_of_classes"] = len(
-            project_meta.obj_classes
-        )  # update number of classes
-        fields = [
-            {"field": "data.info", "payload": session_info},
-            {"field": "state.classesInfo", "payload": project_meta.obj_classes.to_json()},
-            {"field": "state.classes", "payload": [True] * len(project_meta.obj_classes)},
-        ]
-        api.task.set_fields(task_id, fields)  # update necessary fields
-
     res_ann, res_project_meta = postprocess(
         api, project_id, ann_pred, project_meta, model_meta, state
     )
