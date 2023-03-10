@@ -128,23 +128,27 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
         for label in ann_pred.labels:
             final_labels.append(label.clone(obj_class=target_class))  # only one object
         ann_pred = ann_pred.clone(labels=final_labels)
+        print(f"[before preprocess] mask class: {ann_pred.labels[0].obj_class.name}")
 
     res_ann, res_project_meta = postprocess(
         api, project_id, ann_pred, project_meta, model_meta, state
     )
+    # print(f"[after preprocess] mask class: {res_ann.labels[0].obj_class.name}")
 
     if state["addMode"] == "merge":
         res_ann = ann.merge(res_ann)
     else:
         pass  # replace (data prepared, nothing to do)
+    
+    # print(f"[after merge] mask class: {res_ann.labels[0].obj_class.name}")
 
     if res_project_meta != project_meta:
         api.project.update_meta(project_id, res_project_meta.to_json())
     
     if session_info.get("task type") == "salient object segmentation" and figure_id is not None:
         print(f"!!!! number of predictions: {len(res_ann.labels)}")
-        if len(res_ann.labels) > 0:
-            print(f"!!!! mask class: {res_ann.labels[0].obj_class.name}")
+        if len(res_ann.labels) > 1:
+            print(f"!!!! mask class: {res_ann.labels[1].obj_class.name}")
             
     api.annotation.upload_ann(image_id, res_ann)
     fields = [
