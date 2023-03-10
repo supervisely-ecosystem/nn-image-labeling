@@ -19,7 +19,6 @@ team_id = int(os.environ["context.teamId"])
 
 my_app: sly.AppService = sly.AppService(ignore_task_id=True)
 model_meta: sly.ProjectMeta = None
-session_info: dict = None
 
 ann_cache = defaultdict(list)  # only one (current) image in cache
 
@@ -27,8 +26,8 @@ ann_cache = defaultdict(list)  # only one (current) image in cache
 @my_app.callback("connect")
 @sly.timeit
 def connect(api: sly.Api, task_id, context, state, app_logger):
-    global model_meta, session_info
-    model_meta, session_info = get_model_info(api, task_id, context, state, app_logger)
+    global model_meta
+    model_meta = get_model_info(api, task_id, context, state, app_logger)
 
 
 @my_app.callback("disconnect")
@@ -99,24 +98,12 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
 
     data = {"image_id": image_id, "settings": inference_setting}
 
-    label_roi = None
     if figure_id is not None:
-        label_roi = ann.get_label_by_id(figure_id)
-        object_roi: sly.Rectangle = label_roi.geometry.to_bbox()
+        label_annotation = ann.get_label_by_id(figure_id)
+        object_roi: sly.Rectangle = label_annotation.geometry.to_bbox()
         data["rectangle"] = object_roi.to_json()
 
     ann_pred_json = api.task.send_request(state["sessionId"], "inference_image_id", data=data)
-
-    # # update model meta if needed
-    # if session_info.get("task type") == "salient object segmentation" and figure_id is not None:
-    #     # add new obj class to model meta if needed
-    #     rectangle_data = data["rectangle"]
-    #     objclass_info = api.object_class.get_info_by_id(id=rectangle_data["classId"])
-    #     class_name = objclass_info.name + "_mask"
-    #     global model_meta
-    #     if not model_meta.get_obj_class(class_name):  # if obj class is not in model meta
-    #         model_meta = model_meta.add_obj_class(sly.ObjClass(class_name, sly.Bitmap, [255, 0, 0]))
-
     if isinstance(ann_pred_json, dict) and "annotation" in ann_pred_json.keys():
         ann_pred_json = ann_pred_json["annotation"]
     try:
@@ -128,23 +115,9 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
         )
         sly.logger.debug("Response from serving app", extra={"serving_response": ann_pred_json})
         ann_pred = sly.Annotation(img_size=ann.img_size)
-        
-    if session_info.get("task type") == "salient object segmentation" and figure_id is not None:   
-        target_class_name = label_roi.obj_class.name + "_mask"  
-        target_class = project_meta.get_obj_class(target_class_name) 
-        if target_class is None:
-            target_class = sly.ObjClass(target_class_name, sly.Bitmap, [255, 0, 0])
-            project_meta = project_meta.add_obj_class(target_class)
-            api.project.update_meta(project_meta)
-            # delete - api.project.pull_meta_ids(project_id, project_meta)
-        
-        final_labels = []
-        for label in ann_pred.labels:
-            final_labels.append(label.clone(obj_class=target_class)) # only one object
-        final_ann_pred = ann_pred.clone(labels=final_labels)
-                        
+
     res_ann, res_project_meta = postprocess(
-        api, project_id, final_ann_pred, project_meta, model_meta, state
+        api, project_id, ann_pred, project_meta, model_meta, state
     )
 
     if state["addMode"] == "merge":
