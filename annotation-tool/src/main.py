@@ -123,7 +123,7 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
         if target_class is None:
             target_class = sly.ObjClass(target_class_name, sly.Bitmap, [255, 0, 0])
             project_meta = project_meta.add_obj_class(target_class)
-            api.project.update_meta(project_meta)
+            api.project.update_meta(project_id, project_meta)
         final_labels = []
         for label in ann_pred.labels:
             final_labels.append(label.clone(obj_class=target_class))  # only one object
