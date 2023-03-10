@@ -144,7 +144,7 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
     if session_info.get("task type") == "salient object segmentation" and figure_id is not None:
         print(f"!!!! number of predictions: {len(res_ann.labels)}")
         if len(res_ann.labels) > 0:
-            print(f"!!!! mask class: {len(res_ann.labels[0].obj_class.name)}")
+            print(f"!!!! mask class: {res_ann.labels[0].obj_class.name}")
             
     api.annotation.upload_ann(image_id, res_ann)
     fields = [
