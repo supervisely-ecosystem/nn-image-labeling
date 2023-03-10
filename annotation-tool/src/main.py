@@ -140,6 +140,12 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
 
     if res_project_meta != project_meta:
         api.project.update_meta(project_id, res_project_meta.to_json())
+    
+    if session_info.get("task type") == "salient object segmentation" and figure_id is not None:
+        print(f"!!!! number of predictions: {len(res_ann.labels)}")
+        if len(res_ann.labels) > 0:
+            print(f"!!!! mask class: {len(res_ann.labels[0].obj_class.name)}")
+            
     api.annotation.upload_ann(image_id, res_ann)
     fields = [
         {"field": "data.rollbackIds", "payload": list(ann_cache.keys())},
