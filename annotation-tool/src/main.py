@@ -14,7 +14,7 @@ from shared_utils.connect import get_model_info
 from shared_utils.inference import postprocess
 from dotenv import load_dotenv
 
-if sly.is_development():  # for debug, has no effect in production
+if sly.is_development():
     load_dotenv(os.path.expanduser("~/supervisely.env"))
     load_dotenv("annotation-tool/debug.env")
 
@@ -130,11 +130,12 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
             api.project.update_meta(project_id, project_meta)
         final_labels = []
         for label in ann_pred.labels:
-            final_labels.append(label.clone(obj_class=target_class))
+            final_labels.append(label.clone(obj_class=target_class))  # only one object
         ann_pred = ann_pred.clone(labels=final_labels)
-        print(f"[before preprocess] mask class: {ann_pred.labels[0].obj_class.name}")
 
-    if session_info.get("task type") != "salient object segmentation":
+    if not (
+        session_info.get("task type") == "salient object segmentation" and figure_id is not None
+    ):
         res_ann, res_project_meta = postprocess(
             api, project_id, ann_pred, project_meta, model_meta, state
         )
@@ -147,7 +148,9 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
         pass  # replace (data prepared, nothing to do)
 
     if (
-        session_info.get("task type") != "salient object segmentation"
+        not (
+            session_info.get("task type") == "salient object segmentation" and figure_id is not None
+        )
         and res_project_meta != project_meta
     ):
         api.project.update_meta(project_id, res_project_meta.to_json())
