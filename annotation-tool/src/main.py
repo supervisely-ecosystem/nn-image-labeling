@@ -12,13 +12,18 @@ sys.path.append(root_source_path)
 from init_ui import init_ui
 from shared_utils.connect import get_model_info
 from shared_utils.inference import postprocess
+from dotenv import load_dotenv
 
+if sly.is_development():
+    load_dotenv(os.path.expanduser("~/supervisely.env"))
+    load_dotenv("annotation-tool/debug.env")
 
 owner_id = int(os.environ["context.userId"])
 team_id = int(os.environ["context.teamId"])
 
 my_app: sly.AppService = sly.AppService(ignore_task_id=True)
 model_meta: sly.ProjectMeta = None
+session_info: dict = None
 
 ann_cache = defaultdict(list)  # only one (current) image in cache
 
@@ -26,8 +31,8 @@ ann_cache = defaultdict(list)  # only one (current) image in cache
 @my_app.callback("connect")
 @sly.timeit
 def connect(api: sly.Api, task_id, context, state, app_logger):
-    global model_meta
-    model_meta = get_model_info(api, task_id, context, state, app_logger)
+    global model_meta, session_info
+    model_meta, session_info = get_model_info(api, task_id, context, state, app_logger)
 
 
 @my_app.callback("disconnect")
@@ -99,8 +104,8 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
     data = {"image_id": image_id, "settings": inference_setting}
 
     if figure_id is not None:
-        label_annotation = ann.get_label_by_id(figure_id)
-        object_roi: sly.Rectangle = label_annotation.geometry.to_bbox()
+        label_roi = ann.get_label_by_id(figure_id)
+        object_roi: sly.Rectangle = label_roi.geometry.to_bbox()
         data["rectangle"] = object_roi.to_json()
 
     ann_pred_json = api.task.send_request(state["sessionId"], "inference_image_id", data=data)
@@ -116,17 +121,40 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
         sly.logger.debug("Response from serving app", extra={"serving_response": ann_pred_json})
         ann_pred = sly.Annotation(img_size=ann.img_size)
 
-    res_ann, res_project_meta = postprocess(
-        api, project_id, ann_pred, project_meta, model_meta, state
-    )
+    if session_info.get("task type") == "salient object segmentation" and figure_id is not None:
+        target_class_name = label_roi.obj_class.name + "_mask"
+        target_class = project_meta.get_obj_class(target_class_name)
+        if target_class is None:
+            target_class = sly.ObjClass(target_class_name, sly.Bitmap, [255, 0, 0])
+            project_meta = project_meta.add_obj_class(target_class)
+            api.project.update_meta(project_id, project_meta)
+        final_labels = []
+        for label in ann_pred.labels:
+            final_labels.append(label.clone(obj_class=target_class))  # only one object
+        ann_pred = ann_pred.clone(labels=final_labels)
+
+    if not (
+        session_info.get("task type") == "salient object segmentation" and figure_id is not None
+    ):
+        res_ann, res_project_meta = postprocess(
+            api, project_id, ann_pred, project_meta, model_meta, state
+        )
+    else:
+        res_ann = ann_pred
 
     if state["addMode"] == "merge":
         res_ann = ann.merge(res_ann)
     else:
         pass  # replace (data prepared, nothing to do)
 
-    if res_project_meta != project_meta:
+    if (
+        not (
+            session_info.get("task type") == "salient object segmentation" and figure_id is not None
+        )
+        and res_project_meta != project_meta
+    ):
         api.project.update_meta(project_id, res_project_meta.to_json())
+
     api.annotation.upload_ann(image_id, res_ann)
     fields = [
         {"field": "data.rollbackIds", "payload": list(ann_cache.keys())},

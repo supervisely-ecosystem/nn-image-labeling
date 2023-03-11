@@ -38,7 +38,7 @@ def get_model_info(api: sly.Api, task_id, context, state, app_logger) -> sly.Pro
     except Exception as e:
         ui.set_error(api, task_id, e)
 
-    return model_meta
+    return model_meta, info
 
 
 def set_model_info(api, task_id, model_meta, model_info, inf_settings):
