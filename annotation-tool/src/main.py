@@ -12,7 +12,11 @@ sys.path.append(root_source_path)
 from init_ui import init_ui
 from shared_utils.connect import get_model_info
 from shared_utils.inference import postprocess
+from dotenv import load_dotenv
 
+if sly.is_development():  # for debug, has no effect in production
+    load_dotenv(os.path.expanduser("~/supervisely.env"))
+    load_dotenv("annotation-tool/debug.env")
 
 owner_id = int(os.environ["context.userId"])
 team_id = int(os.environ["context.teamId"])
@@ -126,20 +130,27 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
             api.project.update_meta(project_id, project_meta)
         final_labels = []
         for label in ann_pred.labels:
-            final_labels.append(label.clone(obj_class=target_class))  # only one object
+            final_labels.append(label.clone(obj_class=target_class))
         ann_pred = ann_pred.clone(labels=final_labels)
 
-    res_ann, res_project_meta = postprocess(
-        api, project_id, ann_pred, project_meta, model_meta, state
-    )
+    if session_info.get("task type") != "salient object segmentation":
+        res_ann, res_project_meta = postprocess(
+            api, project_id, ann_pred, project_meta, model_meta, state
+        )
+    else:
+        res_ann = ann_pred
 
     if state["addMode"] == "merge":
         res_ann = ann.merge(res_ann)
     else:
         pass  # replace (data prepared, nothing to do)
 
-    if res_project_meta != project_meta:
+    if (
+        session_info.get("task type") != "salient object segmentation"
+        and res_project_meta != project_meta
+    ):
         api.project.update_meta(project_id, res_project_meta.to_json())
+
     api.annotation.upload_ann(image_id, res_ann)
     fields = [
         {"field": "data.rollbackIds", "payload": list(ann_cache.keys())},
