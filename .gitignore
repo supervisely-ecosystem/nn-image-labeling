@@ -1,5 +1,6 @@
 .idea
 venv
+.venv
 supervisely_lib
 shared_utils/__pycache__
 project-dataset/src/__pycache__

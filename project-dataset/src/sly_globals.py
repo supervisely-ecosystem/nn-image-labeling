@@ -15,11 +15,11 @@ sys.path.append(root_source_path)
 # load_dotenv(os.path.expanduser("~/supervisely.env"))
 # load_dotenv("project-dataset/debug.env")
 
-task_id = int(os.environ['TASK_ID'])
+task_id = int(os.environ["TASK_ID"])
 
-owner_id = int(os.environ['context.userId'])
-team_id = int(os.environ['context.teamId'])
-workspace_id = int(os.environ['context.workspaceId'])
+owner_id = int(os.environ["context.userId"])
+team_id = int(os.environ["context.teamId"])
+workspace_id = int(os.environ["context.workspaceId"])
 
 
 project_id = None
@@ -42,7 +42,7 @@ project_meta: sly.ProjectMeta = None
 
 image_grid_options = {
     "opacity": 0.5,
-    "fillRectangle": True, #False,
+    "fillRectangle": True,  # False,
     "enableZoom": False,
     "syncViews": True,
     "showPreview": True,
@@ -51,15 +51,10 @@ image_grid_options = {
 }
 
 empty_gallery = {
-    "content": {
-        "projectMeta": {},
-        "annotations": {},
-        "layout": []
-    },
+    "content": {"projectMeta": {}, "annotations": {}, "layout": []},
     "options": image_grid_options,
 }
 
 # sliding window part
 
 det_model_meta = None
-
