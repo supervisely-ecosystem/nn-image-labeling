@@ -20,7 +20,7 @@ import sly_globals as g
 @sly.timeit
 @g.my_app.ignore_errors_and_show_dialog_window()
 def connect(api: sly.Api, task_id, context, state, app_logger):
-    g.model_meta = get_model_info(api, task_id, context, state, app_logger)
+    g.model_meta, session_info = get_model_info(api, task_id, context, state, app_logger)
     actual_ui_state = api.task.get_field(task_id, "state")
     preview(api, task_id, context, actual_ui_state, app_logger)
 
@@ -49,9 +49,7 @@ def select_all_classes(api: sly.Api, task_id, context, state, app_logger):
 @g.my_app.callback("deselect_all_classes")
 @sly.timeit
 def deselect_all_classes(api: sly.Api, task_id, context, state, app_logger):
-    api.task.set_field(
-        task_id, "state.classes", [False] * len(g.model_meta.obj_classes)
-    )
+    api.task.set_field(task_id, "state.classes", [False] * len(g.model_meta.obj_classes))
 
 
 @g.my_app.callback("select_all_tags")
@@ -138,11 +136,13 @@ def apply_model_to_image(api, state, dataset_id, image_id, inf_setting):
 
 
 def validate_ann_pred_json(ann_pred_json: dict):
-    if (not isinstance(ann_pred_json["description"], str)
+    if (
+        not isinstance(ann_pred_json["description"], str)
         and not isinstance(ann_pred_json["size"], dict)
         and not isinstance(ann_pred_json["tags"], list)
         and not isinstance(ann_pred_json["objects"], list)
-            and not isinstance(ann_pred_json["customBigData"], dict)):
+        and not isinstance(ann_pred_json["customBigData"], dict)
+    ):
         raise ValueError(
             "Some of the received annotation prediction values are invalid:"
             f"description: {ann_pred_json.get('description', None)}"
@@ -154,11 +154,11 @@ def validate_ann_pred_json(ann_pred_json: dict):
 
     if not isinstance(ann_pred_json["size"]["height"], int):
         raise ValueError(
-            f"Image 'height' must be 'int', not {type(ann_pred_json['size']['height'])}")
+            f"Image 'height' must be 'int', not {type(ann_pred_json['size']['height'])}"
+        )
 
     if not isinstance(ann_pred_json["size"]["width"], int):
-        raise ValueError(
-            f"Image 'width' must be 'int', not {type(ann_pred_json['size']['width'])}")
+        raise ValueError(f"Image 'width' must be 'int', not {type(ann_pred_json['size']['width'])}")
 
 
 def apply_model_to_images(api, state, dataset_id, ids, inf_setting):
@@ -179,17 +179,26 @@ def apply_model_to_images(api, state, dataset_id, ids, inf_setting):
             },
         )
         if type(ann_pred_json) != list:
-            raise ValueError(f"Sequence with annotation predictions must be a 'list'. Predictions: '{ann_pred_json}'")
+            raise ValueError(
+                f"Sequence with annotation predictions must be a 'list'. Predictions: '{ann_pred_json}'"
+            )
         if len(ann_pred_json) != len(ids):
-            raise RuntimeError("Can not match number of images ids and number of predictions, len(img_ids) != len(ann_pred_json)")
+            raise RuntimeError(
+                "Can not match number of images ids and number of predictions, len(img_ids) != len(ann_pred_json)"
+            )
     except Exception as e:
-        sly.logger.warn(f"Couldn't process predictions by batch. Attempting to process predictions one by one. Error: {e}")
-        sly.logger.info("INFERENCE DEBUG INFO (BATCH)", extra ={
-            "nn_session_id": nn_session_id,
-            "dataset_id": dataset_id,
-            "batch_ids": ids,
-            "settings": str(inf_setting),
-        })
+        sly.logger.warn(
+            f"Couldn't process predictions by batch. Attempting to process predictions one by one. Error: {e}"
+        )
+        sly.logger.info(
+            "INFERENCE DEBUG INFO (BATCH)",
+            extra={
+                "nn_session_id": nn_session_id,
+                "dataset_id": dataset_id,
+                "batch_ids": ids,
+                "settings": str(inf_setting),
+            },
+        )
         ann_pred_json = []
         for img_id in ids:
             try:
@@ -202,19 +211,23 @@ def apply_model_to_images(api, state, dataset_id, ids, inf_setting):
                         "settings": inf_setting,
                     },
                 )[0]
-            
+
                 validate_ann_pred_json(pred_json)
                 ann_pred_json.append(pred_json)
             except Exception as e:
-                sly.logger.info("INFERENCE DEBUG INFO (PER IMG)", extra ={
-                    "nn_session_id": nn_session_id,
-                    "dataset_id": dataset_id,
-                    "image_id": img_id,
-                    "settings": str(inf_setting),
-                })
+                sly.logger.info(
+                    "INFERENCE DEBUG INFO (PER IMG)",
+                    extra={
+                        "nn_session_id": nn_session_id,
+                        "dataset_id": dataset_id,
+                        "image_id": img_id,
+                        "settings": str(inf_setting),
+                    },
+                )
                 image_info = api.image.get_info_by_id(id=img_id)
                 sly.logger.warn(
-                    f"Couldn't process annotation prediction for image: {image_info.name} (ID: {img_id}). Image remain unchanged. Error: {e}")
+                    f"Couldn't process annotation prediction for image: {image_info.name} (ID: {img_id}). Image remain unchanged. Error: {e}"
+                )
                 pred_json = sly.Annotation(img_size=(image_info.height, image_info.width)).to_json()
                 ann_pred_json.append(pred_json)
 
@@ -230,9 +243,7 @@ def apply_model_to_images(api, state, dataset_id, ids, inf_setting):
                 "Can not process predictions from serving",
                 extra={"image_id": img_id, "details": repr(e)},
             )
-            sly.logger.debug(
-                "Response from serving app", extra={"serving_response": pred_json}
-            )
+            sly.logger.debug("Response from serving app", extra={"serving_response": pred_json})
             img_info = api.image.get_info_by_id(img_id)
             ann_pred = sly.Annotation(img_size=(img_info.height, img_info.width))
             ann_preds.append(ann_pred)
@@ -310,9 +321,7 @@ def apply_model(api: sly.Api, task_id, context, state, app_logger):
     progress = sly.Progress("Inference", len(g.input_images), need_info_log=True)
 
     for dataset in g.input_datasets:
-        res_dataset = api.dataset.create(
-            res_project.id, dataset.name, dataset.description
-        )
+        res_dataset = api.dataset.create(res_project.id, dataset.name, dataset.description)
         images = api.image.get_list(dataset.id)
 
         for batch in sly.batched(images, batch_size=10):
@@ -382,9 +391,7 @@ def apply_model(api: sly.Api, task_id, context, state, app_logger):
             if progress.need_report():
                 _update_progress(progress)
 
-    res_project = api.project.get_info_by_id(
-        res_project.id
-    )  # to refresh reference_image_url
+    res_project = api.project.get_info_by_id(res_project.id)  # to refresh reference_image_url
     fields = [
         {"field": "data.resProjectId", "payload": res_project.id},
         {"field": "data.resProjectName", "payload": res_project.name},
@@ -418,13 +425,9 @@ def main():
         g.input_images.extend(g.my_app.public_api.image.get_list(ds_info.id))
 
     data["imagesForPreview"] = get_images_for_preview_list()
-    state["previewOnImageId"] = (
-        g.input_images[0].id if len(g.input_images) > 0 else None
-    )
+    state["previewOnImageId"] = g.input_images[0].id if len(g.input_images) > 0 else None
 
-    g.project_meta = sly.ProjectMeta.from_json(
-        g.my_app.public_api.project.get_meta(g.project_id)
-    )
+    g.project_meta = sly.ProjectMeta.from_json(g.my_app.public_api.project.get_meta(g.project_id))
 
     ui.init(data, state)
     data["emptyGallery"] = g.empty_gallery
