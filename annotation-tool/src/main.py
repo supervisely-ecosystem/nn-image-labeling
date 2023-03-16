@@ -133,8 +133,19 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
             final_labels.append(label.clone(obj_class=target_class))  # only one object
         ann_pred = ann_pred.clone(labels=final_labels)
 
-    if not (
-        session_info.get("task type") == "salient object segmentation" and figure_id is not None
+    if session_info.get("task type") == "prompt-based object detection":
+        if figure_id is None:
+            # add obj class to project meta if needed
+            for label in ann_pred.labels:
+                if not project_meta.get_obj_class(label.obj_class.name):
+                    project_meta = project_meta.add_obj_class(label.obj_class)
+                    api.project.update_meta(project_id, project_meta)
+
+    if (
+        not (
+            session_info.get("task type") == "salient object segmentation" and figure_id is not None
+        )
+        and session_info.get("task type") != "prompt-based object detection"
     ):
         res_ann, res_project_meta = postprocess(
             api, project_id, ann_pred, project_meta, model_meta, state
@@ -151,6 +162,7 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
         not (
             session_info.get("task type") == "salient object segmentation" and figure_id is not None
         )
+        and session_info.get("task type") != "prompt-based object detection"
         and res_project_meta != project_meta
     ):
         api.project.update_meta(project_id, res_project_meta.to_json())
