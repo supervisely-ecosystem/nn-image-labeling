@@ -137,6 +137,11 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
         if figure_id is None:
             # add obj class to project meta if needed
             for label in ann_pred.labels:
+                if not project_meta.get_tag_meta("confidence"):
+                    project_meta = project_meta.add_tag_meta(
+                        sly.TagMeta("confidence", value_type="any_number")
+                    )
+                    api.project.update_meta(project_id, project_meta)
                 if not project_meta.get_obj_class(label.obj_class.name):
                     project_meta = project_meta.add_obj_class(label.obj_class)
                     api.project.update_meta(project_id, project_meta)
