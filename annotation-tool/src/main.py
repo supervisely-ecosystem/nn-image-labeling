@@ -109,6 +109,19 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
         data["rectangle"] = object_roi.to_json()
 
     ann_pred_json = api.task.send_request(state["sessionId"], "inference_image_id", data=data)
+    if session_info.get("task type") == "prompt-based object detection":
+        # add tag to model meta if necessary
+        global model_meta
+        if not model_meta.get_tag_meta("confidence"):
+            model_meta = model_meta.add_tag_meta(sly.TagMeta("confidence", value_type="any_number"))
+        # add obj class to model meta if necessary
+        for object in ann_pred_json["annotation"]["objects"]:
+            class_name = object["classTitle"]
+            obj_class = model_meta.get_obj_class(class_name)
+            if obj_class is None:
+                obj_class = sly.ObjClass(class_name, sly.Rectangle, [255, 0, 0])
+                model_meta = model_meta.add_obj_class(obj_class)
+
     if isinstance(ann_pred_json, dict) and "annotation" in ann_pred_json.keys():
         ann_pred_json = ann_pred_json["annotation"]
     try:
@@ -135,13 +148,14 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
 
     if session_info.get("task type") == "prompt-based object detection":
         if figure_id is None:
-            # add obj class to project meta if needed
+            # add tag to project meta if necessary
+            if not project_meta.get_tag_meta("confidence"):
+                project_meta = project_meta.add_tag_meta(
+                    sly.TagMeta("confidence", value_type="any_number")
+                )
+                api.project.update_meta(project_id, project_meta)
+            # add obj class to project meta if necessary
             for label in ann_pred.labels:
-                if not project_meta.get_tag_meta("confidence"):
-                    project_meta = project_meta.add_tag_meta(
-                        sly.TagMeta("confidence", value_type="any_number")
-                    )
-                    api.project.update_meta(project_id, project_meta)
                 if not project_meta.get_obj_class(label.obj_class.name):
                     project_meta = project_meta.add_obj_class(label.obj_class)
                     api.project.update_meta(project_id, project_meta)
