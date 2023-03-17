@@ -107,6 +107,18 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
         label_roi = ann.get_label_by_id(figure_id)
         object_roi: sly.Rectangle = label_roi.geometry.to_bbox()
         data["rectangle"] = object_roi.to_json()
+        if session_info.get("task type") == "prompt-based object detection":
+            inference_setting["mode"] = "reference_image"
+            inference_setting["reference_image_id"] = image_id
+            inference_setting["reference_class_name"] = label_roi.obj_class.name
+            inference_setting = yaml.dump(inference_setting, allow_unicode=True)
+            app_logger.info(f"Image with id {image_id} was selected as reference image")
+            fields = [
+                {"field": "state.settings", "payload": inference_setting},
+                {"field": "state.processing", "payload": False},
+            ]
+            api.task.set_fields(task_id, fields)
+            return
 
     ann_pred_json = api.task.send_request(state["sessionId"], "inference_image_id", data=data)
     if session_info.get("task type") == "prompt-based object detection":
@@ -147,18 +159,17 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
         ann_pred = ann_pred.clone(labels=final_labels)
 
     if session_info.get("task type") == "prompt-based object detection":
-        if figure_id is None:
-            # add tag to project meta if necessary
-            if not project_meta.get_tag_meta("confidence"):
-                project_meta = project_meta.add_tag_meta(
-                    sly.TagMeta("confidence", value_type="any_number")
-                )
+        # add tag to project meta if necessary
+        if not project_meta.get_tag_meta("confidence"):
+            project_meta = project_meta.add_tag_meta(
+                sly.TagMeta("confidence", value_type="any_number")
+            )
+            api.project.update_meta(project_id, project_meta)
+        # add obj class to project meta if necessary
+        for label in ann_pred.labels:
+            if not project_meta.get_obj_class(label.obj_class.name):
+                project_meta = project_meta.add_obj_class(label.obj_class)
                 api.project.update_meta(project_id, project_meta)
-            # add obj class to project meta if necessary
-            for label in ann_pred.labels:
-                if not project_meta.get_obj_class(label.obj_class.name):
-                    project_meta = project_meta.add_obj_class(label.obj_class)
-                    api.project.update_meta(project_id, project_meta)
 
     if (
         not (
