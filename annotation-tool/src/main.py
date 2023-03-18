@@ -112,10 +112,10 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
             inference_setting["reference_image_id"] = image_id
             inference_setting["reference_class_name"] = label_roi.obj_class.name
             inference_setting["reference_bbox"] = [
-                label_roi.top,
-                label_roi.left,
-                label_roi.bottom,
-                label_roi.right,
+                object_roi.top,
+                object_roi.left,
+                object_roi.bottom,
+                object_roi.right,
             ]
             inference_setting = yaml.dump(inference_setting, allow_unicode=True)
             app_logger.info(f"Image with id {image_id} was selected as reference image")
