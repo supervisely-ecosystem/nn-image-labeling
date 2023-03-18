@@ -117,7 +117,10 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
                 object_roi.bottom,
                 object_roi.right,
             ]
+            # had to increase default confidence threshold because of model's specific features
+            inference_setting["confidence_threshold"] = 0.8
             inference_setting = yaml.dump(inference_setting, allow_unicode=True)
+            app_logger.info("Switching model to reference image mode")
             app_logger.info(f"Image with id {image_id} was selected as reference image")
             fields = [
                 {"field": "state.settings", "payload": inference_setting},
