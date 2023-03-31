@@ -32,10 +32,10 @@ def get_model_info(api: sly.Api, task_id, context, state, app_logger) -> sly.Pro
 
         log_settings(settings=inf_settings, msg="⚙️INFERENCE SETTINGS⚙️")
 
-        # info = api.task.send_request(state["sessionId"], "get_session_info", data={})
-        # log_settings(settings=info, msg="⚙️MODEL SETTINGS⚙️")
-        # info["session"] = state["sessionId"]
-        # app_logger.debug("Session Info", extra={"info": info})
+        info = api.task.send_request(state["sessionId"], "get_session_info", data={})
+        log_settings(settings=info, msg="⚙️MODEL SETTINGS⚙️")
+        info["session"] = state["sessionId"]
+        app_logger.debug("Session Info", extra={"info": info})
         ui.set_model_info(api, task_id, model_meta, info, inf_settings)
     except Exception as e:
         sly.logger.warn(f"session-info: {info}")
