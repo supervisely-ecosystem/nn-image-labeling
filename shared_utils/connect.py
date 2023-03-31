@@ -5,39 +5,41 @@ import yaml
 
 def get_model_info(api: sly.Api, task_id, context, state, app_logger) -> sly.ProjectMeta:
     model_meta = None
-    info = None
-    # try:
-    #     info = api.task.send_request(state["sessionId"], "get_session_info", data={})
-    #     log_settings(settings=info, msg="⚙️MODEL SETTINGS⚙️")
-    #     info["session"] = state["sessionId"]
-    #     app_logger.debug("Session Info", extra={"info": info})
+    info = {}
+    try:
 
-    #     meta_json = api.task.send_request(
-    #         state["sessionId"], "get_output_classes_and_tags", data={}
-    #     )
-    #     sly.logger.info(f"Model meta: {str(meta_json)}")
-    #     model_meta = sly.ProjectMeta.from_json(meta_json)
+        meta_json = api.task.send_request(
+            state["sessionId"], "get_output_classes_and_tags", data={}
+        )
+        sly.logger.info(f"Model meta: {str(meta_json)}")
+        model_meta = sly.ProjectMeta.from_json(meta_json)
 
-    #     try:
-    #         inf_settings = api.task.send_request(
-    #             state["sessionId"], "get_custom_inference_settings", data={}
-    #         )
+        try:
+            inf_settings = api.task.send_request(
+                state["sessionId"], "get_custom_inference_settings", data={}
+            )
 
-    #         if inf_settings["settings"] is None or len(inf_settings["settings"]) == 0:
-    #             inf_settings["settings"] = ""
-    #             sly.logger.info("Model doesn't support custom inference settings.")
-    #         elif isinstance(inf_settings["settings"], dict):
-    #             inf_settings["settings"] = yaml.dump(inf_settings["settings"], allow_unicode=True)
-    #     except Exception as ex:
-    #         inf_settings = {"settings": ""}
-    #         sly.logger.info(
-    #             "Model doesn't support custom inference settings.\n" f"Reason: {repr(ex)}"
-    #         )
+            if inf_settings["settings"] is None or len(inf_settings["settings"]) == 0:
+                inf_settings["settings"] = ""
+                sly.logger.info("Model doesn't support custom inference settings.")
+            elif isinstance(inf_settings["settings"], dict):
+                inf_settings["settings"] = yaml.dump(inf_settings["settings"], allow_unicode=True)
+        except Exception as ex:
+            inf_settings = {"settings": ""}
+            sly.logger.info(
+                "Model doesn't support custom inference settings.\n" f"Reason: {repr(ex)}"
+            )
 
-    #     log_settings(settings=inf_settings, msg="⚙️INFERENCE SETTINGS⚙️")
-    #     ui.set_model_info(api, task_id, model_meta, info, inf_settings)
-    # except Exception as e:
-    #     ui.set_error(api, task_id, e)
+        log_settings(settings=inf_settings, msg="⚙️INFERENCE SETTINGS⚙️")
+
+        info = api.task.send_request(state["sessionId"], "get_session_info", data={})
+        log_settings(settings=info, msg="⚙️MODEL SETTINGS⚙️")
+        info["session"] = state["sessionId"]
+        app_logger.debug("Session Info", extra={"info": info})
+
+        ui.set_model_info(api, task_id, model_meta, info, inf_settings)
+    except Exception as e:
+        ui.set_error(api, task_id, e)
 
     return model_meta, info
 
