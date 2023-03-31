@@ -4,6 +4,7 @@ import pathlib
 import sys
 from collections import defaultdict
 import supervisely as sly
+from supervisely.imaging.color import random_rgb, generate_rgb
 
 root_source_path = str(pathlib.Path(sys.argv[0]).parents[2])
 sly.logger.info(f"Root source directory: {root_source_path}")
@@ -24,6 +25,8 @@ team_id = int(os.environ["context.teamId"])
 my_app: sly.AppService = sly.AppService(ignore_task_id=True)
 model_meta: sly.ProjectMeta = None
 session_info: dict = None
+# list for storing colors of bounding boxes (used in prompt-based object detection)
+box_colors = []
 
 ann_cache = defaultdict(list)  # only one (current) image in cache
 
@@ -138,7 +141,13 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
             class_name = object["classTitle"]
             obj_class = model_meta.get_obj_class(class_name)
             if obj_class is None:
-                obj_class = sly.ObjClass(class_name, sly.Rectangle, [255, 0, 0])
+                global box_colors
+                if len(box_colors) > 0:
+                    color = generate_rgb(box_colors)
+                else:
+                    color = random_rgb()
+                box_colors.append(color)
+                obj_class = sly.ObjClass(class_name, sly.Rectangle, color)
                 model_meta = model_meta.add_obj_class(obj_class)
 
     if isinstance(ann_pred_json, dict) and "annotation" in ann_pred_json.keys():
