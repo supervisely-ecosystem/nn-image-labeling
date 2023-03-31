@@ -36,7 +36,7 @@ def get_model_info(api: sly.Api, task_id, context, state, app_logger) -> sly.Pro
         # log_settings(settings=info, msg="⚙️MODEL SETTINGS⚙️")
         # info["session"] = state["sessionId"]
         # app_logger.debug("Session Info", extra={"info": info})
-        print("info: None")
+        sly.logger.info("info: None")
         ui.set_model_info(api, task_id, model_meta, info, inf_settings)
     except Exception as e:
         ui.set_error(api, task_id, e)
