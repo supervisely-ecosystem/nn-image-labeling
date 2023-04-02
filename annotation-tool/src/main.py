@@ -14,6 +14,8 @@ from init_ui import init_ui
 from shared_utils.connect import get_model_info
 from shared_utils.inference import postprocess
 from dotenv import load_dotenv
+import ruamel.yaml
+import io
 
 if sly.is_development():
     load_dotenv(os.path.expanduser("~/supervisely.env"))
@@ -111,20 +113,31 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
         object_roi: sly.Rectangle = label_roi.geometry.to_bbox()
         data["rectangle"] = object_roi.to_json()
         if session_info.get("task type") == "prompt-based object detection":
-            inference_setting["mode"] = "reference_image"
-            inference_setting["reference_image_id"] = image_id
-            inference_setting["reference_class_name"] = label_roi.obj_class.name
-            inference_setting["reference_bbox"] = [
+            # load settings string
+            settings_str = state["settings"]
+            ryaml = ruamel.yaml.YAML()
+            settings = ryaml.load(settings_str)
+            # set necessary parameters
+            settings["mode"] = "reference_image"
+            settings["reference_image_id"] = image_id
+            settings["reference_class_name"] = label_roi.obj_class.name
+            settings["reference_bbox"] = [
                 object_roi.top,
                 object_roi.left,
                 object_roi.bottom,
                 object_roi.right,
             ]
-            inference_setting = yaml.dump(inference_setting, allow_unicode=True)
+            # transform dict back to string
+            stream = io.BytesIO()
+            ryaml.dump(settings, stream)
+            # decode string
+            settings = stream.getvalue()
+            settings = settings.decode("utf-8")
             app_logger.info("Switching model to reference image mode")
             app_logger.info(f"Image with id {image_id} was selected as reference image")
+            # update necessary fields
             fields = [
-                {"field": "state.settings", "payload": inference_setting},
+                {"field": "state.settings", "payload": settings},
                 {"field": "state.processing", "payload": False},
             ]
             api.task.set_fields(task_id, fields)
