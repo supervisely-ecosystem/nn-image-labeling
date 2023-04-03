@@ -136,7 +136,7 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
             final_labels.append(label.clone(obj_class=target_class))  # only one object
         ann_pred = ann_pred.clone(labels=final_labels)
 
-    if "task type" in session_info.keys() and not (
+    if not (
         session_info.get("task type") == "salient object segmentation" and figure_id is not None
     ):
         res_ann, res_project_meta = postprocess(
