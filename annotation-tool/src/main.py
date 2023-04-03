@@ -122,8 +122,7 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
         ann_pred = sly.Annotation(img_size=ann.img_size)
 
     if (
-        "task type" in session_info.keys()
-        and session_info.get("task type") == "salient object segmentation"
+        session_info.get("task type") == "salient object segmentation"
         and figure_id is not None
     ):
         target_class_name = label_roi.obj_class.name + "_mask"
