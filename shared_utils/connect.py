@@ -7,6 +7,14 @@ def get_model_info(api: sly.Api, task_id, context, state, app_logger) -> sly.Pro
     model_meta = None
     info = {}
     try:
+        try:
+            info = api.task.send_request(state["sessionId"], "get_session_info", data={})
+        except Exception as er:
+            info = {}
+            sly.logger.info(f"Get session info request error. Reason: {repr(er)}")
+        log_settings(settings=info, msg="⚙️MODEL SETTINGS⚙️")
+        info["session"] = state["sessionId"]
+        app_logger.debug("Session Info", extra={"info": info})
 
         meta_json = api.task.send_request(
             state["sessionId"], "get_output_classes_and_tags", data={}
@@ -32,16 +40,8 @@ def get_model_info(api: sly.Api, task_id, context, state, app_logger) -> sly.Pro
 
         log_settings(settings=inf_settings, msg="⚙️INFERENCE SETTINGS⚙️")
 
-        try:
-            info = api.task.send_request(state["sessionId"], "get_session_info", data={})
-            log_settings(settings=info, msg="⚙️MODEL SETTINGS⚙️")
-        except Exception as e:
-            ui.set_error(api, task_id, e)
-        info["session"] = state["sessionId"]
-        app_logger.debug("Session Info", extra={"info": info})
         ui.set_model_info(api, task_id, model_meta, info, inf_settings)
     except Exception as e:
-        sly.logger.warn(f"session-info: {info}")
         ui.set_error(api, task_id, e)
 
     return model_meta, info
