@@ -39,7 +39,6 @@ def get_model_info(api: sly.Api, task_id, context, state, app_logger) -> sly.Pro
             )
 
         log_settings(settings=inf_settings, msg="⚙️INFERENCE SETTINGS⚙️")
-
         ui.set_model_info(api, task_id, model_meta, info, inf_settings)
     except Exception as e:
         ui.set_error(api, task_id, e)
