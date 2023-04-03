@@ -33,7 +33,6 @@ def get_model_info(api: sly.Api, task_id, context, state, app_logger) -> sly.Pro
         log_settings(settings=inf_settings, msg="⚙️INFERENCE SETTINGS⚙️")
 
         try:
-            raise Exception
             info = api.task.send_request(state["sessionId"], "get_session_info", data={})
             log_settings(settings=info, msg="⚙️MODEL SETTINGS⚙️")
         except Exception as e:
