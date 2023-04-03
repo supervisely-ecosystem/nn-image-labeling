@@ -121,7 +121,11 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
         sly.logger.debug("Response from serving app", extra={"serving_response": ann_pred_json})
         ann_pred = sly.Annotation(img_size=ann.img_size)
 
-    if session_info.get("task type") == "salient object segmentation" and figure_id is not None:
+    if (
+        "task type" in session_info.keys()
+        and session_info.get("task type") == "salient object segmentation"
+        and figure_id is not None
+    ):
         target_class_name = label_roi.obj_class.name + "_mask"
         target_class = project_meta.get_obj_class(target_class_name)
         if target_class is None:
@@ -133,7 +137,7 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
             final_labels.append(label.clone(obj_class=target_class))  # only one object
         ann_pred = ann_pred.clone(labels=final_labels)
 
-    if not (
+    if "task type" in session_info.keys() and not (
         session_info.get("task type") == "salient object segmentation" and figure_id is not None
     ):
         res_ann, res_project_meta = postprocess(
@@ -147,7 +151,7 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
     else:
         pass  # replace (data prepared, nothing to do)
 
-    if (
+    if "task type" in session_info.keys() and (
         not (
             session_info.get("task type") == "salient object segmentation" and figure_id is not None
         )
