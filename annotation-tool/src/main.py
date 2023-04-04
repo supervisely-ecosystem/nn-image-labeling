@@ -204,8 +204,7 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
         not (
             session_info.get("task type") == "salient object segmentation" and figure_id is not None
         )
-        and session_info.get("task type") != "prompt-based object detection"
-    ):
+        and session_info.get("task type") != "prompt-based object detection":
         res_ann, res_project_meta = postprocess(
             api, project_id, ann_pred, project_meta, model_meta, state
         )
@@ -217,7 +216,7 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
     else:
         pass  # replace (data prepared, nothing to do)
 
-    if (
+    if "task type" in session_info.keys() and (
         not (
             session_info.get("task type") == "salient object segmentation" and figure_id is not None
         )

@@ -5,8 +5,13 @@ import yaml
 
 def get_model_info(api: sly.Api, task_id, context, state, app_logger) -> sly.ProjectMeta:
     model_meta = None
+    info = {}
     try:
-        info = api.task.send_request(state["sessionId"], "get_session_info", data={})
+        try:
+            info = api.task.send_request(state["sessionId"], "get_session_info", data={})
+        except Exception as er:
+            info = {}
+            sly.logger.info(f"Get session info request error. Reason: {repr(er)}")
         log_settings(settings=info, msg="⚙️MODEL SETTINGS⚙️")
         info["session"] = state["sessionId"]
         app_logger.debug("Session Info", extra={"info": info})
