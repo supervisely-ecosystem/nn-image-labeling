@@ -4,6 +4,7 @@ import pathlib
 import sys
 from collections import defaultdict
 import supervisely as sly
+from supervisely.imaging.color import random_rgb, generate_rgb
 
 root_source_path = str(pathlib.Path(sys.argv[0]).parents[2])
 sly.logger.info(f"Root source directory: {root_source_path}")
@@ -13,6 +14,8 @@ from init_ui import init_ui
 from shared_utils.connect import get_model_info
 from shared_utils.inference import postprocess
 from dotenv import load_dotenv
+import ruamel.yaml
+import io
 
 if sly.is_development():
     load_dotenv(os.path.expanduser("~/supervisely.env"))
@@ -24,6 +27,8 @@ team_id = int(os.environ["context.teamId"])
 my_app: sly.AppService = sly.AppService(ignore_task_id=True)
 model_meta: sly.ProjectMeta = None
 session_info: dict = None
+# list for storing colors of bounding boxes (used in prompt-based object detection)
+box_colors = []
 
 ann_cache = defaultdict(list)  # only one (current) image in cache
 
@@ -107,8 +112,57 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
         label_roi = ann.get_label_by_id(figure_id)
         object_roi: sly.Rectangle = label_roi.geometry.to_bbox()
         data["rectangle"] = object_roi.to_json()
+        if session_info.get("task type") == "prompt-based object detection":
+            # load settings string
+            settings_str = state["settings"]
+            ryaml = ruamel.yaml.YAML()
+            settings = ryaml.load(settings_str)
+            # set necessary parameters
+            settings["mode"] = "reference_image"
+            settings["reference_image_id"] = image_id
+            settings["reference_class_name"] = label_roi.obj_class.name
+            settings["reference_bbox"] = [
+                object_roi.top,
+                object_roi.left,
+                object_roi.bottom,
+                object_roi.right,
+            ]
+            # transform dict back to string
+            stream = io.BytesIO()
+            ryaml.dump(settings, stream)
+            # decode string
+            settings = stream.getvalue()
+            settings = settings.decode("utf-8")
+            app_logger.info("Switching model to reference image mode")
+            app_logger.info(f"Image with id {image_id} was selected as reference image")
+            # update necessary fields
+            fields = [
+                {"field": "state.settings", "payload": settings},
+                {"field": "state.processing", "payload": False},
+            ]
+            api.task.set_fields(task_id, fields)
+            return
 
     ann_pred_json = api.task.send_request(state["sessionId"], "inference_image_id", data=data)
+    if session_info.get("task type") == "prompt-based object detection":
+        # add tag to model meta if necessary
+        global model_meta
+        if not model_meta.get_tag_meta("confidence"):
+            model_meta = model_meta.add_tag_meta(sly.TagMeta("confidence", value_type="any_number"))
+        # add obj class to model meta if necessary
+        for object in ann_pred_json["annotation"]["objects"]:
+            class_name = object["classTitle"]
+            obj_class = model_meta.get_obj_class(class_name)
+            if obj_class is None:
+                global box_colors
+                if len(box_colors) > 0:
+                    color = generate_rgb(box_colors)
+                else:
+                    color = random_rgb()
+                box_colors.append(color)
+                obj_class = sly.ObjClass(class_name, sly.Rectangle, color)
+                model_meta = model_meta.add_obj_class(obj_class)
+
     if isinstance(ann_pred_json, dict) and "annotation" in ann_pred_json.keys():
         ann_pred_json = ann_pred_json["annotation"]
     try:
@@ -121,11 +175,7 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
         sly.logger.debug("Response from serving app", extra={"serving_response": ann_pred_json})
         ann_pred = sly.Annotation(img_size=ann.img_size)
 
-    if (
-        "task type" in session_info.keys()
-        and session_info.get("task type") == "salient object segmentation"
-        and figure_id is not None
-    ):
+    if session_info.get("task type") == "salient object segmentation" and figure_id is not None:
         target_class_name = label_roi.obj_class.name + "_mask"
         target_class = project_meta.get_obj_class(target_class_name)
         if target_class is None:
@@ -137,8 +187,24 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
             final_labels.append(label.clone(obj_class=target_class))  # only one object
         ann_pred = ann_pred.clone(labels=final_labels)
 
-    if "task type" in session_info.keys() and not (
-        session_info.get("task type") == "salient object segmentation" and figure_id is not None
+    if session_info.get("task type") == "prompt-based object detection":
+        # add tag to project meta if necessary
+        if not project_meta.get_tag_meta("confidence"):
+            project_meta = project_meta.add_tag_meta(
+                sly.TagMeta("confidence", value_type="any_number")
+            )
+            api.project.update_meta(project_id, project_meta)
+        # add obj class to project meta if necessary
+        for label in ann_pred.labels:
+            if not project_meta.get_obj_class(label.obj_class.name):
+                project_meta = project_meta.add_obj_class(label.obj_class)
+                api.project.update_meta(project_id, project_meta)
+
+    if (
+        not (
+            session_info.get("task type") == "salient object segmentation" and figure_id is not None
+        )
+        and session_info.get("task type") != "prompt-based object detection"
     ):
         res_ann, res_project_meta = postprocess(
             api, project_id, ann_pred, project_meta, model_meta, state
@@ -155,6 +221,7 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
         not (
             session_info.get("task type") == "salient object segmentation" and figure_id is not None
         )
+        and session_info.get("task type") != "prompt-based object detection"
         and res_project_meta != project_meta
     ):
         api.project.update_meta(project_id, res_project_meta.to_json())
