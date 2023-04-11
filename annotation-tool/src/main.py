@@ -168,33 +168,38 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
             # geometries = [object["geometryType"] for object in current_ann]
             geometries = [label.geometry.geometry_name() for label in current_ann.labels]
             # set necessary parameters
+            points_outside_box = False
             if "point" in geometries:
-                settings["mode"] = "combined"
-                app_logger.info("Switching model to combined mode")
-                settings["input_image_id"] = image_id
-                points = [
-                    label
-                    for label in current_ann.labels
-                    if label.geometry.geometry_name() == "point"
-                ]
-                settings["point_coordinates"] = [
-                    [point.geometry.col, point.geometry.row] for point in points
-                ]
-                point_labels = []
-                for point in points:
-                    if point.obj_class.name == "positive":
-                        point_labels.append(1)
-                    elif point.obj_class.name == "negative":
-                        point_labels.append(0)
-                settings["point_labels"] = point_labels
-                settings["bbox_coordinates"] = [
-                    object_roi.top,
-                    object_roi.left,
-                    object_roi.bottom,
-                    object_roi.right,
-                ]
-                settings["bbox_class_name"] = label_roi.obj_class.name
-            else:
+                # check if points are located inside object roi
+                points = []
+                for label in current_ann.labels:
+                    if label.geometry.geometry_name() == "point":
+                        if object_roi.contains(label.geometry.to_bbox()):
+                            points.append(label)
+                if len(points) > 0:
+                    settings["mode"] = "combined"
+                    app_logger.info("Switching model to combined mode")
+                    settings["input_image_id"] = image_id
+                    settings["point_coordinates"] = [
+                        [point.geometry.col, point.geometry.row] for point in points
+                    ]
+                    point_labels = []
+                    for point in points:
+                        if point.obj_class.name == "positive":
+                            point_labels.append(1)
+                        elif point.obj_class.name == "negative":
+                            point_labels.append(0)
+                    settings["point_labels"] = point_labels
+                    settings["bbox_coordinates"] = [
+                        object_roi.top,
+                        object_roi.left,
+                        object_roi.bottom,
+                        object_roi.right,
+                    ]
+                    settings["bbox_class_name"] = label_roi.obj_class.name
+                else:
+                    points_outside_box = True
+            if "point" not in geometries or points_outside_box:
                 settings["mode"] = "bbox"
                 app_logger.info("Switching model to bbox mode")
                 settings["bbox_coordinates"] = [
