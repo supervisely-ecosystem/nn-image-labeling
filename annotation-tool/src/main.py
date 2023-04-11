@@ -172,8 +172,14 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
                 settings["mode"] = "combined"
                 app_logger.info("Switching model to combined mode")
                 settings["input_image_id"] = image_id
-                points = [label for label in current_ann.labels if label.geometry.geometry_name() == "point"]
-                settings["point_coordinates"] = [[point.geometry.col, point.geometry.row] for point in points]
+                points = [
+                    label
+                    for label in current_ann.labels
+                    if label.geometry.geometry_name() == "point"
+                ]
+                settings["point_coordinates"] = [
+                    [point.geometry.col, point.geometry.row] for point in points
+                ]
                 point_labels = []
                 for point in points:
                     if point.obj_class.name == "positive":
@@ -192,11 +198,11 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
                 settings["mode"] = "bbox"
                 app_logger.info("Switching model to bbox mode")
                 settings["bbox_coordinates"] = [
-                object_roi.top,
-                object_roi.left,
-                object_roi.bottom,
-                object_roi.right,
-            ]
+                    object_roi.top,
+                    object_roi.left,
+                    object_roi.bottom,
+                    object_roi.right,
+                ]
                 settings["bbox_class_name"] = label_roi.obj_class.name
                 settings["input_image_id"] = image_id
             # transform dict back to string
@@ -226,8 +232,14 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
                 # set necessary parameters
                 settings["mode"] = "points"
                 settings["input_image_id"] = image_id
-                points = [label for label in current_ann.labels if label.geometry.geometry_name() == "point"]
-                settings["point_coordinates"] = [[point.geometry.col, point.geometry.row] for point in points]
+                points = [
+                    label
+                    for label in current_ann.labels
+                    if label.geometry.geometry_name() == "point"
+                ]
+                settings["point_coordinates"] = [
+                    [point.geometry.col, point.geometry.row] for point in points
+                ]
                 point_labels = []
                 for point in points:
                     if point.obj_class.name == "positive":
@@ -271,7 +283,17 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
                 api.task.set_fields(task_id, fields)
                 data["settings"] = yaml.safe_load(settings)
 
-
+    if session_info.get("task type") == "promptable segmentation":
+        # delete old masks if necessary to avoid overlapping
+        for label in ann.labels:
+            if label.geometry.geometry_name() == "bitmap":
+                if data["settings"]["mode"] in ("raw", "points"):
+                    ann = ann.delete_label(label)
+                elif data["settings"]["mode"] in ("bbox", "combined"):
+                    bbox = sly.Rectangle(*data["settings"]["bbox_coordinates"])
+                    mask_bbox = label.geometry.to_bbox()
+                    if bbox.contains(mask_bbox):
+                        ann = ann.delete_label(label)
 
     ann_pred_json = api.task.send_request(state["sessionId"], "inference_image_id", data=data)
     if session_info.get("task type") == "prompt-based object detection":
@@ -307,7 +329,6 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
                 obj_class = sly.ObjClass(class_name, sly.Bitmap, color)
                 model_meta = model_meta.add_obj_class(obj_class)
 
-
     if isinstance(ann_pred_json, dict) and "annotation" in ann_pred_json.keys():
         ann_pred_json = ann_pred_json["annotation"]
     try:
@@ -332,7 +353,10 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
             final_labels.append(label.clone(obj_class=target_class))  # only one object
         ann_pred = ann_pred.clone(labels=final_labels)
 
-    if session_info.get("task type") in ("prompt-based object detection", "promptable segmentation"):
+    if session_info.get("task type") in (
+        "prompt-based object detection",
+        "promptable segmentation",
+    ):
         # add tag to project meta if necessary
         if not project_meta.get_tag_meta("confidence"):
             project_meta = project_meta.add_tag_meta(
@@ -345,11 +369,11 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
                 project_meta = project_meta.add_obj_class(label.obj_class)
                 api.project.update_meta(project_id, project_meta)
 
-    if (
-        not (
-            session_info.get("task type") == "salient object segmentation" and figure_id is not None
-        )
-        and session_info.get("task type") not in ("prompt-based object detection", "promptable segmentation")
+    if not (
+        session_info.get("task type") == "salient object segmentation" and figure_id is not None
+    ) and session_info.get("task type") not in (
+        "prompt-based object detection",
+        "promptable segmentation",
     ):
         res_ann, res_project_meta = postprocess(
             api, project_id, ann_pred, project_meta, model_meta, state
@@ -366,7 +390,8 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
         not (
             session_info.get("task type") == "salient object segmentation" and figure_id is not None
         )
-        and session_info.get("task type") not in ("prompt-based object detection", "promptable segmentation")
+        and session_info.get("task type")
+        not in ("prompt-based object detection", "promptable segmentation")
         and res_project_meta != project_meta
     ):
         api.project.update_meta(project_id, res_project_meta.to_json())
