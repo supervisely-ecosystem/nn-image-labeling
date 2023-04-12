@@ -49,7 +49,7 @@ def connect(api: sly.Api, task_id, context, state, app_logger):
                 if obj_class_name == "positive":
                     new_class = sly.ObjClass(obj_class_name, sly.Point, [51, 255, 51])
                 elif obj_class_name == "negative":
-                    new_class = sly.ObjClass(obj_class_name, sly.Point, [51, 153, 255])
+                    new_class = sly.ObjClass(obj_class_name, sly.Point, [255, 0, 0])
                 project_meta = project_meta.add_obj_class(new_class)
                 api.project.update_meta(project_id, project_meta)
 
