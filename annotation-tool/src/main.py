@@ -289,16 +289,17 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
                 data["settings"] = yaml.safe_load(settings)
 
     if session_info.get("task type") == "promptable segmentation":
-        # delete old masks if necessary to avoid overlapping
-        for label in ann.labels:
-            if label.geometry.geometry_name() == "bitmap":
-                if data["settings"]["mode"] in ("raw", "points"):
-                    ann = ann.delete_label(label)
-                elif data["settings"]["mode"] in ("bbox", "combined"):
-                    bbox = sly.Rectangle(*data["settings"]["bbox_coordinates"])
-                    mask_bbox = label.geometry.to_bbox()
-                    if bbox.contains(mask_bbox):
+        if data["settings"]["replace_masks"]:
+            # delete old masks if necessary to avoid overlapping
+            for label in ann.labels:
+                if label.geometry.geometry_name() == "bitmap":
+                    if data["settings"]["mode"] in ("raw", "points"):
                         ann = ann.delete_label(label)
+                    elif data["settings"]["mode"] in ("bbox", "combined"):
+                        bbox = sly.Rectangle(*data["settings"]["bbox_coordinates"])
+                        mask_bbox = label.geometry.to_bbox()
+                        if bbox.contains(mask_bbox):
+                            ann = ann.delete_label(label)
 
     ann_pred_json = api.task.send_request(state["sessionId"], "inference_image_id", data=data)
     if session_info.get("task type") == "prompt-based object detection":
