@@ -11,6 +11,7 @@ def init_ui(data, state):
             "deployed_nn_keypoints",
             "deployed_nn_object_segmentation",
             "deployed_owl_vit_object_detection",
+            "sly_smart_annotation",
         ],
         "showLabel": False,
         "size": "mini",

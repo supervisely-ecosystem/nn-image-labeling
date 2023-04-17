@@ -29,6 +29,8 @@ model_meta: sly.ProjectMeta = None
 session_info: dict = None
 # list for storing colors of bounding boxes (used in prompt-based object detection)
 box_colors = []
+# list for storing colors of masks (used in promptable segmentation)
+mask_colors = [[255, 0, 0]]
 
 ann_cache = defaultdict(list)  # only one (current) image in cache
 
@@ -38,6 +40,18 @@ ann_cache = defaultdict(list)  # only one (current) image in cache
 def connect(api: sly.Api, task_id, context, state, app_logger):
     global model_meta, session_info
     model_meta, session_info = get_model_info(api, task_id, context, state, app_logger)
+    if session_info.get("task type") == "promptable segmentation":
+        # add positive and negative point classes to project meta
+        project_id = context.get("projectId")
+        project_meta = sly.ProjectMeta.from_json(api.project.get_meta(project_id))
+        for obj_class_name in ["positive", "negative"]:
+            if not project_meta.get_obj_class(obj_class_name):
+                if obj_class_name == "positive":
+                    new_class = sly.ObjClass(obj_class_name, sly.Point, [51, 255, 51])
+                elif obj_class_name == "negative":
+                    new_class = sly.ObjClass(obj_class_name, sly.Point, [255, 0, 0])
+                project_meta = project_meta.add_obj_class(new_class)
+                api.project.update_meta(project_id, project_meta)
 
 
 @my_app.callback("disconnect")
@@ -83,6 +97,7 @@ def deselect_all_tags(api: sly.Api, task_id, context, state, app_logger):
 @my_app.callback("inference")
 @sly.timeit
 def inference(api: sly.Api, task_id, context, state, app_logger):
+    global model_meta
     project_id = context.get("projectId")
     image_id = context.get("imageId")
     figure_id = context.get("figureId")
@@ -142,6 +157,149 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
             ]
             api.task.set_fields(task_id, fields)
             return
+        elif session_info.get("task type") == "promptable segmentation":
+            # load settings string
+            settings_str = state["settings"]
+            ryaml = ruamel.yaml.YAML()
+            settings = ryaml.load(settings_str)
+            # get annotation geometry types
+            current_ann = api.annotation.download(image_id).annotation
+            current_ann = sly.Annotation.from_json(current_ann, project_meta)
+            # geometries = [object["geometryType"] for object in current_ann]
+            geometries = [label.geometry.geometry_name() for label in current_ann.labels]
+            # set necessary parameters
+            points_outside_box = False
+            if "point" in geometries:
+                # check if points are located inside object roi
+                points = []
+                for label in current_ann.labels:
+                    if label.geometry.geometry_name() == "point":
+                        if object_roi.contains(label.geometry.to_bbox()):
+                            points.append(label)
+                if len(points) > 0:
+                    settings["mode"] = "combined"
+                    app_logger.info("Switching model to combined mode")
+                    settings["input_image_id"] = image_id
+                    settings["point_coordinates"] = [
+                        [point.geometry.col, point.geometry.row] for point in points
+                    ]
+                    point_labels = []
+                    for point in points:
+                        if point.obj_class.name == "positive":
+                            point_labels.append(1)
+                        elif point.obj_class.name == "negative":
+                            point_labels.append(0)
+                    settings["point_labels"] = point_labels
+                    settings["bbox_coordinates"] = [
+                        object_roi.top,
+                        object_roi.left,
+                        object_roi.bottom,
+                        object_roi.right,
+                    ]
+                    settings["bbox_class_name"] = label_roi.obj_class.name
+                else:
+                    points_outside_box = True
+            if "point" not in geometries or points_outside_box:
+                settings["mode"] = "bbox"
+                app_logger.info("Switching model to bbox mode")
+                settings["bbox_coordinates"] = [
+                    object_roi.top,
+                    object_roi.left,
+                    object_roi.bottom,
+                    object_roi.right,
+                ]
+                settings["bbox_class_name"] = label_roi.obj_class.name
+                settings["input_image_id"] = image_id
+            # transform dict back to string
+            stream = io.BytesIO()
+            ryaml.dump(settings, stream)
+            # decode string
+            settings = stream.getvalue()
+            settings = settings.decode("utf-8")
+            # update necessary fields
+            fields = [
+                {"field": "state.settings", "payload": settings},
+                {"field": "state.processing", "payload": False},
+            ]
+            api.task.set_fields(task_id, fields)
+            data["settings"] = yaml.safe_load(settings)
+    else:
+        if session_info.get("task type") == "promptable segmentation":
+            # get annotation geometry types
+            current_ann = api.annotation.download(image_id).annotation
+            current_ann = sly.Annotation.from_json(current_ann, project_meta)
+            geometries = [label.geometry.geometry_name() for label in current_ann.labels]
+            if "point" in geometries:
+                # load settings string
+                settings_str = state["settings"]
+                ryaml = ruamel.yaml.YAML()
+                settings = ryaml.load(settings_str)
+                # set necessary parameters
+                settings["mode"] = "points"
+                settings["input_image_id"] = image_id
+                points = [
+                    label
+                    for label in current_ann.labels
+                    if label.geometry.geometry_name() == "point"
+                ]
+                settings["point_coordinates"] = [
+                    [point.geometry.col, point.geometry.row] for point in points
+                ]
+                point_labels = []
+                for point in points:
+                    if point.obj_class.name == "positive":
+                        point_labels.append(1)
+                    elif point.obj_class.name == "negative":
+                        point_labels.append(0)
+                settings["point_labels"] = point_labels
+                # transform dict back to string
+                stream = io.BytesIO()
+                ryaml.dump(settings, stream)
+                # decode string
+                settings = stream.getvalue()
+                settings = settings.decode("utf-8")
+                app_logger.info("Switching model to points mode")
+                # update necessary fields
+                fields = [
+                    {"field": "state.settings", "payload": settings},
+                    {"field": "state.processing", "payload": False},
+                ]
+                api.task.set_fields(task_id, fields)
+                data["settings"] = yaml.safe_load(settings)
+            else:
+                # load settings string
+                settings_str = state["settings"]
+                ryaml = ruamel.yaml.YAML()
+                settings = ryaml.load(settings_str)
+                # set necessary parameters
+                settings["mode"] = "raw"
+                # transform dict back to string
+                stream = io.BytesIO()
+                ryaml.dump(settings, stream)
+                # decode string
+                settings = stream.getvalue()
+                settings = settings.decode("utf-8")
+                app_logger.info("Switching model to raw mode")
+                # update necessary fields
+                fields = [
+                    {"field": "state.settings", "payload": settings},
+                    {"field": "state.processing", "payload": False},
+                ]
+                api.task.set_fields(task_id, fields)
+                data["settings"] = yaml.safe_load(settings)
+
+    if session_info.get("task type") == "promptable segmentation":
+        if data["settings"]["replace_masks"]:
+            # delete old masks if necessary to avoid overlapping
+            for label in ann.labels:
+                if label.geometry.geometry_name() == "bitmap":
+                    if data["settings"]["mode"] in ("raw", "points"):
+                        ann = ann.delete_label(label)
+                    elif data["settings"]["mode"] in ("bbox", "combined"):
+                        bbox = sly.Rectangle(*data["settings"]["bbox_coordinates"])
+                        mask_bbox = label.geometry.to_bbox()
+                        if bbox.contains(mask_bbox):
+                            ann = ann.delete_label(label)
 
     ann_pred_json = api.task.send_request(state["sessionId"], "inference_image_id", data=data)
     if session_info.get("task type") == "prompt-based object detection":
@@ -161,6 +319,20 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
                     color = random_rgb()
                 box_colors.append(color)
                 obj_class = sly.ObjClass(class_name, sly.Rectangle, color)
+                model_meta = model_meta.add_obj_class(obj_class)
+    elif session_info.get("task type") == "promptable segmentation":
+        # add obj class to model meta if necessary
+        for object in ann_pred_json["annotation"]["objects"]:
+            class_name = object["classTitle"]
+            obj_class = model_meta.get_obj_class(class_name)
+            if obj_class is None:
+                global mask_colors
+                if data["settings"]["mode"] == "raw":
+                    color = generate_rgb(mask_colors)
+                    mask_colors.append(color)
+                else:
+                    color = mask_colors[0]
+                obj_class = sly.ObjClass(class_name, sly.Bitmap, color)
                 model_meta = model_meta.add_obj_class(obj_class)
 
     if isinstance(ann_pred_json, dict) and "annotation" in ann_pred_json.keys():
@@ -187,7 +359,10 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
             final_labels.append(label.clone(obj_class=target_class))  # only one object
         ann_pred = ann_pred.clone(labels=final_labels)
 
-    if session_info.get("task type") == "prompt-based object detection":
+    if session_info.get("task type") in (
+        "prompt-based object detection",
+        "promptable segmentation",
+    ):
         # add tag to project meta if necessary
         if not project_meta.get_tag_meta("confidence"):
             project_meta = project_meta.add_tag_meta(
@@ -200,11 +375,11 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
                 project_meta = project_meta.add_obj_class(label.obj_class)
                 api.project.update_meta(project_id, project_meta)
 
-    if (
-        not (
-            session_info.get("task type") == "salient object segmentation" and figure_id is not None
-        )
-        and session_info.get("task type") != "prompt-based object detection"
+    if not (
+        session_info.get("task type") == "salient object segmentation" and figure_id is not None
+    ) and session_info.get("task type") not in (
+        "prompt-based object detection",
+        "promptable segmentation",
     ):
         res_ann, res_project_meta = postprocess(
             api, project_id, ann_pred, project_meta, model_meta, state
@@ -221,7 +396,8 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
         not (
             session_info.get("task type") == "salient object segmentation" and figure_id is not None
         )
-        and session_info.get("task type") != "prompt-based object detection"
+        and session_info.get("task type")
+        not in ("prompt-based object detection", "promptable segmentation")
         and res_project_meta != project_meta
     ):
         api.project.update_meta(project_id, res_project_meta.to_json())
