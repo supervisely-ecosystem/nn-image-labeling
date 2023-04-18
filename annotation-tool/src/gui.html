@@ -57,8 +57,8 @@
                                           (state.processing === true)"
                                    :loading="state.processing"
                                    @click="state.processing = true; command('inference')">
-                            <span v-if="!context.figureId"><i class="zmdi zmdi-fire mr5"></i>Apply model to image (ctrl+m)</span>
-                            <span v-if="context.figureId"><i class="zmdi zmdi-fire mr5"></i>Apply model to ROI (ctrl+m)</span>
+                            <span v-if="!context.figureId"><i class="zmdi zmdi-fire mr5"></i>Apply model to image (C)</span>
+                            <span v-if="context.figureId"><i class="zmdi zmdi-fire mr5"></i>Apply model to ROI (C)</span>
                         </el-button>
 
                     </el-button>
