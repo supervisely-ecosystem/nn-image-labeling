@@ -19,11 +19,7 @@ def init(data, state):
     data["tags"] = []
     data["connected"] = False
     data["connectionError"] = ""
-    data["ssOptions"] = {
-        "sessionTags": ["deployed_nn"],
-        "showLabel": False,
-        "size": "small"
-    }
+    data["ssOptions"] = {"sessionTags": ["deployed_nn"], "showLabel": False, "size": "small"}
     data["gallery"] = None
     data["started"] = False
     data["progress"] = 0
@@ -36,10 +32,10 @@ def init(data, state):
     state["tabName"] = "info"
     state["infMode"] = "fi"  # roi, sw
     state["suffix"] = "model"
+    state["useModelSuffix"] = False
     state["settings"] = "# empty"
     state["addMode"] = "merge"
     state["processing"] = False
     state["disabledSW"] = True
 
     state["randomImagePreview"] = True
-
