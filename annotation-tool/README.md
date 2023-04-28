@@ -26,6 +26,16 @@ Any NN can be integrated into Labeling interface if it has properly implemented 
     <img src="https://i.imgur.com/ODlVoBh.png" alt="SLY_EMBEDED_VIDEO_LINK"  style="max-width:100%;">
 </a>
 
+# What's New
+
+### v1.6.0
+
+- ☑️ Added checkbox to always add suffix to model class/tag name even if it doesn't have conflicts with existing one
+
+<div align="center" markdown>
+  <img src="https://user-images.githubusercontent.com/48913536/235163632-85fa8fe3-7ca0-4ba0-a74f-7e434353d116.png">
+</div>
+
 # How To Use
 
 0. Add this app to your team from Ecosystem
@@ -38,10 +48,10 @@ Any NN can be integrated into Labeling interface if it has properly implemented 
 
 # Demo
 
-Full Image  |  ROI
-:-------------------------:|:-----------------------------------:
-<img src="https://github.com/supervisely-ecosystem/nn-image-labeling/releases/download/v1.0.0/det_full_image-min.gif"/>  |  <img src="https://github.com/supervisely-ecosystem/nn-image-labeling/releases/download/v1.0.0/det_obj_roi-min.gif"/>
-<img src="https://github.com/supervisely-ecosystem/nn-image-labeling/releases/download/v1.0.0/seg_full_image-min.gif"/>  |  <img src="https://github.com/supervisely-ecosystem/nn-image-labeling/releases/download/v1.0.0/seg_obj_roi-min.gif"/>
+|                                                       Full Image                                                        |                                                         ROI                                                          |
+| :---------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------: |
+| <img src="https://github.com/supervisely-ecosystem/nn-image-labeling/releases/download/v1.0.0/det_full_image-min.gif"/> | <img src="https://github.com/supervisely-ecosystem/nn-image-labeling/releases/download/v1.0.0/det_obj_roi-min.gif"/> |
+| <img src="https://github.com/supervisely-ecosystem/nn-image-labeling/releases/download/v1.0.0/seg_full_image-min.gif"/> | <img src="https://github.com/supervisely-ecosystem/nn-image-labeling/releases/download/v1.0.0/seg_obj_roi-min.gif"/> |
 
 
 

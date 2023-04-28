@@ -31,6 +31,14 @@ App connects to the deployed Neural Network and applies it to the images project
 
 # What's New
 
+### v1.6.0
+
+- ☑️ Added checkbox to always add suffix to model class/tag name even if it doesn't have conflicts with existing one
+
+<div align="center" markdown>
+  <img src="https://user-images.githubusercontent.com/48913536/235163632-85fa8fe3-7ca0-4ba0-a74f-7e434353d116.png">
+</div>
+
 ### v1.2.3
 
 - Configurable sliding window mode with preview, mode enables automatically if the connected neural network supports it
