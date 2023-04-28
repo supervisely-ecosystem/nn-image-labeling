@@ -23,6 +23,7 @@ def init_ui(data, state):
     state["tags"] = []
     state["tabName"] = "info"
     state["suffix"] = "model"
+    state["useModelSuffix"] = False
     state["settings"] = "# empty"
     state["addMode"] = "merge"
     state["processing"] = False
