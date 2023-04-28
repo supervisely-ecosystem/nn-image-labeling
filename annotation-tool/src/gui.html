@@ -152,6 +152,12 @@
                         <div>Add suffix to model class/tag name if it has conflicts with existing one</div>
                         <el-input placeholder="Please input" size="mini" v-model="state.suffix"></el-input>
                     </div>
+                    <el-checkbox
+                      :disabled="data.started"
+                      v-model="state.useModelSuffix"
+                    >
+                      Always add suffix to model predictions
+                    </el-checkbox>
 
                     <div class="mb15">
                         <div><b>How to add predictions</b></div>

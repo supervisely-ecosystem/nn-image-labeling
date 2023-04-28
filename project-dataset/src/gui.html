@@ -204,11 +204,7 @@
         style="width: 193px"
       ></el-input>
     </sly-field>
-    <el-checkbox
-      :disabled="data.started"
-      v-model="state.useModelSuffix"
-      style="width: 193px"
-    >
+    <el-checkbox :disabled="data.started" v-model="state.useModelSuffix">
       Always add suffix to model predictions
     </el-checkbox>
     <sly-field
