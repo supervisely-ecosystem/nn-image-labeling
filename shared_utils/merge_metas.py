@@ -2,34 +2,51 @@ import supervisely as sly
 from supervisely.collection.key_indexed_collection import KeyIndexedCollection
 
 
-def find_item(collection: KeyIndexedCollection, item, suffix, use_suffix: bool = False):
+def generate_res_name(item, suffix, index):
+    return f"{item.name}-{suffix}" if index == 0 else f"{item.name}-{suffix}-{index}"
+
+
+def find_item(
+    collection: KeyIndexedCollection,
+    item,
+    suffix,
+    use_suffix: bool = False,
+):
     index = 0
     res_name = item.name
+    if res_name == "cat-model":
+        print("horse")
     while True:
         existing_item = collection.get(res_name)
         if existing_item is None:
-            if use_suffix:
-                res_name = (
-                    f"{item.name}-{suffix}" if index == 0 else f"{item.name}-{suffix}-{index}"
-                )
+            if use_suffix is True:
+                res_name = generate_res_name(item, suffix, index)
                 existing_item = collection.get(res_name)
                 if existing_item is not None:
                     return existing_item, None
             return None, res_name
         else:
             if existing_item == item.clone(name=res_name):
-                if use_suffix:
-                    res_name = (
-                        f"{item.name}-{suffix}" if index == 0 else f"{item.name}-{suffix}-{index}"
-                    )
+                if use_suffix is True:
+                    res_name = generate_res_name(item, suffix, index)
                     existing_item = collection.get(res_name)
                     if existing_item is None:
                         return None, res_name
+                    elif existing_item == item.clone(name=res_name):
+                        res_name = generate_res_name(item, suffix, index)
+                        existing_item = collection.get(res_name)
+                        if existing_item is None:
+                            return None, res_name
+                        return existing_item, None
+                    else:
+                        index += 1
+                        res_name = generate_res_name(item, suffix, index)
+                        existing_item = collection.get(res_name)
+                        if existing_item is None:
+                            return None, res_name
                 return existing_item, None
             else:
-                res_name = (
-                    f"{item.name}-{suffix}" if index == 0 else f"{item.name}-{suffix}-{index}"
-                )
+                res_name = generate_res_name(item, suffix, index)
                 index += 1
 
 
