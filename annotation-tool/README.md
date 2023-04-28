@@ -33,7 +33,7 @@ Any NN can be integrated into Labeling interface if it has properly implemented 
 - ☑️ Added checkbox to always add suffix to model class/tag name even if it doesn't have conflicts with existing one
 
 <div align="center" markdown>
-  <img src="https://user-images.githubusercontent.com/48913536/235163632-85fa8fe3-7ca0-4ba0-a74f-7e434353d116.png">
+  <img src="https://user-images.githubusercontent.com/48913536/235165230-f5c5cab6-8076-4c4d-929f-16ceefe6894f.png">
 </div>
 
 # How To Use
