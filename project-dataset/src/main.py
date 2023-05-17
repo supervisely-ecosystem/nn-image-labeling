@@ -2,6 +2,7 @@ import os
 import yaml
 import pathlib
 import sys
+import time
 from collections import defaultdict
 import random
 import supervisely as sly
@@ -20,7 +21,7 @@ import sly_globals as g
 @sly.timeit
 @g.my_app.ignore_errors_and_show_dialog_window()
 def connect(api: sly.Api, task_id, context, state, app_logger):
-    g.model_meta, session_info = get_model_info(api, task_id, context, state, app_logger)
+    g.model_meta, g.model_info = get_model_info(api, task_id, context, state, app_logger)
     actual_ui_state = api.task.get_field(task_id, "state")
     preview(api, task_id, context, actual_ui_state, app_logger)
 
@@ -161,7 +162,7 @@ def validate_ann_pred_json(ann_pred_json: dict):
         raise ValueError(f"Image 'width' must be 'int', not {type(ann_pred_json['size']['width'])}")
 
 
-def apply_model_to_images(api, state, dataset_id, ids, inf_setting):
+def apply_model_to_images(api: sly.Api, state, dataset_id, ids, inf_setting):
     nn_session_id = state["sessionId"]
     add_mode = state["addMode"]
 
@@ -199,37 +200,76 @@ def apply_model_to_images(api, state, dataset_id, ids, inf_setting):
                 "settings": str(inf_setting),
             },
         )
-        ann_pred_json = []
-        for img_id in ids:
-            try:
-                pred_json = api.task.send_request(
-                    nn_session_id,
-                    "inference_batch_ids",
+
+        sly.logger.debug("Starting inference...")
+        if g.model_info.get("async_image_inference_support") is True:
+            # Running async inference
+            def get_inference_progress(inference_request_uuid):
+                sly.logger.debug("Requesting inference progress...")
+                result = g.api.task.send_request(
+                    state["sessionId"],
+                    "get_inference_progress",
+                    data={"inference_request_uuid": inference_request_uuid},
+                )
+                return result
+
+            ann_pred_json = []
+            for img_id in ids:
+                pred_json = g.api.task.send_request(
+                    state["sessionId"],
+                    "inference_image_id_async",
                     data={
-                        "dataset_id": dataset_id,
-                        "batch_ids": [img_id],
+                        "image_id": img_id,
                         "settings": inf_setting,
                     },
-                )[0]
+                )
+                g.inference_request_uuid = pred_json["inference_request_uuid"]
 
-                validate_ann_pred_json(pred_json)
-                ann_pred_json.append(pred_json)
-            except Exception as e:
-                sly.logger.info(
-                    "INFERENCE DEBUG INFO (PER IMG)",
-                    extra={
-                        "nn_session_id": nn_session_id,
-                        "dataset_id": dataset_id,
-                        "image_id": img_id,
-                        "settings": str(inf_setting),
-                    },
-                )
-                image_info = api.image.get_info_by_id(id=img_id)
-                sly.logger.warn(
-                    f"Couldn't process annotation prediction for image: {image_info.name} (ID: {img_id}). Image remain unchanged. Error: {e}"
-                )
-                pred_json = sly.Annotation(img_size=(image_info.height, image_info.width)).to_json()
-                ann_pred_json.append(pred_json)
+                is_inferring = True
+                while is_inferring:
+                    progress = get_inference_progress(g.inference_request_uuid)
+                    current, total = progress["progress"]["current"], progress["progress"]["total"]
+                    is_inferring = progress["is_inferring"]
+                    sly.logger.info(f"Inferring model... {current} / {total}")
+                    time.sleep(1)
+                sly.logger.info(f"Inferring model... {current+1} / {total}")
+                result = progress["result"]
+                ann_pred_json.append(result)
+        else:
+            # Fallback to sync inference version
+            ann_pred_json = []
+            for img_id in ids:
+                try:
+                    pred_json = api.task.send_request(
+                        nn_session_id,
+                        "inference_batch_ids",
+                        data={
+                            "dataset_id": dataset_id,
+                            "batch_ids": [img_id],
+                            "settings": inf_setting,
+                        },
+                    )[0]
+
+                    validate_ann_pred_json(pred_json)
+                    ann_pred_json.append(pred_json)
+                except Exception as e:
+                    sly.logger.info(
+                        "INFERENCE DEBUG INFO (PER IMG)",
+                        extra={
+                            "nn_session_id": nn_session_id,
+                            "dataset_id": dataset_id,
+                            "image_id": img_id,
+                            "settings": str(inf_setting),
+                        },
+                    )
+                    image_info = api.image.get_info_by_id(id=img_id)
+                    sly.logger.warn(
+                        f"Couldn't process annotation prediction for image: {image_info.name} (ID: {img_id}). Image remain unchanged. Error: {e}"
+                    )
+                    pred_json = sly.Annotation(
+                        img_size=(image_info.height, image_info.width)
+                    ).to_json()
+                    ann_pred_json.append(pred_json)
 
     ann_preds = []
     for img_id, pred_json in zip(ids, ann_pred_json):

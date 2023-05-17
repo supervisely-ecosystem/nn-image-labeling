@@ -1,4 +1,6 @@
-supervisely==6.71.19
+# supervisely==6.71.19
+git+https://github.com/supervisely/supervisely.git@inf_image_async
+
 PyYAML
 ruamel.yaml==0.17.21
 matplotlib==3.7.1
