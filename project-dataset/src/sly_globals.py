@@ -58,3 +58,5 @@ empty_gallery = {
 # sliding window part
 
 det_model_meta = None
+model_info = None
+inference_request_uuid = None
