@@ -54,7 +54,8 @@
                         <el-button type="success" size="mini" class="mt5" style="margin-bottom: 15px;"
                                    :disabled="(state.classes.filter(Boolean).length === 0 &&
                                           state.tags.filter(Boolean).length === 0) ||
-                                          (state.processing === true)"
+                                          (state.processing === true) ||
+                                          !state.allow_full_image_inference && !context.figureId"
                                    :loading="state.processing"
                                    @click="state.processing = true; command('inference')">
                             <span v-if="!context.figureId"><i class="zmdi zmdi-fire mr5"></i>Apply model to image (ctrl+m)</span>
