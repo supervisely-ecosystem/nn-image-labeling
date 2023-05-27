@@ -27,3 +27,4 @@ def init_ui(data, state):
     state["settings"] = "# empty"
     state["addMode"] = "merge"
     state["processing"] = False
+    state["allow_full_image_inference"] = True
