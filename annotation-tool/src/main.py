@@ -127,8 +127,8 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
     data = {"image_id": image_id, "settings": inference_setting}
 
     if figure_id is not None:
-        print("Project ID: {project_id}")
-        print("Figure ID: {figure_id}")
+        print(f"Project ID: {project_id}")
+        print(f"Figure ID: {figure_id}")
         print("Annotation json:")
         print(ann_json)
         label_roi = ann.get_label_by_id(figure_id)
