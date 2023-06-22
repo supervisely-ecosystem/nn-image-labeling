@@ -52,7 +52,9 @@ def connect(api: sly.Api, task_id, context, state, app_logger):
                     new_class = sly.ObjClass(obj_class_name, sly.Point, [255, 0, 0])
                 project_meta = project_meta.add_obj_class(new_class)
                 api.project.update_meta(project_id, project_meta)
-    elif session_info.get("task type") == "pose estimation":
+    elif session_info.get("task type") == "pose estimation" and not session_info.get(
+        "detector_included"
+    ):
         fields = [{"field": "state.allow_full_image_inference", "payload": False}]
         api.task.set_fields(task_id, fields)
 
