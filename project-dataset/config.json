@@ -18,7 +18,7 @@
   "task_location": "workspace_tasks",
   "isolate": true,
   "headless": false,
-  "icon": "https://i.imgur.com/KdCigmp.png",
+  "icon": "media/pdicon.png",
   "icon_background": "#FFFFFF",
   "context_menu": {
     "target": ["images_project", "images_dataset"],
