@@ -19,7 +19,7 @@
   "isolate": true,
   "headless": false,
   "integrated_into": ["image_annotation_tool"],
-  "icon": "https://i.imgur.com/nnB2BqW.png",
+  "icon": "https://github.com/supervisely-ecosystem/nn-image-labeling/blob/bc6cc35758e257a78dfc8a19b576a913071f50d1/media/aticon.png",
   "icon_background": "#FFFFFF",
   "hotkeys": [
     {
