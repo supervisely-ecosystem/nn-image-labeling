@@ -128,8 +128,11 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
 
     data = {"image_id": image_id, "settings": inference_setting}
 
+    label_roi = None
     if figure_id is not None:
         label_roi = ann.get_label_by_id(figure_id)
+
+    if label_roi is not None:
         object_roi: sly.Rectangle = label_roi.geometry.to_bbox()
         data["rectangle"] = object_roi.to_json()
         if session_info.get("task type") == "prompt-based object detection":
@@ -352,7 +355,7 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
         sly.logger.debug("Response from serving app", extra={"serving_response": ann_pred_json})
         ann_pred = sly.Annotation(img_size=ann.img_size)
 
-    if session_info.get("task type") == "salient object segmentation" and figure_id is not None:
+    if session_info.get("task type") == "salient object segmentation" and label_roi is not None:
         target_class_name = label_roi.obj_class.name + "_mask"
         target_class = project_meta.get_obj_class(target_class_name)
         if target_class is None:
@@ -381,7 +384,7 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
                 api.project.update_meta(project_id, project_meta)
 
     if not (
-        session_info.get("task type") == "salient object segmentation" and figure_id is not None
+        session_info.get("task type") == "salient object segmentation" and label_roi is not None
     ) and session_info.get("task type") not in (
         "prompt-based object detection",
         "promptable segmentation",
@@ -399,7 +402,7 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
 
     if "task type" in session_info.keys() and (
         not (
-            session_info.get("task type") == "salient object segmentation" and figure_id is not None
+            session_info.get("task type") == "salient object segmentation" and label_roi is not None
         )
         and session_info.get("task type")
         not in ("prompt-based object detection", "promptable segmentation")
