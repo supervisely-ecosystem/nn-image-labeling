@@ -15,7 +15,7 @@ def postprocess(
         keep_classes = ui.get_keep_classes(state)  # @TODO: for debug ['dog'] #
         keep_tags = ui.get_keep_tags(state)
     except KeyError as e:
-        Exception(
+        raise Exception(
             "Can not get classesInfo/tagsInfo from state. "
             "You are probably trying to use a model trained outside Supervisely. "
             "You can use one of pretrained models or train a model in Supervisely via corresponding app. "
