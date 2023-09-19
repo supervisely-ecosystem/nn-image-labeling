@@ -30,6 +30,8 @@ def connect(api: sly.Api, task_id, context, state, app_logger):
             task_id,
             "Couldn't get model info. Please, make sure that model is running and try again.",
         )
+        from supervisely.io.exception_handlers import ErrorHandler
+        raise ErrorHandler.APP.ImageUploadError("Test error (image)")
     else:
         actual_ui_state = api.task.get_field(task_id, "state")
         preview(api, task_id, context, actual_ui_state, app_logger)
@@ -48,6 +50,8 @@ def disconnect(api: sly.Api, task_id, context, state, app_logger):
         {"field": "state", "payload": new_state, "append": True},
     ]
     api.task.set_fields(task_id, fields)
+    from supervisely.io.exception_handlers import ErrorHandler
+    raise ErrorHandler.APP.VideoUploadError("Test error (video)")
 
 
 @g.my_app.callback("select_all_classes")
