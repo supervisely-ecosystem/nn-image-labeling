@@ -36,7 +36,6 @@ def set_error(api: sly.Api, task_id, e: Exception):
 
 def clean_error(api: sly.Api, task_id):
     fields = [
-        {"field": "data.connected", "payload": True},
         {"field": "data.connectionError", "payload": ""},
     ]
     api.task.set_fields(task_id, fields)
