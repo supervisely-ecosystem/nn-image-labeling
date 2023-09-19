@@ -6,6 +6,7 @@ import supervisely as sly
 
 from shared_utils.connect import get_model_info, log_settings
 from shared_utils.inference import postprocess
+from shared_utils.ui2 import set_error
 import init_ui as ui
 
 import sliding_window
