@@ -44,7 +44,7 @@
         </el-button>
       </div>
       <sly-notification
-        v-if="data.connectionError.length > 0"
+        v-if="!!data.connectionError"
         :options="{'name': 'Connection Error', 'type': 'error'}"
         :content="data.connectionError"
       >

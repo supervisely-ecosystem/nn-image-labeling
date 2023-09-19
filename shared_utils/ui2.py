@@ -34,6 +34,13 @@ def set_error(api: sly.Api, task_id, e: Exception):
     api.task.set_fields(task_id, fields)
 
 
+def clean_error(api: sly.Api, task_id):
+    fields = [
+        {"field": "data.connectionError", "payload": ""},
+    ]
+    api.task.set_fields(task_id, fields)
+
+
 def _get_keep_names(infos: List[dict], flags: List[bool]):
     keep_names = []
     for info, flag in zip(infos, flags):
