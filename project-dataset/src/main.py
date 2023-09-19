@@ -39,7 +39,7 @@ def disconnect(api: sly.Api, task_id, context, state, app_logger):
     ]
     api.task.set_fields(task_id, fields)
     from supervisely.io.exception_handlers import ErrorHandler
-    raise ErrorHandler.APP.VideoUploadError("Test error (video)")
+    ErrorHandler.APP.VideoUploadError("Test error (video)").raise_error()
 
 
 @g.my_app.callback("select_all_classes")
