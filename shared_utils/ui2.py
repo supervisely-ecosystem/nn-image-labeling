@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 import supervisely as sly
 
 
@@ -12,7 +12,7 @@ def set_model_info(api: sly.Api, task_id, model_meta: sly.ProjectMeta, model_inf
             if model_info["sliding_window_support"] != "none":
                 disabledSW = False
     fields = [
-        {"field": "data.info", "payload": format_info(model_info)},
+        {"field": "data.info", "payload": format_info(model_info, "video")},
         {"field": "state.classesInfo", "payload": model_meta.obj_classes.to_json()},
         {"field": "state.classes", "payload": [True] * len(model_meta.obj_classes)},
         {"field": "state.tagsInfo", "payload": model_meta.tag_metas.to_json()},
@@ -60,10 +60,15 @@ def get_keep_tags(state):
     return keep_names
 
 
-def format_info(info: Dict[str, Any]) -> Dict[str, Any]:
+def format_info(info: Dict[str, Any], trigger_to_del: Optional[str] = None) -> Dict[str, Any]:
     formated_info = {}
 
     for name, data in info.items():
+        if trigger_to_del is not None:
+            if trigger_to_del.lower() in name.lower():
+                sly.logger.debug(f"Field {name} excluded from session info: found `{trigger_to_del}` in name")
+                continue
+    
         new_name = name.replace("_", " ").capitalize()
         formated_info[new_name] = data
 

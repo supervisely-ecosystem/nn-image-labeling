@@ -56,7 +56,7 @@ def set_model_info(api, task_id, model_meta, model_info, inf_settings):
                 disabledSW = False
 
     fields = [
-        {"field": "data.info", "payload": ui.format_info(model_info)},
+        {"field": "data.info", "payload": ui.format_info(model_info, "video")},
         {"field": "state.classesInfo", "payload": model_meta.obj_classes.to_json()},
         {"field": "state.classes", "payload": [True] * len(model_meta.obj_classes)},
         {"field": "state.tagsInfo", "payload": model_meta.tag_metas.to_json()},
