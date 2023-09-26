@@ -4,7 +4,7 @@ import random
 import supervisely as sly
 
 
-from shared_utils.connect import get_model_info
+from shared_utils.connect import get_model_info, log_settings
 from shared_utils.inference import postprocess
 from shared_utils.ui2 import clean_error, set_error
 import init_ui as ui
@@ -353,6 +353,7 @@ def apply_model(api: sly.Api, task_id, context, state, app_logger):
 
     try:
         inf_setting = yaml.safe_load(state["settings"])
+        log_settings(settings=inf_setting, msg="FINAL INFERENCE SETTINGS")
     except Exception as e:
         inf_setting = {}
         app_logger.warn(
