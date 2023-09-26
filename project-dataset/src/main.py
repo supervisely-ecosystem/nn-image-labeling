@@ -353,7 +353,7 @@ def apply_model(api: sly.Api, task_id, context, state, app_logger):
 
     try:
         inf_setting = yaml.safe_load(state["settings"])
-        log_settings(log_settings(settings=inf_setting, msg="FINAL INFERENCE SETTINGS"))
+        log_settings(settings=inf_setting, msg="FINAL INFERENCE SETTINGS")
     except Exception as e:
         inf_setting = {}
         app_logger.warn(
