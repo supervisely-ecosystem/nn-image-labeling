@@ -4,7 +4,7 @@ import random
 import supervisely as sly
 
 
-from shared_utils.connect import get_model_info
+from shared_utils.connect import get_model_info, log_settings
 from shared_utils.inference import postprocess
 from shared_utils.ui2 import clean_error, set_error
 import init_ui as ui
@@ -176,6 +176,10 @@ def apply_model_to_images(api: sly.Api, state, dataset_id, ids, inf_setting):
 
     try:
         sly.logger.info("Starting inference...")
+        try:
+            log_settings(log_settings(settings=inf_setting, msg="FINAL INFERENCE SETTINGS"))
+        except Exception as e:
+            sly.logger.debug(f"Unable to print inference settings: {e}")
         if state["infMode"] == "sliding_window":
             # Running async inference
             if g.model_info.get("async_image_inference_support") is True:
