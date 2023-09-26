@@ -176,10 +176,6 @@ def apply_model_to_images(api: sly.Api, state, dataset_id, ids, inf_setting):
 
     try:
         sly.logger.info("Starting inference...")
-        try:
-            log_settings(log_settings(settings=inf_setting, msg="FINAL INFERENCE SETTINGS"))
-        except Exception as e:
-            sly.logger.debug(f"Unable to print inference settings: {e}")
         if state["infMode"] == "sliding_window":
             # Running async inference
             if g.model_info.get("async_image_inference_support") is True:
@@ -357,6 +353,7 @@ def apply_model(api: sly.Api, task_id, context, state, app_logger):
 
     try:
         inf_setting = yaml.safe_load(state["settings"])
+        log_settings(log_settings(settings=inf_setting, msg="FINAL INFERENCE SETTINGS"))
     except Exception as e:
         inf_setting = {}
         app_logger.warn(
