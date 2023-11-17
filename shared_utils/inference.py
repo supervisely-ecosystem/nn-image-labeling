@@ -33,7 +33,7 @@ def postprocess(
                 continue
             label_tags.append(tag.clone(meta=tag_meta_mapping[tag.meta.name]))
         new_label = label.clone(
-            obj_class=class_mapping[label.obj_class.name], tags=sly.TagCollection(label_tags)
+            obj_class=class_mapping[label.obj_class.name.strip()], tags=sly.TagCollection(label_tags)
         )
         new_labels.append(new_label)
 

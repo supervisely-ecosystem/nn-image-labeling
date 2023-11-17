@@ -13,11 +13,11 @@ def find_item(
     use_suffix: bool = False,
 ):
     index = 0
-    res_name = item.name
+    res_name = item.name.strip()
     if res_name == "cat-model":
         print("horse")
     while True:
-        existing_item = collection.get(res_name)
+        existing_item = collection.get(res_name.strip())
         if existing_item is None:
             if use_suffix is True:
                 res_name = generate_res_name(item, suffix, index)
@@ -72,7 +72,7 @@ def merge_metas(
                     if is_class
                     else res_meta.add_tag_meta(res_item)
                 )
-            mapping[model_item.name] = res_item
+            mapping[model_item.name.strip()] = res_item
         return res_meta, mapping
 
     res_meta, class_mapping = _merge(
