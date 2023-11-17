@@ -14,8 +14,6 @@ def find_item(
 ):
     index = 0
     res_name = item.name.strip()
-    if res_name == "cat-model":
-        print("horse")
     while True:
         existing_item = collection.get(res_name.strip())
         if existing_item is None:
