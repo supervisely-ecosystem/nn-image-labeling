@@ -6,12 +6,21 @@ import yaml
 def get_model_info(api: sly.Api, task_id, context, state, app_logger) -> sly.ProjectMeta:
     model_meta = None
     info = {}
+
+    ui.clean_error(api, task_id)
     try:
         info = api.task.send_request(state["sessionId"], "get_session_info", data={})
         log_settings(settings=info, msg="⚙️MODEL SETTINGS⚙️")
         info["session"] = state["sessionId"]
         app_logger.debug("Session Info", extra={"info": info})
 
+    except Exception as e:
+        msg = "Couldn't get model info. Make sure that model is deployed and try again."
+        app_logger.warning(msg)
+        ui.set_error(api, task_id, msg, log_error=False)
+        return model_meta, info
+
+    try:
         meta_json = api.task.send_request(
             state["sessionId"], "get_output_classes_and_tags", data={}
         )
