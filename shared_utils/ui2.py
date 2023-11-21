@@ -25,8 +25,9 @@ def set_model_info(api: sly.Api, task_id, model_meta: sly.ProjectMeta, model_inf
     api.task.set_fields(task_id, fields)
 
 
-def set_error(api: sly.Api, task_id, e: Exception):
-    sly.logger.error(repr(e))
+def set_error(api: sly.Api, task_id, e: Exception, log_error: bool = True):
+    if log_error:
+        sly.logger.error(repr(e))
     fields = [
         {"field": "data.connected", "payload": False},
         {"field": "data.connectionError", "payload": repr(e)},

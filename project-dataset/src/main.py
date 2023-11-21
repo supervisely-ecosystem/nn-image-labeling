@@ -6,7 +6,7 @@ import supervisely as sly
 
 from shared_utils.connect import get_model_info, log_settings
 from shared_utils.inference import postprocess
-from shared_utils.ui2 import clean_error, set_error
+from shared_utils.ui2 import clean_error
 import init_ui as ui
 
 import sliding_window
@@ -20,13 +20,7 @@ import sly_globals as g
 def connect(api: sly.Api, task_id, context, state, app_logger):
     clean_error(api, task_id)
     g.model_meta, g.model_info = get_model_info(api, task_id, context, state, app_logger)
-    if g.model_meta is None:
-        set_error(
-            api,
-            task_id,
-            "Couldn't get model info. Please, make sure that model is running and try again.",
-        )
-    else:
+    if g.model_meta is not None:
         actual_ui_state = api.task.get_field(task_id, "state")
         preview(api, task_id, context, actual_ui_state, app_logger)
 

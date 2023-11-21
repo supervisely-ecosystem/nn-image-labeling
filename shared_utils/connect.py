@@ -12,6 +12,16 @@ def get_model_info(api: sly.Api, task_id, context, state, app_logger) -> sly.Pro
         info["session"] = state["sessionId"]
         app_logger.debug("Session Info", extra={"info": info})
 
+    except Exception as e:
+        ui.set_error(
+            api,
+            task_id,
+            "Couldn't get model info. Make sure that model is deployed and try again.",
+            log_error=False,
+        )
+        return model_meta, info
+
+    try:
         meta_json = api.task.send_request(
             state["sessionId"], "get_output_classes_and_tags", data={}
         )
