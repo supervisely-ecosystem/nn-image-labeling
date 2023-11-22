@@ -309,7 +309,25 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
                         if bbox.contains(mask_bbox):
                             ann = ann.delete_label(label)
 
-    ann_pred_json = api.task.send_request(state["sessionId"], "inference_image_id", data=data)
+    try:
+        ann_pred_json = api.task.send_request(state["sessionId"], "inference_image_id", data=data)
+    except Exception as e:
+        image_info = api.image.get_info_by_id(image_id)
+        sly.logger.info(
+            "INFERENCE DEBUG INFO",
+            extra={
+                "nn_session_id": state["sessionId"],
+                "dataset_id": image_info.dataset_id,
+                "image_id": image_id,
+                "settings": str(data["settings"]),
+            },
+        )
+        sly.logger.warn(
+            f"Couldn't process annotation prediction for image: {image_info.name} (ID: {image_id}). Image remain unchanged. Error: {e}"
+        )
+        empty_ann_json = sly.Annotation(img_size=(image_info.height, image_info.width)).to_json()
+        ann_pred_json = {"annotation": empty_ann_json}
+
     if session_info.get("task type") == "prompt-based object detection":
         # add tag to model meta if necessary
         global model_meta
