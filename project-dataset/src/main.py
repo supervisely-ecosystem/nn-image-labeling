@@ -485,4 +485,4 @@ def main():
 
 # @TODO: progress bar пропал после обновления страницы и снова появилась кнопка
 if __name__ == "__main__":
-    sly.main_wrapper("main", main)
+    sly.main_wrapper("main", main, log_for_agent=False)
