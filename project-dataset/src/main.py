@@ -3,6 +3,7 @@ import time
 import random
 import supervisely as sly
 
+from supervisely.io.exception_handlers import handle_exception
 
 from shared_utils.connect import get_model_info, log_settings
 from shared_utils.inference import postprocess
@@ -328,6 +329,21 @@ def get_images_for_preview_list(max_size=100):
 
     return images_for_preview_list
 
+def raise_handled_exceprtion(e: Exception):
+    exc_handler = handle_exception(e)
+    if exc_handler:
+        exc_handler.log_error_for_agent("main")
+    else:
+        sly.logger.error(
+            repr(e),
+            exc_info=True,
+            extra={
+                "main_name": "main",
+                "exc_str": repr(e),
+                "event_type": sly.EventType.TASK_CRASHED,
+            },
+        )
+    raise e
 
 @g.my_app.callback("apply_model")
 @sly.timeit
@@ -452,37 +468,42 @@ def main():
     data["ownerId"] = g.owner_id
     data["teamId"] = g.team_id
 
-    dataset_info = None
-    if g.project_id is None:
-        dataset_info = g.my_app.public_api.dataset.get_info_by_id(g.dataset_id)
-        g.input_datasets.append(dataset_info)
-        g.project_id = dataset_info.project_id
-    else:
-        g.input_datasets = g.my_app.public_api.dataset.get_list(g.project_id)
-    project_info = g.my_app.public_api.project.get_info_by_id(g.project_id)
+    try:
+        dataset_info = None
+        if g.project_id is None:
+            dataset_info = g.my_app.public_api.dataset.get_info_by_id(g.dataset_id)
+            g.input_datasets.append(dataset_info)
+            g.project_id = dataset_info.project_id
+        else:
+            g.input_datasets = g.my_app.public_api.dataset.get_list(g.project_id)
+        project_info = g.my_app.public_api.project.get_info_by_id(g.project_id)
 
-    g.input_images = []
-    for ds_info in g.input_datasets:
-        g.input_images.extend(g.my_app.public_api.image.get_list(ds_info.id))
+        g.input_images = []
+        for ds_info in g.input_datasets:
+            g.input_images.extend(g.my_app.public_api.image.get_list(ds_info.id))
 
-    data["imagesForPreview"] = get_images_for_preview_list()
-    state["previewOnImageId"] = g.input_images[0].id if len(g.input_images) > 0 else None
+        data["imagesForPreview"] = get_images_for_preview_list()
+        state["previewOnImageId"] = g.input_images[0].id if len(g.input_images) > 0 else None
 
-    g.project_meta = sly.ProjectMeta.from_json(g.my_app.public_api.project.get_meta(g.project_id))
+        g.project_meta = sly.ProjectMeta.from_json(
+            g.my_app.public_api.project.get_meta(g.project_id)
+        )
 
-    ui.init(data, state)
-    data["emptyGallery"] = g.empty_gallery
-    ui.init_input_project(
-        g.my_app.public_api, data, project_info, len(g.input_images), dataset_info
-    )
-    state["resProjectName"] = project_info.name + " (inf)"
-    ui.init_output_project(data)
+        ui.init(data, state)
+        data["emptyGallery"] = g.empty_gallery
+        ui.init_input_project(
+            g.my_app.public_api, data, project_info, len(g.input_images), dataset_info
+        )
+        state["resProjectName"] = project_info.name + " (inf)"
+        ui.init_output_project(data)
 
-    sliding_window.init(data, state)
+        sliding_window.init(data, state)
+    except Exception as e:
+        raise_handled_exceprtion(e)
 
     g.my_app.run(data=data, state=state)
 
 
 # @TODO: progress bar пропал после обновления страницы и снова появилась кнопка
 if __name__ == "__main__":
-    sly.main_wrapper("main", main)
+    sly.main_wrapper("main", main, log_for_agent=False)
