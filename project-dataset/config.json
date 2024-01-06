@@ -11,8 +11,8 @@
     "labeling"
   ],
   "description": "NN Inference on images in project or dataset",
-  "docker_image": "supervisely/labeling:6.72.192",
-  "min_instance_version": "6.8.48",
+  "docker_image": "supervisely/labeling:6.72.234",
+  "min_instance_version": "6.8.54",
   "main_script": "project-dataset/src/main.py",
   "gui_template": "project-dataset/src/gui.html",
   "task_location": "workspace_tasks",

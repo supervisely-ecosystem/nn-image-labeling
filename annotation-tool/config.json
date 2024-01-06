@@ -11,8 +11,8 @@
     "labeling"
   ],
   "description": "Use deployed neural network in labeling interface",
-  "docker_image": "supervisely/labeling:6.72.192",
-  "min_instance_version": "6.8.48",
+  "docker_image": "supervisely/labeling:6.72.234",
+  "min_instance_version": "6.8.54",
   "main_script": "annotation-tool/src/main.py",
   "gui_template": "annotation-tool/src/gui.html",
   "task_location": "application_sessions",
