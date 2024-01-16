@@ -5,16 +5,32 @@ from collections import defaultdict
 
 import supervisely as sly
 from supervisely.app.v1.app_service import AppService
+from supervisely.io.fs import file_exists
 
 root_source_path = str(pathlib.Path(sys.argv[0]).parents[2])
 sly.logger.info(f"Root source directory: {root_source_path}")
 sys.path.append(root_source_path)
+parent_path = str(pathlib.Path(sys.argv[0]).parents[1])
+sly.logger.info(f"Parent directory: {parent_path}")
 
 # only for debug
 from dotenv import load_dotenv
+
 if sly.is_development():
-    load_dotenv(os.path.expanduser("~/supervisely.env"))
-    load_dotenv("project-dataset/debug.env")
+    local_debug_env_path = os.path.join(parent_path, "debug.env")
+    secret_debug_env_path = os.path.join(parent_path, "secret_debug.env")
+    supervisely_env_path = os.path.expanduser("~/supervisely.env")
+
+    if not file_exists(secret_debug_env_path) and not file_exists(supervisely_env_path):
+        raise Exception(
+            f"Credentials not found. Please create secret env file with credentials. "
+            "Read more: https://developer.supervisely.com/getting-started/basics-of-authentication"
+        )
+
+    load_dotenv(local_debug_env_path)
+    load_dotenv(supervisely_env_path)
+    load_dotenv(secret_debug_env_path, override=True)
+
 
 task_id = int(os.environ["TASK_ID"])
 
