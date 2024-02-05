@@ -21,7 +21,7 @@
   "icon": "https://i.imgur.com/KdCigmp.png",
   "icon_background": "#FFFFFF",
   "context_menu": {
-    "target": ["images_project", "images_dataset"],
+    "target": ["images_project", "images_dataset", "ecosystem"],
     "context_root": "Neural Networks"
   },
   "poster": "https://user-images.githubusercontent.com/106374579/187227957-ea4fd452-35ef-4969-9e55-cd7a5a4873ee.png"

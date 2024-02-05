@@ -11,6 +11,28 @@
             "env": {
                 "PYTHONPATH": "${workspaceFolder}${pathSeparator}${env:PYTHONPATH}"
             }
-        }
+        },
+        {
+            "name": "UI app",
+            "type": "python",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "project_dataset.src.main:app",
+                "--host",
+                "0.0.0.0",
+                "--port",
+                "8000",
+                "--ws",
+                "websockets",
+                "--reload"
+            ],
+            "jinja": true,
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}:${PYTHONPATH}",
+                "LOG_LEVEL": "DEBUG"
+            }
+        },
     ]
 }
