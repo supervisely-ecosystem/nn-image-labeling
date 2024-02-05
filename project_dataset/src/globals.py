@@ -29,7 +29,10 @@ model_meta = None
 
 # endregion
 
+# region ui-consants
 deployed_nn_tags = ["deployed_nn"]
+inference_modes = ["full image", "sliding window"]
+add_predictions_modes = ["merge with existing labels", "replace existing labels"]
 
 ann_cache = defaultdict(list)  # only one (current) image in cache
 project_info = None

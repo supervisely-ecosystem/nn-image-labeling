@@ -2,6 +2,7 @@ import supervisely as sly
 from supervisely.app.widgets import Button, Card, Container, ModelInfo, SelectAppSession, Text
 
 import project_dataset.src.globals as g
+import project_dataset.src.ui.inference_settings as inference_settings
 import project_dataset.src.ui.nn_info as nn_info
 
 select_session = SelectAppSession(g.team_id, g.deployed_nn_tags)
@@ -58,6 +59,9 @@ def model_selected():
     nn_info.card.unlock()
     nn_info.card.uncollapse()
 
+    inference_settings.card.unlock()
+    inference_settings.card.uncollapse()
+
 
 @disconnect_button.click
 def model_changed():
@@ -71,6 +75,9 @@ def model_changed():
     model_info.hide()
     nn_info.card.lock()
     nn_info.card.collapse()
+
+    inference_settings.card.lock()
+    inference_settings.card.collapse()
 
 
 def connect_to_model():
