@@ -24,8 +24,11 @@ api = sly.Api.from_env()
 # region ui-settings
 selected_project = None
 selected_datasets = None
+model_session_id = None
 
 # endregion
+
+deployed_nn_tags = ["deployed_nn"]
 
 model_meta: sly.ProjectMeta = None
 

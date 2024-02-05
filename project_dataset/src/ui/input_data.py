@@ -2,6 +2,7 @@ import supervisely as sly
 from supervisely.app.widgets import Button, Card, Container, SelectDataset, Text
 
 import project_dataset.src.globals as g
+import project_dataset.src.ui.connect_nn as connect_nn
 
 select_dataset = SelectDataset(multiselect=True, project_id=g.project_id, default_id=g.dataset_id)
 select_button = Button("Select")
@@ -34,12 +35,16 @@ def datasets_selected():
         return
     no_datasets_text.hide()
 
+    connect_nn.card.unlock()
+    connect_nn.card.uncollapse()
     card.lock()
     change_button.show()
 
 
 @change_button.click
 def datasets_changed():
+    connect_nn.card.lock()
+    connect_nn.card.collapse()
     card.unlock()
     change_button.hide()
     g.selected_project = None
