@@ -25,12 +25,11 @@ api = sly.Api.from_env()
 selected_project = None
 selected_datasets = None
 model_session_id = None
+model_meta = None
 
 # endregion
 
 deployed_nn_tags = ["deployed_nn"]
-
-model_meta: sly.ProjectMeta = None
 
 ann_cache = defaultdict(list)  # only one (current) image in cache
 project_info = None
