@@ -15,27 +15,34 @@ team_id = sly.env.team_id()
 workspace_id = sly.env.workspace_id()
 project_id = sly.env.project_id(raise_not_found=False)
 dataset_id = sly.env.dataset_id(raise_not_found=False)
+
 sly.logger.info(
     f"TEAM_ID: {team_id}, WORKSPACE_ID: {workspace_id}, PROJECT_ID: {project_id}, DATASET_ID: {dataset_id}"
 )
 
 api = sly.Api.from_env()
+if dataset_id:
+    dataset_info = api.dataset.get_info_by_id(dataset_id)
+    project_id = dataset_info.project_id
+
+project_info = api.project.get_info_by_id(project_id)
 
 # region ui-settings
 selected_project = None
 selected_datasets = None
 model_session_id = None
 model_meta = None
-
+inference_settings = None
 # endregion
 
 # region ui-consants
 deployed_nn_tags = ["deployed_nn"]
 inference_modes = ["full image", "sliding window"]
 add_predictions_modes = ["merge with existing labels", "replace existing labels"]
+# endregion
 
 ann_cache = defaultdict(list)  # only one (current) image in cache
-project_info = None
+# project_info = None
 input_images = None
 project_meta: sly.ProjectMeta = None
 

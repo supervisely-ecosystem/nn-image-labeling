@@ -31,9 +31,11 @@ def load_classes():
     obj_classes = g.model_meta.obj_classes
     select_classes.set(obj_classes)
     sly.logger.info(f"{len(obj_classes)} classes were loaded.")
+    select_classes.select_all()
 
 
 def load_tags():
     obj_tags = g.model_meta.tag_metas
     select_tags.set(obj_tags)
     sly.logger.info(f"{len(obj_tags)} tags were loaded.")
+    select_tags.select_all()

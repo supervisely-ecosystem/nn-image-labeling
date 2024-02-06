@@ -26,7 +26,7 @@ add_predictions_mode_field = Field(
     description="Select how to add predictions to the project: by merging with existing labels or by replacing them.",
 )
 
-additional_settings = Editor()
+additional_settings = Editor(language_mode="yaml", height_lines=20)
 additional_settings_field = Field(
     content=additional_settings,
     title="Additional settings",

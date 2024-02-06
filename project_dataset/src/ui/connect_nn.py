@@ -1,9 +1,12 @@
 import supervisely as sly
+import yaml
 from supervisely.app.widgets import Button, Card, Container, ModelInfo, SelectAppSession, Text
 
 import project_dataset.src.globals as g
+import project_dataset.src.ui.inference_preview as inference_preview
 import project_dataset.src.ui.inference_settings as inference_settings
 import project_dataset.src.ui.nn_info as nn_info
+import project_dataset.src.ui.output_data as output_data
 
 select_session = SelectAppSession(g.team_id, g.deployed_nn_tags)
 connect_button = Button("Connect", icon="zmdi zmdi-check")
@@ -44,6 +47,8 @@ def model_selected():
         return
 
     g.model_meta = get_model_meta()
+    g.inference_settings = get_inference_settings()
+    inference_settings.additional_settings.set_text(g.inference_settings["settings"])
 
     error_text.hide()
     model_info.set_session_id(g.model_session_id)
@@ -62,6 +67,12 @@ def model_selected():
     inference_settings.card.unlock()
     inference_settings.card.uncollapse()
 
+    inference_preview.card.unlock()
+    inference_preview.card.uncollapse()
+
+    output_data.card.unlock()
+    output_data.card.uncollapse()
+
 
 @disconnect_button.click
 def model_changed():
@@ -73,11 +84,18 @@ def model_changed():
     g.model_meta = None
     sly.logger.info(f"Change button was clicked. Model session: {g.model_session_id}")
     model_info.hide()
+
     nn_info.card.lock()
     nn_info.card.collapse()
 
     inference_settings.card.lock()
     inference_settings.card.collapse()
+
+    inference_preview.card.lock()
+    inference_preview.card.collapse()
+
+    output_data.card.lock()
+    output_data.card.collapse()
 
 
 def connect_to_model():
@@ -95,3 +113,17 @@ def connect_to_model():
 def get_model_meta():
     meta_json = g.api.task.send_request(g.model_session_id, "get_output_classes_and_tags", data={})
     return sly.ProjectMeta.from_json(meta_json)
+
+
+def get_inference_settings():
+    inference_settings = g.api.task.send_request(
+        g.model_session_id, "get_custom_inference_settings", data={}
+    )
+    if inference_settings["settings"] is None or len(inference_settings["settings"]) == 0:
+        inference_settings["settings"] = ""
+        sly.logger.info("Model doesn't support custom inference settings.")
+    elif isinstance(inference_settings["settings"], dict):
+        inference_settings["settings"] = yaml.dump(
+            inference_settings["settings"], allow_unicode=True
+        )
+    return inference_settings
