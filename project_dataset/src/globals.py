@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 
 ABSOLUTE_PATH = os.path.dirname(os.path.abspath(__file__))
 PARENT_DIR = os.path.dirname(ABSOLUTE_PATH)
+TEMP_DIR = os.path.join(PARENT_DIR, "temp")
+sly.fs.mkdir(TEMP_DIR)
 
 if sly.is_development():
     load_dotenv(os.path.join(PARENT_DIR, "local.env"))
