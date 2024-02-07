@@ -1,6 +1,7 @@
 from supervisely.app.widgets import Card, Checkbox, Container, Editor, Field, Input, Select
 
 import project_dataset.src.globals as g
+import project_dataset.src.ui.inference_preview as inference_preview
 
 inference_mode = Select(items=[Select.Item(mode) for mode in g.inference_modes])
 inference_mode.set_value(g.inference_modes[0])
@@ -50,3 +51,11 @@ card = Card(
 )
 card.lock()
 card.collapse()
+
+
+@inference_mode.value_changed
+def inference_mode_changed(mode: str):
+    if mode == "sliding window":
+        inference_preview.sliding_window_settings.show()
+    else:
+        inference_preview.sliding_window_settings.hide()

@@ -32,7 +32,6 @@ card.lock()
 @connect_button.click
 def model_selected():
     g.model_session_id = select_session.get_selected_id()
-    sly.logger.info(f"Select button was clicked. Model: {g.model_info}")
     if g.model_session_id is None:
         error_text.text = "No model was selected, please select a model and try again."
         error_text.show()

@@ -1,8 +1,10 @@
 import os
-from collections import defaultdict
 
 import supervisely as sly
 from dotenv import load_dotenv
+
+# from collections import defaultdict
+
 
 ABSOLUTE_PATH = os.path.dirname(os.path.abspath(__file__))
 PARENT_DIR = os.path.dirname(ABSOLUTE_PATH)
@@ -25,8 +27,6 @@ if dataset_id:
     dataset_info = api.dataset.get_info_by_id(dataset_id)
     project_id = dataset_info.project_id
 
-project_info = api.project.get_info_by_id(project_id)
-
 # region ui-settings
 selected_project = None
 selected_datasets = None
@@ -41,28 +41,34 @@ inference_modes = ["full image", "sliding window"]
 add_predictions_modes = ["merge with existing labels", "replace existing labels"]
 # endregion
 
-ann_cache = defaultdict(list)  # only one (current) image in cache
-# project_info = None
+# region caches
 input_images = None
-project_meta: sly.ProjectMeta = None
+project_info = api.project.get_info_by_id(project_id)
+project_meta = sly.ProjectMeta.from_json(api.project.get_meta(project_id))
+# endregion
 
-image_grid_options = {
-    "opacity": 0.5,
-    "fillRectangle": True,  # False,
-    "enableZoom": False,
-    "syncViews": True,
-    "showPreview": True,
-    "selectable": False,
-    "showOpacityInHeader": True,
-}
-
-empty_gallery = {
-    "content": {"projectMeta": {}, "annotations": {}, "layout": []},
-    "options": image_grid_options,
-}
-
-# sliding window part
-
+# region sliding window parameters
 det_model_meta = None
 model_info = None
 inference_request_uuid = None
+# endregion
+
+# ann_cache = defaultdict(list)  # only one (current) image in cache
+# # project_info = None
+# input_images = None
+# project_meta: sly.ProjectMeta = None
+
+# image_grid_options = {
+#     "opacity": 0.5,
+#     "fillRectangle": True,  # False,
+#     "enableZoom": False,
+#     "syncViews": True,
+#     "showPreview": True,
+#     "selectable": False,
+#     "showOpacityInHeader": True,
+# }
+
+# empty_gallery = {
+#     "content": {"projectMeta": {}, "annotations": {}, "layout": []},
+#     "options": image_grid_options,
+# }

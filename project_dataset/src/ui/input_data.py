@@ -35,6 +35,8 @@ def datasets_selected():
         return
     no_datasets_text.hide()
 
+    g.input_images = None
+
     connect_nn.card.unlock()
     connect_nn.card.uncollapse()
     card.lock()
