@@ -91,9 +91,6 @@ card.collapse()
 @preview_button.click
 def create_preview() -> None:
     """Create a preview of the model inference and show it in the gallery."""
-    if g.input_images is None:
-        cache_input_images()
-
     try:
         inference_settings = yaml.safe_load(settings.additional_settings.get_value())
     except Exception as e:
@@ -130,6 +127,11 @@ def create_preview() -> None:
     )
 
 
+# region legacy
+# This code comes from the legacy version of the app mostly as is.
+# Functions were modified to use the global variables with less arguments
+# and UI state was removed (as it is not used in the new version of the app).
+# Consider refactoring logic of functions later.
 def apply_model_to_image(
     image_info: sly.ImageInfo, inference_setting: Dict[str, Union[float, bool]]
 ) -> Tuple[sly.Annotation, sly.Annotation, sly.ProjectMeta]:
@@ -152,14 +154,6 @@ def apply_model_to_image(
     else:
         original_ann = original_anns[0]
     return original_ann, result_anns[0], res_project_meta
-
-
-def cache_input_images() -> None:
-    """Cache input images for the model inference."""
-    g.input_images = []
-    for dataset_id in g.selected_datasets:
-        g.input_images.extend(g.api.image.get_list(dataset_id))
-    sly.logger.debug(f"Input images were cached: {len(g.input_images)} images.")
 
 
 def apply_model_to_images(
@@ -564,3 +558,6 @@ def generate_res_name(item: Union[sly.ObjClass, sly.TagMeta], suffix: str, index
     :rtype: str
     """
     return f"{item.name}-{suffix}" if index == 0 else f"{item.name}-{suffix}-{index}"
+
+
+# endregion

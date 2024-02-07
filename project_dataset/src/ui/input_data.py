@@ -36,6 +36,7 @@ def datasets_selected():
     no_datasets_text.hide()
 
     g.input_images = None
+    cache_input_images()
 
     connect_nn.card.unlock()
     connect_nn.card.uncollapse()
@@ -54,3 +55,11 @@ def datasets_changed():
     sly.logger.info(
         f"Change button was clicked. Project: {g.selected_project}, Datasets: {g.selected_datasets}"
     )
+
+
+def cache_input_images() -> None:
+    """Cache input images for the model inference."""
+    g.input_images = []
+    for dataset_id in g.selected_datasets:
+        g.input_images.extend(g.api.image.get_list(dataset_id))
+    sly.logger.debug(f"Input images were cached: {len(g.input_images)} images.")
