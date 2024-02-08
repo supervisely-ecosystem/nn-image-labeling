@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 import supervisely as sly
 
 
@@ -25,12 +25,15 @@ def set_model_info(api: sly.Api, task_id, model_meta: sly.ProjectMeta, model_inf
     api.task.set_fields(task_id, fields)
 
 
-def set_error(api: sly.Api, task_id, e: Exception, log_error: bool = True):
+def set_error(api: sly.Api, task_id, e: Union[Exception, str], log_error: bool = True):
+    err = e if isinstance(e, str) else repr(e)
     if log_error:
-        sly.logger.error(repr(e))
+        sly.logger.error(err)
+    else:
+        sly.logger.warn(err)
     fields = [
         {"field": "data.connected", "payload": False},
-        {"field": "data.connectionError", "payload": repr(e)},
+        {"field": "data.connectionError", "payload": err},
     ]
     api.task.set_fields(task_id, fields)
 

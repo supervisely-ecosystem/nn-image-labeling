@@ -13,6 +13,7 @@ sys.path.append(root_source_path)
 from init_ui import init_ui
 from shared_utils.connect import get_model_info
 from shared_utils.inference import postprocess
+from shared_utils.ui2 import set_error
 from dotenv import load_dotenv
 import ruamel.yaml
 import io
@@ -103,6 +104,12 @@ def deselect_all_tags(api: sly.Api, task_id, context, state, app_logger):
 @sly.timeit
 def inference(api: sly.Api, task_id, context, state, app_logger):
     global model_meta
+    if model_meta is None:
+        err = "Model meta is None. Make sure that the model is deployed, has meta, and try again."
+        set_error(api, task_id, err)
+        fields = [{"field": "state.processing", "payload": False}]
+        api.task.set_fields(task_id, fields)
+        return
     project_id = context.get("projectId")
     image_id = context.get("imageId")
     figure_id = context.get("figureId")
@@ -330,7 +337,6 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
 
     if session_info.get("task type") == "prompt-based object detection":
         # add tag to model meta if necessary
-        global model_meta
         if not model_meta.get_tag_meta("confidence"):
             model_meta = model_meta.add_tag_meta(sly.TagMeta("confidence", value_type="any_number"))
         # add obj class to model meta if necessary
