@@ -1,6 +1,7 @@
 import supervisely as sly
 from supervisely.app.widgets import Container
 
+import project_dataset.src.globals as g
 import project_dataset.src.ui.connect_nn as connect_nn
 import project_dataset.src.ui.inference_preview as inference_preview
 import project_dataset.src.ui.inference_settings as inference_settings
@@ -19,4 +20,4 @@ layout = Container(
     ],
 )
 
-app = sly.Application(layout=layout)
+app = sly.Application(layout=layout, static_dir=g.STATIC_DIR)

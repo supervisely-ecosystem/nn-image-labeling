@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from random import choice
 from time import sleep
 from typing import Any, Dict, List, Literal, Tuple, Union
@@ -16,6 +17,7 @@ from supervisely.app.widgets import (
     Flexbox,
     GridGallery,
     InputNumber,
+    VideoPlayer,
 )
 
 import project_dataset.src.globals as g
@@ -29,6 +31,10 @@ preview_gallery = GridGallery(
     resize_on_zoom=True,
     empty_message="Click Preview button to see the result.",
 )
+preview_gallery.hide()
+preview_video = VideoPlayer()
+preview_video.hide()
+
 random_image_checkbox = Checkbox("Random image", checked=True)
 preview_button = Button("Preview", icon="zmdi zmdi-eye")
 
@@ -76,13 +82,14 @@ sliding_window_settings = Container(
         vizulazation_fps_field,
     ]
 )
-sliding_window_settings.hide()
+sliding_window_flexbox = Container([sliding_window_settings, preview_video], direction="horizontal")
+sliding_window_flexbox.hide()
 
 
 card = Card(
     "5️⃣ Inference preview",
     "Preview the model inference on a random image.",
-    content=Container([sliding_window_settings, preview_gallery], direction="horizontal"),
+    content=Container([preview_gallery, sliding_window_flexbox]),
     content_top_right=Flexbox([random_image_checkbox, preview_button]),
     collapsable=True,
     lock_message="Connect to the deployed neural network on step 2️⃣.",
@@ -93,7 +100,7 @@ card.collapse()
 
 @preview_button.click
 def create_preview() -> None:
-    if settings.inference_mode.get_value() == "sliding_window":
+    if settings.inference_mode.get_value() == "sliding window":
         window_preview()
     else:
         full_preview()
@@ -101,6 +108,7 @@ def create_preview() -> None:
 
 def full_preview() -> None:
     """Create a preview of the model inference and show it in the gallery."""
+    preview_video.hide()
     try:
         inference_settings = yaml.safe_load(settings.additional_settings.get_value())
     except Exception as e:
@@ -136,8 +144,11 @@ def full_preview() -> None:
         f"{image_info.name} (result)",
     )
 
+    preview_gallery.show()
+
 
 def window_preview():
+    preview_gallery.hide()
     if random_image_checkbox.is_checked():
         image_info: sly.ImageInfo = choice(g.input_images)
     else:
@@ -146,6 +157,7 @@ def window_preview():
 
     check_sliding_sizes_by_image(image_info)
     inference_setting = get_sliding_window_params()
+    print(inference_setting)
 
     ann_pred_res = g.api.task.send_request(
         g.model_session_id,
@@ -153,6 +165,7 @@ def window_preview():
         data={"image_id": image_info.id, "settings": inference_setting},
         timeout=200,
     )
+    print(ann_pred_res)
 
     try:
         predictions = ann_pred_res["data"]["slides"]
@@ -160,10 +173,10 @@ def window_preview():
         raise ValueError("Cannot parse slides predictions, reason: {}".format(repr(ex)))
 
     image_np = g.api.image.download_np(image_info.id)
-    file_info = write_video(image_np, predictions)
+    video_name = write_video(image_np, predictions)
 
-    # TODO: Show video in the gallery.
-    # ? Change UI widget?
+    preview_video.set_video(f"/static/{video_name}")
+    preview_video.show()
 
 
 # region legacy
@@ -184,7 +197,9 @@ def check_sliding_sizes_by_image(image_info: sly.ImageInfo) -> None:
         window_width.value = image_info.width
 
 
-def write_video(image_np: np.ndarray, predictions, last_two_frames_copies=8, max_video_size=1080):
+def write_video(
+    image_np: np.ndarray, predictions, last_two_frames_copies=8, max_video_size=1080
+) -> str:
     scale_ratio = None
     if image_np.shape[1] > max_video_size:
         scale_ratio = max_video_size / image_np.shape[1]
@@ -192,7 +207,10 @@ def write_video(image_np: np.ndarray, predictions, last_two_frames_copies=8, max
             image_np, (int(image_np.shape[1] * scale_ratio), int(image_np.shape[0] * scale_ratio))
         )
 
-    video_path = os.path.join(g.my_app.data_dir, "preview.mp4")
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    video_name = f"preview_{timestamp}.mp4"
+
+    video_path = os.path.join(g.STATIC_DIR, video_name)
     video = cv2.VideoWriter(
         video_path,
         cv2.VideoWriter_fourcc(*"VP90"),
@@ -215,7 +233,7 @@ def write_video(image_np: np.ndarray, predictions, last_two_frames_copies=8, max
             if scale_ratio is not None:
                 label = sly.Label(label.geometry.scale(scale_ratio), label.obj_class)
             label.draw_contour(frame, thickness=3)
-        sly.image.write(os.path.join(g.TEMP_DIR, f"{i:05d}.jpg"), frame)
+        sly.image.write(os.path.join(g.STATIC_DIR, f"{i:05d}.jpg"), frame)
         frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
         if i >= len(predictions) - 2:
@@ -225,12 +243,13 @@ def write_video(image_np: np.ndarray, predictions, last_two_frames_copies=8, max
             video.write(frame_bgr)
 
     video.release()
+    return video_name
 
-    remote_video_path = os.path.join(g.TEMP_DIR, "preview.mp4")
-    if g.api.file.exists(g.team_id, remote_video_path):
-        g.api.file.remove(g.team_id, remote_video_path)
-    file_info = g.api.file.upload(g.team_id, video_path, remote_video_path)
-    return file_info
+    # remote_video_path = os.path.join(g.STATIC_DIR, "preview.mp4")
+    # if g.api.file.exists(g.team_id, remote_video_path):
+    #     g.api.file.remove(g.team_id, remote_video_path)
+    # file_info = g.api.file.upload(g.team_id, video_path, remote_video_path)
+    # return file_info
 
 
 def apply_model_to_image(
@@ -450,13 +469,13 @@ def get_sliding_window_params() -> Dict[str, Union[int, str, bool]]:
     :rtype: Dict[str, Union[int, str, bool]]
     """
     return {
-        "inference_mode": settings.inference_mode.get_value(),
+        "inference_mode": "sliding_window",
         "sliding_window_params": {
             "windowHeight": window_height.get_value(),
             "windowWidth": window_width.get_value(),
             "overlapY": vertical_overlap.get_value(),
             "overlapX": horizontal_overlap.get_value(),
-            "borderStrategy": "Shift window",
+            "borderStrategy": "shift_window",
             "naive": False,
         },
     }

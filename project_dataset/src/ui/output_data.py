@@ -119,7 +119,7 @@ def apply_model():
                             continue
                 pbar.update(len(batched_image_infos))
 
-    output_project_thumbnail.set(res_project)
+    output_project_thumbnail.set(g.api.project.get_info_by_id(res_project.id))
     output_project_thumbnail.show()
 
     from project_dataset.src.main import app
