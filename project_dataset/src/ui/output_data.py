@@ -29,6 +29,8 @@ card.collapse()
 
 @apply_button.click
 def apply_model():
+    """Applies the model to the input data and creates a new project with the predictions.
+    After the process is finished, the new project will be shown and the app will be stopped."""
     try:
         inference_settings = yaml.safe_load(settings.additional_settings.get_value())
         sly.logger.info("Final Inference Settings:")

@@ -25,7 +25,9 @@ card = Card(
 
 
 @select_button.click
-def datasets_selected():
+def datasets_selected() -> None:
+    """Changes the UI state based on the selected datasets,
+    caches input images and creates the image selector."""
     g.selected_project = select_dataset.get_selected_project_id()
     g.selected_datasets = select_dataset.get_selected_ids()
     sly.logger.info(
@@ -48,6 +50,7 @@ def datasets_selected():
 
 @change_button.click
 def datasets_changed():
+    """Changes the UI state based on the selected datasets and clears the cached input images."""
     connect_nn.card.lock()
     connect_nn.card.collapse()
     card.unlock()

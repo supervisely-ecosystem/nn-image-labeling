@@ -54,7 +54,8 @@ card.collapse()
 
 
 @inference_mode.value_changed
-def inference_mode_changed(mode: str):
+def inference_mode_changed(mode: str) -> None:
+    """Changes the UI state based on the selected inference mode."""
     if mode == "sliding window":
         inference_preview.sliding_window_container.show()
         inference_preview.preview_gallery.hide()

@@ -30,7 +30,8 @@ card.lock()
 
 
 @connect_button.click
-def model_selected():
+def model_selected() -> None:
+    """Connects to the selected model session and changes the UI state."""
     g.model_session_id = select_session.get_selected_id()
     if g.model_session_id is None:
         error_text.text = "No model was selected, please select a model and try again."
@@ -77,7 +78,8 @@ def model_selected():
 
 
 @disconnect_button.click
-def model_changed():
+def model_changed() -> None:
+    """Changes the UI state when the model is changed."""
     connect_button.show()
     select_session.show()
 
@@ -103,7 +105,12 @@ def model_changed():
     output_data.card.collapse()
 
 
-def connect_to_model():
+def connect_to_model() -> bool:
+    """Connects to the selected model session.
+
+    :return: True if the connection was successful, False otherwise.
+    :rtype: bool
+    """
     try:
         session_info = g.api.task.send_request(g.model_session_id, "get_session_info", data={})
         sly.logger.info(f"Connected to model session: {session_info}")
@@ -115,12 +122,23 @@ def connect_to_model():
         return False
 
 
-def get_model_meta():
+def get_model_meta() -> sly.ProjectMeta:
+    """Returns model meta in Supervisely format.
+
+    :return: Model meta in Supervisely format.
+    :rtype: sly.ProjectMeta
+    """
     meta_json = g.api.task.send_request(g.model_session_id, "get_output_classes_and_tags", data={})
     return sly.ProjectMeta.from_json(meta_json)
 
 
-def get_inference_settings():
+def get_inference_settings() -> str:
+    """Returns custom inference settings for the model.
+    The settings are returned as a string in YAML format.
+
+    :return: Custom inference settings for the model.
+    :rtype: str
+    """
     inference_settings = g.api.task.send_request(
         g.model_session_id, "get_custom_inference_settings", data={}
     )

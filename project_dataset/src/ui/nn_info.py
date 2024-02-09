@@ -27,7 +27,8 @@ card.lock()
 card.collapse()
 
 
-def load_classes():
+def load_classes() -> None:
+    """Fills the widget with the classes from the model metadata."""
     obj_classes = g.model_meta.obj_classes
     select_classes.set(obj_classes)
     sly.logger.info(f"{len(obj_classes)} classes were loaded.")
@@ -35,6 +36,7 @@ def load_classes():
 
 
 def load_tags():
+    """Fills the widget with the tags from the model metadata."""
     obj_tags = g.model_meta.tag_metas
     select_tags.set(obj_tags)
     sly.logger.info(f"{len(obj_tags)} tags were loaded.")
