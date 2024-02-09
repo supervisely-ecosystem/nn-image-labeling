@@ -1,10 +1,8 @@
 import os
+from collections import defaultdict
 
 import supervisely as sly
 from dotenv import load_dotenv
-
-# from collections import defaultdict
-
 
 ABSOLUTE_PATH = os.path.dirname(os.path.abspath(__file__))
 PARENT_DIR = os.path.dirname(ABSOLUTE_PATH)

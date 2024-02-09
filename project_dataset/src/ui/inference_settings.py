@@ -56,8 +56,8 @@ card.collapse()
 @inference_mode.value_changed
 def inference_mode_changed(mode: str):
     if mode == "sliding window":
-        inference_preview.sliding_window_flexbox.show()
+        inference_preview.sliding_window_container.show()
         inference_preview.preview_gallery.hide()
     else:
-        inference_preview.sliding_window_flexbox.hide()
+        inference_preview.sliding_window_container.hide()
         inference_preview.preview_gallery.show()

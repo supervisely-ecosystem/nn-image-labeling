@@ -69,6 +69,9 @@ def model_selected():
     inference_preview.card.unlock()
     inference_preview.card.uncollapse()
 
+    inference_preview.random_image_checkbox.enable()
+    inference_preview.preview_button.enable()
+
     output_data.card.unlock()
     output_data.card.uncollapse()
 
@@ -92,6 +95,9 @@ def model_changed():
 
     inference_preview.card.lock()
     inference_preview.card.collapse()
+
+    inference_preview.random_image_checkbox.disable()
+    inference_preview.preview_button.disable()
 
     output_data.card.lock()
     output_data.card.collapse()

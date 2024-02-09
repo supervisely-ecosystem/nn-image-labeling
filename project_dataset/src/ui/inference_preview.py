@@ -13,10 +13,12 @@ from supervisely.app.widgets import (
     Card,
     Checkbox,
     Container,
+    Empty,
     Field,
-    Flexbox,
     GridGallery,
     InputNumber,
+    ReloadableArea,
+    Select,
     VideoPlayer,
 )
 
@@ -36,7 +38,9 @@ preview_video = VideoPlayer()
 preview_video.hide()
 
 random_image_checkbox = Checkbox("Random image", checked=True)
+random_image_checkbox.disable()
 preview_button = Button("Preview", icon="zmdi zmdi-eye")
+preview_button.disable()
 
 window_height = InputNumber(value=256, min=1, max=10000)
 window_height_field = Field(
@@ -82,15 +86,24 @@ sliding_window_settings = Container(
         vizulazation_fps_field,
     ]
 )
-sliding_window_flexbox = Container([sliding_window_settings, preview_video], direction="horizontal")
-sliding_window_flexbox.hide()
+sliding_window_container = Container(
+    [sliding_window_settings, preview_video], direction="horizontal"
+)
+sliding_window_container.hide()
 
+image_selector_container = Container()
+image_selector_ra = ReloadableArea(content=image_selector_container)
+image_selector_ra.hide()
 
 card = Card(
     "5️⃣ Inference preview",
     "Preview the model inference on a random image.",
-    content=Container([preview_gallery, sliding_window_flexbox]),
-    content_top_right=Flexbox([random_image_checkbox, preview_button]),
+    content=Container([preview_gallery, sliding_window_container]),
+    content_top_right=Container(
+        [image_selector_ra, Container([Empty(), random_image_checkbox]), preview_button],
+        direction="horizontal",
+        style="padding: 5px",
+    ),
     collapsable=True,
     lock_message="Connect to the deployed neural network on step 2️⃣.",
 )
@@ -121,8 +134,11 @@ def full_preview() -> None:
     if random_image_checkbox.is_checked():
         image_info: sly.ImageInfo = choice(g.input_images)
     else:
-        # TODO: implement image selection
-        pass
+        image_info = get_selected_image()
+
+    sly.logger.info(
+        f"Image with id {image_info.id} and name {image_info.name} was selected for preview"
+    )
 
     input_ann, result_ann, result_project_meta = apply_model_to_image(
         image_info, inference_settings
@@ -152,8 +168,11 @@ def window_preview():
     if random_image_checkbox.is_checked():
         image_info: sly.ImageInfo = choice(g.input_images)
     else:
-        # TODO: implement image selection
-        pass
+        image_info = get_selected_image()
+
+    sly.logger.info(
+        f"Image with id {image_info.id} and name {image_info.name} was selected for preview"
+    )
 
     check_sliding_sizes_by_image(image_info)
     inference_setting = get_sliding_window_params()
@@ -177,6 +196,36 @@ def window_preview():
 
     preview_video.set_video(f"/static/{video_name}")
     preview_video.show()
+
+
+def create_image_selector() -> None:
+    items = []
+    for image_info in g.input_images:
+        items.append(
+            Select.Item(
+                label=image_info.name,
+                value=image_info.id,
+            )
+        )
+
+    image_selector = Select(items, filterable=True, placeholder="Select image")
+    image_selector.set_value("")
+    image_selector_ra._content._widgets = [image_selector]
+    image_selector_ra.reload()
+
+
+@random_image_checkbox.value_changed
+def toggle_image_select_mode(is_random: bool) -> None:
+    if is_random:
+        image_selector_ra.hide()
+    else:
+        image_selector_ra.show()
+
+
+def get_selected_image() -> sly.ImageInfo:
+    image_selector = image_selector_ra._content._widgets[0]
+    selected_value = image_selector.get_value()
+    return g.api.image.get_info_by_id(int(selected_value))
 
 
 # region legacy

@@ -3,6 +3,7 @@ from supervisely.app.widgets import Button, Card, Container, SelectDataset, Text
 
 import project_dataset.src.globals as g
 import project_dataset.src.ui.connect_nn as connect_nn
+import project_dataset.src.ui.inference_preview as inference_preview
 
 select_dataset = SelectDataset(multiselect=True, project_id=g.project_id, default_id=g.dataset_id)
 select_button = Button("Select")
@@ -37,6 +38,7 @@ def datasets_selected():
 
     g.input_images = None
     cache_input_images()
+    inference_preview.create_image_selector()
 
     connect_nn.card.unlock()
     connect_nn.card.uncollapse()
