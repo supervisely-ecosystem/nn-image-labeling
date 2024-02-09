@@ -1,5 +1,4 @@
 import os
-from collections import defaultdict
 
 import supervisely as sly
 from dotenv import load_dotenv
@@ -52,23 +51,3 @@ det_model_meta = None
 model_info = None
 inference_request_uuid = None
 # endregion
-
-# ann_cache = defaultdict(list)  # only one (current) image in cache
-# # project_info = None
-# input_images = None
-# project_meta: sly.ProjectMeta = None
-
-# image_grid_options = {
-#     "opacity": 0.5,
-#     "fillRectangle": True,  # False,
-#     "enableZoom": False,
-#     "syncViews": True,
-#     "showPreview": True,
-#     "selectable": False,
-#     "showOpacityInHeader": True,
-# }
-
-# empty_gallery = {
-#     "content": {"projectMeta": {}, "annotations": {}, "layout": []},
-#     "options": image_grid_options,
-# }

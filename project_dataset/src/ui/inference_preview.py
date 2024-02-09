@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 from random import choice
 from time import sleep
-from typing import Any, Dict, List, Literal, Tuple, Union
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
 import cv2
 import numpy as np
@@ -113,6 +113,7 @@ card.collapse()
 
 @preview_button.click
 def create_preview() -> None:
+    """Select the function to create a preview based on the inference mode."""
     if settings.inference_mode.get_value() == "sliding window":
         window_preview()
     else:
@@ -120,7 +121,7 @@ def create_preview() -> None:
 
 
 def full_preview() -> None:
-    """Create a preview of the model inference and show it in the gallery."""
+    """Create a full image preview of the model inference and show it in the gallery."""
     preview_video.hide()
     try:
         inference_settings = yaml.safe_load(settings.additional_settings.get_value())
@@ -163,7 +164,8 @@ def full_preview() -> None:
     preview_gallery.show()
 
 
-def window_preview():
+def window_preview() -> None:
+    """Create a sliding window preview of the model inference and show it in the gallery."""
     preview_gallery.hide()
     if random_image_checkbox.is_checked():
         image_info: sly.ImageInfo = choice(g.input_images)
@@ -176,7 +178,6 @@ def window_preview():
 
     check_sliding_sizes_by_image(image_info)
     inference_setting = get_sliding_window_params()
-    print(inference_setting)
 
     ann_pred_res = g.api.task.send_request(
         g.model_session_id,
@@ -184,7 +185,6 @@ def window_preview():
         data={"image_id": image_info.id, "settings": inference_setting},
         timeout=200,
     )
-    print(ann_pred_res)
 
     try:
         predictions = ann_pred_res["data"]["slides"]
@@ -199,6 +199,7 @@ def window_preview():
 
 
 def create_image_selector() -> None:
+    """Create a selector with the input images and show it in the reloadable area."""
     items = []
     for image_info in g.input_images:
         items.append(
@@ -216,6 +217,7 @@ def create_image_selector() -> None:
 
 @random_image_checkbox.value_changed
 def toggle_image_select_mode(is_random: bool) -> None:
+    """Toggle the image selection mode between random and manual."""
     if is_random:
         image_selector_ra.hide()
     else:
@@ -223,6 +225,11 @@ def toggle_image_select_mode(is_random: bool) -> None:
 
 
 def get_selected_image() -> sly.ImageInfo:
+    """Returns the selected image from the image selector.
+
+    :return: Selected image.
+    :rtype: sly.ImageInfo
+    """
     image_selector = image_selector_ra._content._widgets[0]
     selected_value = image_selector.get_value()
     return g.api.image.get_info_by_id(int(selected_value))
@@ -247,8 +254,24 @@ def check_sliding_sizes_by_image(image_info: sly.ImageInfo) -> None:
 
 
 def write_video(
-    image_np: np.ndarray, predictions, last_two_frames_copies=8, max_video_size=1080
+    image_np: np.ndarray,
+    predictions: Dict[str, Any],
+    last_two_frames_copies: Optional[int] = 8,
+    max_video_size: Optional[int] = 1080,
 ) -> str:
+    """Writes a video with the model inference preview.
+
+    :param image_np: Image to write the video from.
+    :type image_np: np.ndarray
+    :param predictions: Model inference predictions.
+    :type predictions: Dict[str, Any]
+    :param last_two_frames_copies: Number of copies of the last two frames to add to the video.
+    :type last_two_frames_copies: Optional[int]
+    :param max_video_size: Maximum size of the video.
+    :type max_video_size: Optional[int]
+    :return: Video name.
+    :rtype: str
+    """
     scale_ratio = None
     if image_np.shape[1] > max_video_size:
         scale_ratio = max_video_size / image_np.shape[1]
@@ -293,12 +316,6 @@ def write_video(
 
     video.release()
     return video_name
-
-    # remote_video_path = os.path.join(g.STATIC_DIR, "preview.mp4")
-    # if g.api.file.exists(g.team_id, remote_video_path):
-    #     g.api.file.remove(g.team_id, remote_video_path)
-    # file_info = g.api.file.upload(g.team_id, video_path, remote_video_path)
-    # return file_info
 
 
 def apply_model_to_image(
