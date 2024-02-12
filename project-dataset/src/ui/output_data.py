@@ -1,10 +1,12 @@
+import importlib
+
 import supervisely as sly
 import yaml
 from supervisely.app.widgets import Button, Card, Container, Input, Progress, ProjectThumbnail
 
-import project_dataset.src.globals as g
-import project_dataset.src.ui.inference_settings as settings
-from project_dataset.src.ui.inference_preview import apply_model_to_image, apply_model_to_images
+g = importlib.import_module("project-dataset.src.globals")
+settings = importlib.import_module("project-dataset.src.ui.inference_settings")
+inference_preview = importlib.import_module("project-dataset.src.ui.inference_preview")
 
 output_project_name = Input(f"{g.project_info.name}_inference", minlength=1)
 apply_button = Button("Apply model to input data", icon="zmdi zmdi-check")
@@ -64,7 +66,7 @@ def apply_model():
                         image_ids.append(image_info.id)
                         res_names.append(image_info.name)
                         res_metas.append(image_info.meta)
-                    _, res_anns, final_project_meta = apply_model_to_images(
+                    _, res_anns, final_project_meta = inference_preview.apply_model_to_images(
                         dataset_info.id, batched_image_infos, inference_settings
                     )
                 except Exception as e:
@@ -75,7 +77,7 @@ def apply_model():
                     image_ids, res_names, res_anns, res_metas = [], [], [], []
                     for image_info in batched_image_infos:
                         try:
-                            _, res_ann, final_project_meta = apply_model_to_image(
+                            _, res_ann, final_project_meta = inference_preview.apply_model_to_image(
                                 image_info, inference_settings
                             )
 
@@ -124,6 +126,6 @@ def apply_model():
     output_project_thumbnail.set(g.api.project.get_info_by_id(res_project.id))
     output_project_thumbnail.show()
 
-    from project_dataset.src.main import app
+    main = importlib.import_module("project-dataset.src.main")
 
-    app.stop()
+    main.app.stop()
