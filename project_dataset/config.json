@@ -13,7 +13,7 @@
   ],
   "description": "NN Inference on images in project or dataset",
   "docker_image": "supervisely/labeling:6.72.234",
-  "min_instance_version": "6.8.54",
+  "min_instance_version": "6.8.73",
   "entrypoint": "python -m uvicorn project_dataset.src.main:app --host 0.0.0.0 --port 8000",
   "task_location": "workspace_tasks",
   "isolate": true,
