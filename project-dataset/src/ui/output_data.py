@@ -35,9 +35,7 @@ def apply_model():
     After the process is finished, the new project will be shown and the app will be stopped."""
     try:
         inference_settings = yaml.safe_load(settings.additional_settings.get_value())
-        sly.logger.info("Final Inference Settings:")
-        for key, value in settings.items():
-            sly.logger.info(f"{key}: {value}")
+        sly.logger.info(f"Final Inference Settings: {inference_settings}")
     except Exception as e:
         inference_settings = {}
         sly.logger.warning(
