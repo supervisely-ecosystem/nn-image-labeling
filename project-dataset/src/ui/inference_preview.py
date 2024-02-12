@@ -195,7 +195,7 @@ def window_preview() -> None:
     image_np = g.api.image.download_np(image_info.id)
     video_name = write_video(image_np, predictions)
 
-    preview_video.set_video(f"/static/{video_name}")
+    preview_video.set_video(f"static/{video_name}")
     preview_video.show()
 
 
