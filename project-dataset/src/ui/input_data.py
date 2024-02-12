@@ -1,9 +1,11 @@
+import importlib
+
 import supervisely as sly
 from supervisely.app.widgets import Button, Card, Container, SelectDataset, Text
 
-import project_dataset.src.globals as g
-import project_dataset.src.ui.connect_nn as connect_nn
-import project_dataset.src.ui.inference_preview as inference_preview
+g = importlib.import_module("project-dataset.src.globals")
+connect_nn = importlib.import_module("project-dataset.src.ui.connect_nn")
+inference_preview = importlib.import_module("project-dataset.src.ui.inference_preview")
 
 select_dataset = SelectDataset(multiselect=True, project_id=g.project_id, default_id=g.dataset_id)
 select_button = Button("Select")

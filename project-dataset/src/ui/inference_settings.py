@@ -1,7 +1,9 @@
+import importlib
+
 from supervisely.app.widgets import Card, Checkbox, Container, Editor, Field, Input, Select
 
-import project_dataset.src.globals as g
-import project_dataset.src.ui.inference_preview as inference_preview
+g = importlib.import_module("project-dataset.src.globals")
+inference_preview = importlib.import_module("project-dataset.src.ui.inference_preview")
 
 inference_mode = Select(items=[Select.Item(mode) for mode in g.inference_modes])
 inference_mode.set_value(g.inference_modes[0])
