@@ -22,7 +22,7 @@ card = Card(
     content=Container([select_dataset, select_button, no_datasets_text]),
     content_top_right=change_button,
     collapsable=True,
-    lock_message="Click on Chhange button to select another project or dataset.",
+    lock_message="Click on the Change button to select another project or dataset.",
 )
 
 
