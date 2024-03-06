@@ -54,6 +54,8 @@ def model_selected() -> None:
 
     error_text.hide()
     model_info.set_session_id(g.model_session_id)
+    g.model_info = g.api.task.send_request(g.model_session_id, "get_session_info", data={})
+    sly.logger.debug(f"Model info was saved to globals: {g.model_info}")
     model_info.show()
     disconnect_button.show()
 
