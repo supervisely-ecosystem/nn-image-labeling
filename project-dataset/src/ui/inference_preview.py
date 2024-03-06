@@ -363,12 +363,14 @@ def apply_model_to_images(
     inference_mode = settings.inference_mode.get_value()
     image_ids = [image_info.id for image_info in image_infos]
 
-    if inference_mode == "sliding_window":
+    print(f"Inference mode: {inference_mode}")
+
+    if inference_mode == "sliding window":
         inference_settings.update(get_sliding_window_params())
         sly.logger.info("Sliding window is enabled. Inference settings updated.")
 
     try:
-        if inference_mode == "sliding_window":
+        if inference_mode == "sliding window":
             sly.logger.info("Running inference in sliding window mode...")
             if g.model_info.get("async_image_inference_support") is True:
                 sly.logger.info("Running inference in async mode...")
