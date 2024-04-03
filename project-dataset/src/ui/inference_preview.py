@@ -507,7 +507,7 @@ def apply_model_to_images(
     add_mode = settings.add_predictions_mode.get_value()
 
     original_anns = None
-    if add_mode == "merge":
+    if add_mode == "merge with existing labels":
         original_anns = g.api.annotation.download_batch(dataset_id, image_ids)
         original_anns = [
             sly.Annotation.from_json(ann_info.annotation, g.project_meta)
