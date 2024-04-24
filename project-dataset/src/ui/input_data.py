@@ -8,6 +8,11 @@ connect_nn = importlib.import_module("project-dataset.src.ui.connect_nn")
 inference_preview = importlib.import_module("project-dataset.src.ui.inference_preview")
 
 select_dataset = SelectDataset(multiselect=True, project_id=g.project_id, default_id=g.dataset_id)
+if g.dataset_id:
+    select_dataset.set_dataset_ids([g.dataset_id])
+else:
+    dataset_ids = [dataset.id for dataset in g.api.dataset.get_list(g.project_id)]
+    select_dataset.set_dataset_ids(dataset_ids)
 select_button = Button("Select")
 change_button = Button("Change")
 change_button.hide()
