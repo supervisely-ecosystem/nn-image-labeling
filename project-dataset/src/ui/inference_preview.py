@@ -371,9 +371,9 @@ def apply_model_to_images(
 
     try:
         if inference_mode == "sliding window":
-            sly.logger.info("Running inference in sliding window mode...")
+            sly.logger.debug("Running inference in sliding window mode...")
             if g.model_info.get("async_image_inference_support") is True:
-                sly.logger.info("Running inference in async mode...")
+                sly.logger.debug("Running inference in async mode...")
 
                 def get_inference_progress(inference_request_uuid):
                     sly.logger.debug("Requesting inference progress...")
@@ -399,7 +399,7 @@ def apply_model_to_images(
 
                     is_inferring = True
                     if current == 0:
-                        sly.logger.info(
+                        sly.logger.debug(
                             f"Inferring image id{image_id}: {current} / {len(image_ids)}"
                         )
                     while is_inferring:
@@ -414,7 +414,7 @@ def apply_model_to_images(
                     result = progress["result"]
                     ann_pred_json.append(result)
         else:
-            sly.logger.info("Running inference in full image mode...")
+            sly.logger.debug("Running inference in full image mode...")
             ann_pred_json = g.api.task.send_request(
                 g.model_session_id,
                 "inference_batch_ids",
@@ -446,7 +446,7 @@ def apply_model_to_images(
             },
         )
 
-        sly.logger.info("Running inference in sync mode...")
+        sly.logger.debug("Running inference in sync mode...")
         ann_pred_json = []
         for image_id in image_ids:
             try:
