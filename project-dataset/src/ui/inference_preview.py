@@ -233,6 +233,8 @@ def get_selected_image() -> sly.ImageInfo:
     """
     image_selector = image_selector_ra._content._widgets[0]
     selected_value = image_selector.get_value()
+    if selected_value is None or selected_value == "":
+        raise ValueError("Image is not selected. Please, select an image for preview.")
     return g.api.image.get_info_by_id(int(selected_value))
 
 
