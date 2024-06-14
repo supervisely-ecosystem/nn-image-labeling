@@ -9,6 +9,7 @@ import cv2
 import numpy as np
 import supervisely as sly
 import yaml
+from supervisely.api.annotation_api import AnnotationInfo
 from supervisely.app.widgets import (
     Button,
     Card,
@@ -343,6 +344,119 @@ def apply_model_to_image(
     else:
         original_ann = original_anns[0]
     return original_ann, result_anns[0], res_project_meta
+
+
+def apply_model_to_datasets(
+    project_id: int,
+    dataset_ids: List[int],
+    inference_settings: Dict[str, Union[float, bool]],
+    classes: List[str] = None,
+    batch_size=16,
+):
+    """Applies model to the images.
+
+    :param project_id: Project ID.
+    :type project_id: int
+    :param dataset_ids: Datasets IDs.
+    :type dataset_id: List[int]
+    :param inference_settings: Inference settings.
+    :type inference_settings: Dict[str, Union[float, bool]]
+    :param classes: Classes to apply model to.
+    :type classes: List[str]
+    :return: Original AnnotationInfos, result AnnotationInfos, result project meta.
+    :rtype: Tuple[List[AnnotationInfo], List[AnnotationInfo], sly.ProjectMeta]
+    """
+    # Reading parameters from widgets: inference_mode.
+    inference_mode = settings.inference_mode.get_value()
+
+    print(f"Inference mode: {inference_mode}")
+
+    if inference_mode == "sliding window":
+        inference_settings.update(get_sliding_window_params())
+        sly.logger.info("Sliding window is enabled. Inference settings updated.")
+
+    if classes is not None:
+        inference_settings["classes"] = classes
+
+    inference_session = sly.nn.inference.Session(
+        g.api, g.model_session_id, inference_settings=inference_settings
+    )
+    res_project_meta = g.project_meta.clone()
+    ann_info_batch = []
+    for i in inference_session.inference_project_id_async(project_id, dataset_ids):
+        ann_info_batch.append(i)
+        if len(ann_info_batch) < batch_size:
+            continue
+
+        res_ann_infos = []
+        for ann_info in ann_info_batch:
+
+            pred_ann = sly.Annotation.from_json(ann_info.annotation, g.model_meta)
+            res_ann, res_project_meta = postprocess(
+                pred_ann,
+                res_project_meta,
+            )
+            ann_info = ann_info._replace(annotation=res_ann.to_json())
+            res_ann_infos.append(ann_info)
+
+        original_anns = None
+        add_mode = settings.add_predictions_mode.get_value()
+        if add_mode == "merge with existing labels":
+            merged_anns = []
+            for dataset_id in dataset_ids:
+                image_infos = g.api.image.get_list(dataset_id=dataset_id)
+                original_anns = g.api.annotation.download_batch(
+                    dataset_id, [info.id for info in image_infos]
+                )
+                original_anns_dict = {ann_info.image_id: ann_info for ann_info in original_anns}
+
+                for ann_info in res_ann_infos:
+                    original_ann_info = original_anns_dict[ann_info.image_id]
+                    orig_ann = sly.Annotation.from_json(
+                        original_ann_info.annotation, g.project_meta
+                    )
+                    pred_ann = sly.Annotation.from_json(ann_info.annotation, g.project_meta)
+                    merged_anns.append(
+                        original_ann_info._replace(annotation=orig_ann.merge(pred_ann).to_json())
+                    )
+        else:
+            merged_anns = res_ann_infos
+        ann_info_batch = []
+        yield original_anns, merged_anns, res_project_meta
+    if ann_info_batch:
+        res_ann_infos = []
+        for ann_info in ann_info_batch:
+            pred_ann = sly.Annotation.from_json(ann_info.annotation, g.model_meta)
+            res_ann, res_project_meta = postprocess(
+                pred_ann,
+                res_project_meta,
+            )
+            ann_info = ann_info._replace(annotation=res_ann.to_json())
+            res_ann_infos.append(ann_info)
+
+        original_anns = None
+        add_mode = settings.add_predictions_mode.get_value()
+        if add_mode == "merge with existing labels":
+            merged_anns = []
+            for dataset_id in dataset_ids:
+                image_infos = g.api.image.get_list(dataset_id=dataset_id)
+                original_anns = g.api.annotation.download_batch(
+                    dataset_id, [info.id for info in image_infos]
+                )
+                original_anns_dict = {ann_info.image_id: ann_info for ann_info in original_anns}
+
+                for ann_info in res_ann_infos:
+                    original_ann_info = original_anns_dict[ann_info.image_id]
+                    orig_ann = sly.Annotation.from_json(
+                        original_ann_info.annotation, g.project_meta
+                    )
+                    pred_ann = sly.Annotation.from_json(ann_info.annotation, g.project_meta)
+                    merged_anns.append(
+                        original_ann_info._replace(annotation=orig_ann.merge(pred_ann).to_json())
+                    )
+        else:
+            merged_anns = res_ann_infos
+        yield original_anns, merged_anns, res_project_meta
 
 
 def apply_model_to_images(
