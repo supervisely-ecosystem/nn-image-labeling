@@ -31,6 +31,9 @@ card.collapse()
 
 
 def apply_model_ds(src_project, dst_project, inference_settings, res_project_meta):
+    import time
+
+    timer = {}
     dst_dataset_infos = []
     try:
         # 1. Create destination datasets
@@ -41,27 +44,35 @@ def apply_model_ds(src_project, dst_project, inference_settings, res_project_met
         with inference_progress(
             message="Creating datasets...", total=len(selected_datasets)
         ) as pbar:
+
             src_dataset_infos = g.api.dataset.get_list(src_project)
             for src_dataset_info in src_dataset_infos:
-                dst_dataset_infos.append(
-                    g.api.dataset.copy(
-                        dst_project_id=dst_project.id,
-                        id=src_dataset_info.id,
-                        new_name=src_dataset_info.name,
-                    )
+                t = time.time()
+                dst_dataset_info = g.api.dataset.copy(
+                    dst_project_id=dst_project.id,
+                    id=src_dataset_info.id,
+                    new_name=src_dataset_info.name,
                 )
-                for image_info in g.api.image.get_list(src_dataset_info.id):
+                dst_dataset_infos.append(dst_dataset_info)
+                timer.setdefault(src_dataset_info.id, {})["copy"] = time.time() - t
+                t = time.time()
+                for image_info in g.api.image.get_list(dst_dataset_info.id):
                     dst_image_infos_dict[image_info.name] = image_info
+                timer.setdefault(src_dataset_info.id, {})["dst_image_infos"] = time.time() - t
+                t = time.time()
                 src_ds_image_infos_dict[src_dataset_info.id] = {
                     image_info.id: image_info
                     for image_info in g.api.image.get_list(src_dataset_info.id)
                 }
+                timer.setdefault(src_dataset_info.id, {})["src_image_infos"] = time.time() - t
+
                 pbar.update(1)
 
         # 2. Apply model to the datasets
         with inference_progress(message="Processing images...", total=len(g.input_images)) as pbar:
             for src_dataset_info in src_dataset_infos:
                 # iterating over batches of predictions
+                t = time.time()
                 for (
                     _,
                     merged_ann_infos_batch,
@@ -77,10 +88,18 @@ def apply_model_ds(src_project, dst_project, inference_settings, res_project_met
                     batch_size=50,
                     image_infos=list(src_ds_image_infos_dict[src_dataset_info.id].values()),
                 ):
+                    timer.setdefault(src_dataset_info.id, {}).setdefault("items", 0)
+                    timer[src_dataset_info.id]["items"] += len(merged_ann_infos_batch)
+                    timer.setdefault(src_dataset_info.id, {}).setdefault("apply_model", 0)
+                    timer[src_dataset_info.id]["apply_model"] += time.time() - t
+                    t = time.time()
                     # Update project meta if needed
                     if res_project_meta != final_project_meta:
                         res_project_meta = final_project_meta
                         g.api.project.update_meta(dst_project.id, res_project_meta.to_json())
+                        timer.setdefault(src_dataset_info.id, {}).setdefault("update_meta", 0)
+                        timer[src_dataset_info.id]["update_meta"] += time.time() - t
+                        t = time.time()
 
                     dst_anns = []
                     dst_image_infos = []
@@ -92,7 +111,9 @@ def apply_model_ds(src_project, dst_project, inference_settings, res_project_met
                         dst_anns.append(
                             sly.Annotation.from_json(ann_info.annotation, res_project_meta)
                         )
-
+                    timer.setdefault(src_dataset_info.id, {}).setdefault("prepare_anns", 0)
+                    timer[src_dataset_info.id]["prepare_anns"] += time.time() - t
+                    t = time.time()
                     # upload_annotations
                     try:
                         g.api.annotation.upload_anns(
@@ -116,10 +137,15 @@ def apply_model_ds(src_project, dst_project, inference_settings, res_project_met
                                 continue
                             finally:
                                 pbar.update(1)
-
+                    finally:
+                        timer.setdefault(src_dataset_info.id, {}).setdefault("upload_anns", 0)
+                        timer[src_dataset_info.id]["upload_anns"] += time.time() - t
+                        t = time.time()
     except Exception:
         g.api.dataset.remove_batch([ds.id for ds in dst_dataset_infos])
         raise
+    finally:
+        sly.logger.debug("Timer:", extra={"timer": timer})
 
 
 @apply_button.click
