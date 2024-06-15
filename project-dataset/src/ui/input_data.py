@@ -34,7 +34,10 @@ card = Card(
 def datasets_selected() -> None:
     """Changes the UI state based on the selected datasets,
     caches input images and creates the image selector."""
-    g.selected_project = select_dataset.get_selected_project_id()
+    selected_project = select_dataset.get_selected_project_id()
+    if selected_project != g.selected_project:
+        g.project_meta = sly.ProjectMeta.from_json(g.api.project.get_meta(selected_project))
+    g.selected_project = selected_project
     g.selected_datasets = select_dataset.get_selected_ids()
     sly.logger.info(
         f"Select button was clicked. Project: {g.selected_project}, Datasets: {g.selected_datasets}"
