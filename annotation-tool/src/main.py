@@ -335,6 +335,13 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
         empty_ann_json = sly.Annotation(img_size=(image_info.height, image_info.width)).to_json()
         ann_pred_json = {"annotation": empty_ann_json}
 
+    if model_meta is None:
+        err = "Model meta is None. Please reconnect the model."
+        set_error(api, task_id, err)
+        fields = [{"field": "state.processing", "payload": False}]
+        api.task.set_fields(task_id, fields)
+        return
+
     if session_info.get("task type") == "prompt-based object detection":
         # add tag to model meta if necessary
         if not model_meta.get_tag_meta("confidence"):
