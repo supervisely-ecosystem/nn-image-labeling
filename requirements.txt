@@ -1,3 +1,3 @@
-git+https://github.com/supervisely/supervisely.git@app-workflow
+git+https://github.com/supervisely/supervisely.git@workflow+versions
 matplotlib>=3.3.2, <4.0.0
 imgaug>=0.4.0, <1.0.0

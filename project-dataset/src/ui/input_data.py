@@ -7,12 +7,11 @@ g = importlib.import_module("project-dataset.src.globals")
 connect_nn = importlib.import_module("project-dataset.src.ui.connect_nn")
 inference_preview = importlib.import_module("project-dataset.src.ui.inference_preview")
 
-select_dataset = SelectDataset(multiselect=True, project_id=g.project_id, default_id=g.dataset_id)
+select_dataset = SelectDataset(
+    multiselect=True, project_id=g.project_id, default_id=g.dataset_id, select_all_datasets=True
+)
 if g.dataset_id:
     select_dataset.set_dataset_ids([g.dataset_id])
-else:
-    dataset_ids = [dataset.id for dataset in g.api.dataset.get_list(g.project_id)]
-    select_dataset.set_dataset_ids(dataset_ids)
 select_button = Button("Select")
 change_button = Button("Change")
 change_button.hide()
@@ -35,7 +34,10 @@ card = Card(
 def datasets_selected() -> None:
     """Changes the UI state based on the selected datasets,
     caches input images and creates the image selector."""
-    g.selected_project = select_dataset.get_selected_project_id()
+    selected_project = select_dataset.get_selected_project_id()
+    if selected_project != g.selected_project:
+        g.project_meta = sly.ProjectMeta.from_json(g.api.project.get_meta(selected_project))
+    g.selected_project = selected_project
     g.selected_datasets = select_dataset.get_selected_ids()
     sly.logger.info(
         f"Select button was clicked. Project: {g.selected_project}, Datasets: {g.selected_datasets}"
