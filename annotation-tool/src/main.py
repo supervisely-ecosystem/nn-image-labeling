@@ -451,6 +451,7 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
     ]
     api.task.set_fields(task_id, fields)
     api.app.add_output_project(project_id)
+    api.app.add_output_task(task_id)
 
 
 @my_app.callback("undo")
