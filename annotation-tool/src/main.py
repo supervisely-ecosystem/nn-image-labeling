@@ -128,6 +128,11 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
 
     project_meta = sly.ProjectMeta.from_json(api.project.get_meta(project_id))
 
+    # -------------------------------------- Add Workflow Input -------------------------------------- #
+    api.app.add_input_project(project_id)
+    api.app.add_input_task(int(state["sessionId"]))
+    # ----------------------------------------------- - ---------------------------------------------- #
+
     if image_id not in ann_cache:
         # keep only current image for simplicity
         ann_cache.clear()
@@ -450,8 +455,9 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
         {"field": "state.processing", "payload": False},
     ]
     api.task.set_fields(task_id, fields)
+    # -------------------------------------- Add Workflow Output ------------------------------------- #
     api.app.add_output_project(project_id)
-    api.app.add_output_task(int(state["sessionId"]))
+    # ----------------------------------------------- - ---------------------------------------------- #
 
 
 @my_app.callback("undo")
