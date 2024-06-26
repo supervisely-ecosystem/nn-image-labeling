@@ -130,7 +130,8 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
     project_meta = sly.ProjectMeta.from_json(api.project.get_meta(project_id))
 
     # -------------------------------------- Add Workflow Input -------------------------------------- #
-    Workflow.add_input(api, project_id, state)
+    nn_workflow = Workflow(api)
+    nn_workflow.add_input(project_id, state)
     # ----------------------------------------------- - ---------------------------------------------- #
 
     if image_id not in ann_cache:
@@ -457,7 +458,7 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
     api.task.set_fields(task_id, fields)
 
     # -------------------------------------- Add Workflow Output ------------------------------------- #
-    Workflow.add_output(api, project_id)
+    nn_workflow.add_output(project_id)
     # ----------------------------------------------- - ---------------------------------------------- #
 
 
