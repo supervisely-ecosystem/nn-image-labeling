@@ -6,6 +6,7 @@ from collections import defaultdict
 import supervisely as sly
 import yaml
 from supervisely.imaging.color import generate_rgb, random_rgb
+from workflow import Workflow
 
 root_source_path = str(pathlib.Path(sys.argv[0]).parents[2])
 sly.logger.info(f"Root source directory: {root_source_path}")
@@ -129,8 +130,7 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
     project_meta = sly.ProjectMeta.from_json(api.project.get_meta(project_id))
 
     # -------------------------------------- Add Workflow Input -------------------------------------- #
-    api.app.add_input_project(project_id)
-    api.app.add_input_task(int(state["sessionId"]))
+    Workflow.add_input(api, project_id, state)
     # ----------------------------------------------- - ---------------------------------------------- #
 
     if image_id not in ann_cache:
@@ -455,8 +455,9 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
         {"field": "state.processing", "payload": False},
     ]
     api.task.set_fields(task_id, fields)
+
     # -------------------------------------- Add Workflow Output ------------------------------------- #
-    api.app.add_output_project(project_id)
+    Workflow.add_output(api, project_id)
     # ----------------------------------------------- - ---------------------------------------------- #
 
 
