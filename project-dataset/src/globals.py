@@ -2,7 +2,7 @@ import os
 
 import supervisely as sly
 from dotenv import load_dotenv
-from src.workflow import Workflow
+from workflow import Workflow
 
 ABSOLUTE_PATH = os.path.dirname(os.path.abspath(__file__))
 PARENT_DIR = os.path.dirname(ABSOLUTE_PATH)
