@@ -3,7 +3,6 @@ import os
 
 import supervisely as sly
 from dotenv import load_dotenv
-from workflow import Workflow
 
 w = importlib.import_module("project-dataset.src.workflow")
 
