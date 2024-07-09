@@ -2,6 +2,7 @@ import os
 
 import supervisely as sly
 from dotenv import load_dotenv
+from src.workflow import Workflow
 
 ABSOLUTE_PATH = os.path.dirname(os.path.abspath(__file__))
 PARENT_DIR = os.path.dirname(ABSOLUTE_PATH)
@@ -22,6 +23,9 @@ sly.logger.info(
 )
 
 api = sly.Api.from_env()
+
+workflow = Workflow(api)
+
 if dataset_id:
     dataset_info = api.dataset.get_info_by_id(dataset_id)
     project_id = dataset_info.project_id
@@ -29,6 +33,7 @@ if dataset_id:
 # region ui-settings
 selected_project = None
 selected_datasets = None
+all_datasets_selected = None  # for workflow. Output: bool
 model_session_id = None
 model_meta = None
 inference_settings = None

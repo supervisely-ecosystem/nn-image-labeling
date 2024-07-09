@@ -20,16 +20,6 @@ class Workflow:
             "6.9.31" if min_instance_version is None else min_instance_version
         )
 
-    @check_compatibility
-    def add_input(self, project_id: int, state: dict):
-        if self.api.project.get_info_by_id(project_id).version:  # to prevent cycled workflow
-            self.api.app.workflow.add_input_project(project_id)
-        self.api.app.workflow.add_input_task(int(state["sessionId"]))
-
-    @check_compatibility
-    def add_output(self, project_id: int):
-        self.api.app.workflow.add_output_project(project_id)
-
     def check_instance_ver_compatibility(self):
         if self.api.instance_version < self._min_instance_version:
             sly.logger.info(
@@ -37,3 +27,21 @@ class Workflow:
             )
             return False
         return True
+
+    @check_compatibility
+    def add_input(self, project_id: int = None, session_id: int = None, dataset_id: int = None):
+        if session_id is not None:
+            self.api.app.workflow.add_input_task(int(session_id))
+        if dataset_id is not None:
+            self.api.app.workflow.add_input_dataset(dataset_id)
+        if (
+            project_id and self.api.project.get_info_by_id(project_id).version
+        ):  # to prevent cycled workflow
+            self.api.app.workflow.add_input_project(project_id)
+
+    @check_compatibility
+    def add_output(self, project_id: int = None, dataset_id: int = None):
+        if project_id is not None:
+            self.api.app.workflow.add_output_project(project_id)
+        if dataset_id is not None:
+            self.api.app.workflow.add_output_dataset(dataset_id)

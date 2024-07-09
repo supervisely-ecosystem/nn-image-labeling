@@ -55,6 +55,7 @@ def datasets_selected() -> None:
     connect_nn.card.uncollapse()
     card.lock()
     change_button.show()
+    g.all_datasets_selected = select_dataset._all_datasets_checkbox.is_checked()
 
 
 @change_button.click

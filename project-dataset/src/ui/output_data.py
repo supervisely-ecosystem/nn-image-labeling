@@ -2,6 +2,7 @@ import importlib
 
 import supervisely as sly
 import yaml
+from src.globals import workflow
 from supervisely.app.widgets import Button, Card, Container, Input, Progress, ProjectThumbnail
 
 g = importlib.import_module("project-dataset.src.globals")
@@ -35,6 +36,7 @@ def apply_model_ds(src_project, dst_project, inference_settings, res_project_met
 
     timer = {}
     dst_dataset_infos = []
+    add_output = True  # for workflow output
     try:
         # 1. Create destination datasets
         selected_datasets = g.selected_datasets
@@ -143,8 +145,14 @@ def apply_model_ds(src_project, dst_project, inference_settings, res_project_met
                         t = time.time()
     except Exception:
         g.api.dataset.remove_batch([ds.id for ds in dst_dataset_infos])
+        add_output = False
         raise
     finally:
+        # -------------------------------------- Add Workflow Output ------------------------------------- #
+        if not g.all_datasets_selected and add_output:
+            for dataset_info in dst_dataset_infos:
+                workflow.add_output(dataset_id=dataset_info.id)
+        # ----------------------------------------------- - ---------------------------------------------- #
         sly.logger.debug("Timer:", extra={"timer": timer})
 
 
@@ -168,6 +176,12 @@ def apply_model():
     )
     g.api.project.update_meta(res_project.id, res_project_meta.to_json())
 
+    # -------------------------------------- Add Workflow Input -------------------------------------- #
+    workflow.add_input(session_id=g.model_session_id)
+    if g.all_datasets_selected:
+        workflow.add_input(project_id=g.selected_project)
+    # ----------------------------------------------- - ---------------------------------------------- #
+
     try:
         apply_model_ds(g.selected_project, res_project, inference_settings, res_project_meta)
     except Exception as e:
@@ -179,6 +193,10 @@ def apply_model():
         with inference_progress(message="Processing images...", total=len(g.input_images)) as pbar:
             for dataset_id in g.selected_datasets:
                 dataset_info = g.api.dataset.get_info_by_id(dataset_id)
+                # -------------------------------------- Add Workflow Input -------------------------------------- #
+                if not g.all_datasets_selected:
+                    workflow.add_input(dataset_id=dataset_id)
+                # ----------------------------------------------- - ---------------------------------------------- #
                 res_dataset = g.api.dataset.create(
                     res_project.id, dataset_info.name, dataset_info.description
                 )
@@ -249,10 +267,16 @@ def apply_model():
                                 )
                                 continue
                     pbar.update(len(batched_image_infos))
-
+            # -------------------------------------- Add Workflow Output ------------------------------------- #
+            if not g.all_datasets_selected:
+                workflow.add_output(dataset_id=res_dataset.id)
+            # ----------------------------------------------- - ---------------------------------------------- #
     output_project_thumbnail.set(g.api.project.get_info_by_id(res_project.id))
     output_project_thumbnail.show()
-
+    # -------------------------------------- Add Workflow Output ------------------------------------- #
+    if g.all_datasets_selected:
+        workflow.add_output(project_id=res_project.id)
+    # ----------------------------------------------- - ---------------------------------------------- #
     main = importlib.import_module("project-dataset.src.main")
 
     main.app.stop()
