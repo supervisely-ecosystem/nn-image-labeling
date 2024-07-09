@@ -29,19 +29,17 @@ class Workflow:
         return True
 
     @check_compatibility
-    def add_input(self, project_id: int = None, session_id: int = None, dataset_id: int = None):
+    def add_input(self, project_id: int = None, session_id: int = None):
         if session_id is not None:
+            sly.logger.debug(f"Workflow Input: Session ID - {session_id}")
             self.api.app.workflow.add_input_task(int(session_id))
-        if dataset_id is not None:
-            self.api.app.workflow.add_input_dataset(dataset_id)
         if (
             project_id and self.api.project.get_info_by_id(project_id).version
         ):  # to prevent cycled workflow
+            sly.logger.debug(f"Workflow Input: Project ID - {project_id}")
             self.api.app.workflow.add_input_project(project_id)
 
     @check_compatibility
-    def add_output(self, project_id: int = None, dataset_id: int = None):
-        if project_id is not None:
-            self.api.app.workflow.add_output_project(project_id)
-        if dataset_id is not None:
-            self.api.app.workflow.add_output_dataset(dataset_id)
+    def add_output(self, project_id: int):
+        sly.logger.debug(f"Workflow Output: Project ID - {project_id}")
+        self.api.app.workflow.add_output_project(project_id)

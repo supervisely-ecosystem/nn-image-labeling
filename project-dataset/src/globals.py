@@ -35,7 +35,6 @@ if dataset_id:
 # region ui-settings
 selected_project = None
 selected_datasets = None
-all_datasets_selected = None  # for workflow. Output: bool
 model_session_id = None
 model_meta = None
 inference_settings = None

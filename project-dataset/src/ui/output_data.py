@@ -148,9 +148,8 @@ def apply_model_ds(src_project, dst_project, inference_settings, res_project_met
         raise
     finally:
         # -------------------------------------- Add Workflow Output ------------------------------------- #
-        if not g.all_datasets_selected and add_output:
-            for dataset_info in dst_dataset_infos:
-                g.workflow.add_output(dataset_id=dataset_info.id)
+        if add_output:
+            g.workflow.add_output(project_id=dst_project.id)
         # ----------------------------------------------- - ---------------------------------------------- #
         sly.logger.debug("Timer:", extra={"timer": timer})
 
@@ -176,9 +175,7 @@ def apply_model():
     g.api.project.update_meta(res_project.id, res_project_meta.to_json())
 
     # -------------------------------------- Add Workflow Input -------------------------------------- #
-    g.workflow.add_input(session_id=g.model_session_id)
-    if g.all_datasets_selected:
-        g.workflow.add_input(project_id=g.selected_project)
+    g.workflow.add_input(project_id=g.selected_project, session_id=g.model_session_id)
     # ----------------------------------------------- - ---------------------------------------------- #
 
     try:
@@ -192,10 +189,6 @@ def apply_model():
         with inference_progress(message="Processing images...", total=len(g.input_images)) as pbar:
             for dataset_id in g.selected_datasets:
                 dataset_info = g.api.dataset.get_info_by_id(dataset_id)
-                # -------------------------------------- Add Workflow Input -------------------------------------- #
-                if not g.all_datasets_selected:
-                    g.workflow.add_input(dataset_id=dataset_id)
-                # ----------------------------------------------- - ---------------------------------------------- #
                 res_dataset = g.api.dataset.create(
                     res_project.id, dataset_info.name, dataset_info.description
                 )
@@ -266,15 +259,10 @@ def apply_model():
                                 )
                                 continue
                     pbar.update(len(batched_image_infos))
-            # -------------------------------------- Add Workflow Output ------------------------------------- #
-            if not g.all_datasets_selected:
-                g.workflow.add_output(dataset_id=res_dataset.id)
-            # ----------------------------------------------- - ---------------------------------------------- #
     output_project_thumbnail.set(g.api.project.get_info_by_id(res_project.id))
     output_project_thumbnail.show()
     # -------------------------------------- Add Workflow Output ------------------------------------- #
-    if g.all_datasets_selected:
-        g.workflow.add_output(project_id=res_project.id)
+    g.workflow.add_output(project_id=res_project.id)
     # ----------------------------------------------- - ---------------------------------------------- #
     main = importlib.import_module("project-dataset.src.main")
 
