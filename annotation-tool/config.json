@@ -11,16 +11,14 @@
     "labeling"
   ],
   "description": "Use deployed neural network in labeling interface",
-  "docker_image": "supervisely/labeling:6.73.104",
+  "docker_image": "supervisely/labeling:6.73.123",
   "min_instance_version": "6.9.22",
   "main_script": "annotation-tool/src/main.py",
   "gui_template": "annotation-tool/src/gui.html",
   "task_location": "application_sessions",
   "isolate": true,
   "headless": false,
-  "integrated_into": [
-    "image_annotation_tool"
-  ],
+  "integrated_into": ["image_annotation_tool"],
   "icon": "https://i.imgur.com/nnB2BqW.png",
   "icon_background": "#FFFFFF",
   "hotkeys": [

@@ -1,7 +1,10 @@
+import importlib
 import os
 
 import supervisely as sly
 from dotenv import load_dotenv
+
+w = importlib.import_module("project-dataset.src.workflow")
 
 ABSOLUTE_PATH = os.path.dirname(os.path.abspath(__file__))
 PARENT_DIR = os.path.dirname(ABSOLUTE_PATH)
@@ -22,6 +25,9 @@ sly.logger.info(
 )
 
 api = sly.Api.from_env()
+
+workflow = w.Workflow(api)
+
 if dataset_id:
     dataset_info = api.dataset.get_info_by_id(dataset_id)
     project_id = dataset_info.project_id

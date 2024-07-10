@@ -168,6 +168,10 @@ def apply_model():
     )
     g.api.project.update_meta(res_project.id, res_project_meta.to_json())
 
+    # -------------------------------------- Add Workflow Input -------------------------------------- #
+    g.workflow.add_input(project_id=g.selected_project, session_id=g.model_session_id)
+    # ----------------------------------------------- - ---------------------------------------------- #
+
     try:
         apply_model_ds(g.selected_project, res_project, inference_settings, res_project_meta)
     except Exception as e:
@@ -249,10 +253,11 @@ def apply_model():
                                 )
                                 continue
                     pbar.update(len(batched_image_infos))
-
     output_project_thumbnail.set(g.api.project.get_info_by_id(res_project.id))
     output_project_thumbnail.show()
-
+    # -------------------------------------- Add Workflow Output ------------------------------------- #
+    g.workflow.add_output(project_id=res_project.id)
+    # ----------------------------------------------- - ---------------------------------------------- #
     main = importlib.import_module("project-dataset.src.main")
 
     main.app.stop()
