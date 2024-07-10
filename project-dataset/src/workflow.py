@@ -23,7 +23,7 @@ class Workflow:
     def check_instance_ver_compatibility(self):
         if not self.api.is_version_supported(self._min_instance_version):
             sly.logger.info(
-                f"Supervisely instance version {self.api.instance_version} does not support workflow and versioning features."
+                f"Supervisely instance version {self.api.instance_version} does not support workflow features."
             )
             if not sly.is_community():
                 sly.logger.info(
