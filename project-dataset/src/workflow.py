@@ -37,9 +37,7 @@ class Workflow:
         if session_id is not None:
             sly.logger.debug(f"Workflow Input: Session ID - {session_id}")
             self.api.app.workflow.add_input_task(int(session_id))
-        if (
-            project_id and self.api.project.get_info_by_id(project_id).version
-        ):  # to prevent cycled workflow
+        if project_id is not None:
             sly.logger.debug(f"Workflow Input: Project ID - {project_id}")
             self.api.app.workflow.add_input_project(project_id)
 

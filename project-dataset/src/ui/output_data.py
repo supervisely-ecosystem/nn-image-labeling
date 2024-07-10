@@ -35,7 +35,6 @@ def apply_model_ds(src_project, dst_project, inference_settings, res_project_met
 
     timer = {}
     dst_dataset_infos = []
-    add_output = True  # for workflow output
     try:
         # 1. Create destination datasets
         selected_datasets = g.selected_datasets
@@ -144,13 +143,8 @@ def apply_model_ds(src_project, dst_project, inference_settings, res_project_met
                         t = time.time()
     except Exception:
         g.api.dataset.remove_batch([ds.id for ds in dst_dataset_infos])
-        add_output = False
         raise
     finally:
-        # -------------------------------------- Add Workflow Output ------------------------------------- #
-        if add_output:
-            g.workflow.add_output(project_id=dst_project.id)
-        # ----------------------------------------------- - ---------------------------------------------- #
         sly.logger.debug("Timer:", extra={"timer": timer})
 
 
