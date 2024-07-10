@@ -37,7 +37,9 @@ class Workflow:
         if self.api.project.get_info_by_id(project_id).version:  # to prevent cycled workflow
             self.api.app.workflow.add_input_project(project_id)
         self.api.app.workflow.add_input_task(int(state["sessionId"]))
-        sly.logger.debug(f"Workflow Input: Project ID - {project_id}, Session ID - {int(state["sessionId"])}")
+        sly.logger.debug(
+            f'Workflow Input: Project ID - {project_id}, Session ID - {int(state["sessionId"])}'
+        )
 
     @check_compatibility
     def add_output(self, project_id: int):
