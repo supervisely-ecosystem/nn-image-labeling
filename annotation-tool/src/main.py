@@ -1,3 +1,4 @@
+import importlib
 import os
 import pathlib
 import sys
@@ -6,7 +7,6 @@ from collections import defaultdict
 import supervisely as sly
 import yaml
 from supervisely.imaging.color import generate_rgb, random_rgb
-from workflow import Workflow
 
 root_source_path = str(pathlib.Path(sys.argv[0]).parents[2])
 sly.logger.info(f"Root source directory: {root_source_path}")
@@ -21,6 +21,8 @@ from init_ui import init_ui
 from shared_utils.connect import get_model_info
 from shared_utils.inference import postprocess
 from shared_utils.ui2 import set_error
+
+w = importlib.import_module("annotation-tool.src.workflow")
 
 if sly.is_development():
     load_dotenv(os.path.expanduser("~/supervisely.env"))
@@ -130,7 +132,7 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
     project_meta = sly.ProjectMeta.from_json(api.project.get_meta(project_id))
 
     # -------------------------------------- Add Workflow Input -------------------------------------- #
-    nn_workflow = Workflow(api)
+    nn_workflow = w.Workflow(api)
     nn_workflow.add_input(project_id, state)
     # ----------------------------------------------- - ---------------------------------------------- #
 
