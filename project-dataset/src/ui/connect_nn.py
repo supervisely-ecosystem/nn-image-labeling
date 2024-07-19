@@ -15,7 +15,10 @@ connect_button = Button("Connect", icon="zmdi zmdi-check")
 disconnect_button = Button("Disconnect", icon="zmdi zmdi-close")
 disconnect_button.hide()
 error_text = Text(status="warning")
-error_text.hide()
+error_button = Button(button_size='small')
+error_container = Container([error_text, error_button])
+error_button.hide
+error_container.hide()
 
 model_info = ModelInfo()
 model_info.hide()
@@ -37,7 +40,7 @@ def model_selected() -> None:
     g.model_session_id = select_session.get_selected_id()
     if g.model_session_id is None:
         error_text.text = "No model was selected, please select a model and try again."
-        error_text.show()
+        error_container.show()
         return
 
     connect_status = connect_to_model()
@@ -45,14 +48,21 @@ def model_selected() -> None:
         error_text.text = (
             "Couldn't connect to the model. Make sure that model is deployed and try again."
         )
-        error_text.show()
+        app_url = f'/apps/sessions/{g.model_session_id}'
+
+        error_button.text='OPEN APP SESSION'
+        error_button.link=app_url
+        error_button.show()
+        error_container.show()
+
         return
 
     g.model_meta = get_model_meta()
     g.inference_settings = get_inference_settings()
     inference_settings.additional_settings.set_text(g.inference_settings["settings"])
 
-    error_text.hide()
+    error_button.hide()
+    error_container.hide()
     model_info.set_session_id(g.model_session_id)
     g.model_info = g.api.task.send_request(g.model_session_id, "get_session_info", data={})
     sly.logger.debug(f"Model info was saved to globals: {g.model_info}")
