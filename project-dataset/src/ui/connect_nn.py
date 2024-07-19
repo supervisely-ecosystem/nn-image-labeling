@@ -15,7 +15,7 @@ connect_button = Button("Connect", icon="zmdi zmdi-check")
 disconnect_button = Button("Disconnect", icon="zmdi zmdi-close")
 disconnect_button.hide()
 error_text = Text(status="warning")
-error_button = Button(button_size='small')
+error_button = Button(button_size="small")
 error_container = Container([error_text, error_button])
 error_button.hide
 error_container.hide()
@@ -26,7 +26,9 @@ model_info.hide()
 card = Card(
     "2️⃣ Choose model",
     "Select a deployed neural network to start and click on Select button.",
-    content=Container([select_session, connect_button, model_info, disconnect_button, error_text]),
+    content=Container(
+        [select_session, connect_button, model_info, disconnect_button, error_container]
+    ),
     collapsable=True,
     lock_message="Select a project or a dataset on step 1️⃣.",
 )
@@ -48,10 +50,10 @@ def model_selected() -> None:
         error_text.text = (
             "Couldn't connect to the model. Make sure that model is deployed and try again."
         )
-        app_url = f'/apps/sessions/{g.model_session_id}'
+        app_url = f"/apps/sessions/{g.model_session_id}"
 
-        error_button.text='OPEN APP SESSION'
-        error_button.link=app_url
+        error_button.text = "OPEN APP SESSION"
+        error_button.link = app_url
         error_button.show()
         error_container.show()
 
