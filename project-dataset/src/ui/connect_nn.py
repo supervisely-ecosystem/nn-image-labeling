@@ -50,9 +50,10 @@ def model_selected() -> None:
         error_text.text = (
             "Couldn't connect to the model. Make sure that model is deployed and try again."
         )
-        app_url = f"{sly.env.server_address()}/apps/sessions/{g.model_session_id}"
+        app_url = f"{sly.env.server_address().rstrip('/')}/apps/sessions/{g.model_session_id}"
+        sly.logger.info(f"Error button url: {app_url}")
 
-        error_button.text = "OPEN APP SESSION"
+        error_button.text = "OPEN SERVING APP"
         error_button.link = app_url
         error_button.show()
         error_container.show()
