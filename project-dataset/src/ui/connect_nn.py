@@ -17,7 +17,6 @@ disconnect_button.hide()
 error_text = Text(status="warning")
 error_button = Button(button_size="small", link="")
 error_container = Container([error_text, error_button])
-error_button.hide
 error_container.hide()
 
 model_info = ModelInfo()
@@ -51,11 +50,9 @@ def model_selected() -> None:
             "Couldn't connect to the model. Make sure that model is deployed and try again."
         )
         app_url = f"{g.api.server_address}/apps/sessions/{g.model_session_id}"
-        sly.logger.debug(f"Error button url: {app_url}")
 
         error_button.text = "OPEN SERVING APP"
         error_button.link = app_url
-        error_button.show()
         error_container.show()
 
         return
@@ -64,7 +61,6 @@ def model_selected() -> None:
     g.inference_settings = get_inference_settings()
     inference_settings.additional_settings.set_text(g.inference_settings["settings"])
 
-    error_button.hide()
     error_container.hide()
     model_info.set_session_id(g.model_session_id)
     g.model_info = g.api.task.send_request(g.model_session_id, "get_session_info", data={})
