@@ -5,6 +5,7 @@ def init_ui(data, state):
     data["connected"] = False
     data["connectionError"] = ""
     data["inferenceError"] = ""
+    data["servingLink"] = ""
     data["rollbackIds"] = []
     data["ssOptions"] = {
         "sessionTags": [
