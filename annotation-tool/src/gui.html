@@ -85,12 +85,13 @@
                 <sly-notification
                     :options="{'name': 'Inference Error', 'type': 'error'}"
                     :content="data.inferenceError">
+                    <div v-if="data.servingLink.length > 0">
+                        <a :href="data.servingLink" target="_blank">
+                            <el-button type="primary" size="mini" class="mt10"> Open Serving App </el-button>
+                        <a href="" target="_blank">
+                    </div>
                 </sly-notification>
-                <!-- <a :href="data.servingLink" target="_blank">
-                    <el-button size="mini" class="mt5" style="margin-bottom: 15px;">
-                        <i class="zmdi zmdi-close mr5"></i>Open Serving App
-                    </el-button>
-                <a href="" target="_blank"> -->
+
             </div>
 
 

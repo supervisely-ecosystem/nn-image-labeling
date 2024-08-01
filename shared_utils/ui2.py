@@ -37,6 +37,7 @@ def set_error(
     task_id,
     e: Union[Exception, str],
     error_type: Literal["connection", "inference"] = "connection",
+    session_id: str = None,
     log_error: bool = True,
 ):
     err = e if isinstance(e, str) else repr(e)
@@ -49,6 +50,10 @@ def set_error(
     ]
     if error_type == "connection":
         fields.append({"field": "data.connected", "payload": False})
+    elif error_type == "inference" and session_id is not None:
+        serving_app_link = f"{api.server_address}/apps/sessions/{session_id}"
+        fields.append({"field": "data.servingLink", "payload": serving_app_link})
+
     api.task.set_fields(task_id, fields)
 
 
