@@ -3,6 +3,8 @@ import os
 import pathlib
 import sys
 from collections import defaultdict
+from requests.exceptions import HTTPError
+
 
 import supervisely as sly
 import yaml
@@ -342,10 +344,15 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
                 "settings": str(data["settings"]),
             },
         )
-        # sly.logger.warn(
-        #     f"Couldn't process annotation prediction for image: {image_info.name} (ID: {image_id}). Image remain unchanged. Error: {e}"
-        # )
-        set_error(api, task_id, e, "inference", log_error=False)
+        if isinstance(e, HTTPError):
+            error_msg = f"Error sending request to the serving application (id: {state["sessionId"]}). Please, make sure that session you are trying to connect to is running."
+        else:
+            error_msg = f"Couldn't process annotation prediction for image: {image_info.name} (ID: {image_id}). Image remain unchanged. Error: {e}"
+
+        serving_app_link = f"{api.server_address}/apps/sessions/{state["sessionId"]}"
+        api.task.set_field(task_id, {"field": 'data.servingLink', 'payload': serving_app_link })
+
+        set_error(api, task_id, error_msg, "inference", log_error=False)
         empty_ann_json = sly.Annotation(img_size=(image_info.height, image_info.width)).to_json()
         ann_pred_json = {"annotation": empty_ann_json}
 

@@ -81,11 +81,18 @@
                 </div>
 
             </div>
-            <sly-notification
-                v-if="data.inferenceError.length > 0"
-                :options="{'name': 'Inference Error', 'type': 'error'}"
-                :content="data.inferenceError">
-            </sly-notification>
+            <div class="mb10" v-if="data.inferenceError.length > 0"> 
+                <sly-notification
+                    :options="{'name': 'Inference Error', 'type': 'error'}"
+                    :content="data.inferenceError">
+                </sly-notification>
+                <!-- <a :href="data.servingLink" target="_blank">
+                    <el-button size="mini" class="mt5" style="margin-bottom: 15px;">
+                        <i class="zmdi zmdi-close mr5"></i>Open Serving App
+                    </el-button>
+                <a href="" target="_blank"> -->
+            </div>
+
 
             <div><b>SETTINGS:</b></div>
             <el-tabs class="small" v-model="state.tabName">

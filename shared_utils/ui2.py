@@ -25,6 +25,7 @@ def set_model_info(
         {"field": "data.connected", "payload": True},
         {"field": "data.connectionError", "payload": ""},
         {"field": "data.inferenceError", "payload": ""},
+        {"field": "data.servingLink", "payload": ""},
         {"field": "state.settings", "payload": inf_settings["settings"]},
         {"field": "state.disabledSW", "payload": disabledSW},
     ]
@@ -55,6 +56,7 @@ def clean_error(api: sly.Api, task_id):
     fields = [
         {"field": "data.connectionError", "payload": ""},
         {"field": "data.inferenceError", "payload": ""},
+        {"field": "data.servingLink", "payload": ""},
     ]
     api.task.set_fields(task_id, fields)
 
