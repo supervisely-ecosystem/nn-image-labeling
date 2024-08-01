@@ -328,7 +328,9 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
                             ann = ann.delete_label(label)
 
     try:
-        ann_pred_json = api.task.send_request(state["sessionId"], "inference_image_id", data=data)
+        ann_pred_json = api.task.send_request(
+            state["sessionId"], "inference_image_id", data=data, raise_error=True
+        )
     except Exception as e:
         image_info = api.image.get_info_by_id(image_id)
         sly.logger.info(
@@ -340,9 +342,10 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
                 "settings": str(data["settings"]),
             },
         )
-        sly.logger.warn(
-            f"Couldn't process annotation prediction for image: {image_info.name} (ID: {image_id}). Image remain unchanged. Error: {e}"
-        )
+        # sly.logger.warn(
+        #     f"Couldn't process annotation prediction for image: {image_info.name} (ID: {image_id}). Image remain unchanged. Error: {e}"
+        # )
+        set_error(api, task_id, e, "inference", log_error=False)
         empty_ann_json = sly.Annotation(img_size=(image_info.height, image_info.width)).to_json()
         ann_pred_json = {"annotation": empty_ann_json}
 

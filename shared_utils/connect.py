@@ -27,7 +27,9 @@ def get_model_info(api: sly.Api, task_id, context, state, app_logger) -> sly.Pro
         sly.logger.info(f"Model meta: {str(meta_json)}")
         model_meta = sly.ProjectMeta.from_json(meta_json)
         if model_meta is None:
-            raise RuntimeError("Model meta is None. Make sure that the model is deployed, has meta, and try again.")
+            raise RuntimeError(
+                "Model meta is None. Make sure that the model is deployed, has meta, and try again."
+            )
         try:
             inf_settings = api.task.send_request(
                 state["sessionId"], "get_custom_inference_settings", data={}
@@ -73,6 +75,7 @@ def set_model_info(api, task_id, model_meta, model_info, inf_settings):
         {"field": "state.tags", "payload": [True] * len(model_meta.tag_metas)},
         {"field": "data.connected", "payload": True},
         {"field": "data.connectionError", "payload": ""},
+        {"field": "data.inferenceError", "payload": ""},
         {"field": "state.settings", "payload": inf_settings["settings"]},
         {"field": "state.disabledSW", "payload": disabledSW},
     ]

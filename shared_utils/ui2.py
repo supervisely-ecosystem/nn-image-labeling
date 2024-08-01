@@ -1,10 +1,15 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, Literal
 import supervisely as sly
 
 
-def set_model_info(api: sly.Api, task_id, model_meta: sly.ProjectMeta, model_info: dict, inf_settings: dict):
+def set_model_info(
+    api: sly.Api, task_id, model_meta: sly.ProjectMeta, model_info: dict, inf_settings: dict
+):
     disabledSW = True
-    if "sliding_window_support" in model_info.keys() and model_info["sliding_window_support"] is not None:
+    if (
+        "sliding_window_support" in model_info.keys()
+        and model_info["sliding_window_support"] is not None
+    ):
         if isinstance(model_info["sliding_window_support"], bool):
             if model_info["sliding_window_support"]:
                 disabledSW = False
@@ -19,28 +24,37 @@ def set_model_info(api: sly.Api, task_id, model_meta: sly.ProjectMeta, model_inf
         {"field": "state.tags", "payload": [True] * len(model_meta.tag_metas)},
         {"field": "data.connected", "payload": True},
         {"field": "data.connectionError", "payload": ""},
+        {"field": "data.inferenceError", "payload": ""},
         {"field": "state.settings", "payload": inf_settings["settings"]},
-        {"field": "state.disabledSW", "payload": disabledSW}
+        {"field": "state.disabledSW", "payload": disabledSW},
     ]
     api.task.set_fields(task_id, fields)
 
 
-def set_error(api: sly.Api, task_id, e: Union[Exception, str], log_error: bool = True):
+def set_error(
+    api: sly.Api,
+    task_id,
+    e: Union[Exception, str],
+    error_type: Literal["connection", "inference"] = "connection",
+    log_error: bool = True,
+):
     err = e if isinstance(e, str) else repr(e)
     if log_error:
         sly.logger.error(err)
     else:
         sly.logger.warn(err)
     fields = [
-        {"field": "data.connected", "payload": False},
-        {"field": "data.connectionError", "payload": err},
+        {"field": f"data.{error_type}Error", "payload": err},
     ]
+    if error_type == "connection":
+        fields.append({"field": "data.connected", "payload": False})
     api.task.set_fields(task_id, fields)
 
 
 def clean_error(api: sly.Api, task_id):
     fields = [
         {"field": "data.connectionError", "payload": ""},
+        {"field": "data.inferenceError", "payload": ""},
     ]
     api.task.set_fields(task_id, fields)
 
@@ -70,9 +84,11 @@ def format_info(info: Dict[str, Any], trigger_to_del: Optional[str] = None) -> D
     for name, data in info.items():
         if trigger_to_del is not None:
             if trigger_to_del.lower() in name.lower():
-                sly.logger.debug(f"Field {name} excluded from session info: found `{trigger_to_del}` in name")
+                sly.logger.debug(
+                    f"Field {name} excluded from session info: found `{trigger_to_del}` in name"
+                )
                 continue
-    
+
         new_name = name.replace("_", " ").capitalize()
         formated_info[new_name] = data
 

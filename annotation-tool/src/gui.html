@@ -81,6 +81,11 @@
                 </div>
 
             </div>
+            <sly-notification
+                v-if="data.inferenceError.length > 0"
+                :options="{'name': 'Inference Error', 'type': 'error'}"
+                :content="data.inferenceError">
+            </sly-notification>
 
             <div><b>SETTINGS:</b></div>
             <el-tabs class="small" v-model="state.tabName">
