@@ -1,4 +1,5 @@
 import importlib
+from collections import defaultdict
 
 import supervisely as sly
 import yaml
@@ -117,13 +118,36 @@ def apply_model_ds(src_project, dst_project, inference_settings, res_project_met
                     # upload_annotations
                     try:
                         sly.logger.debug(f"Uploading {len(dst_anns)} annotations...")
-                        g.api.annotation.upload_anns(
-                            [image_info.id for image_info in dst_image_infos], dst_anns
-                        )
-                        pbar.update(len(dst_anns))
+                        # Group dst_image_infos and dst_anns by image_info.dataset_id
+                        # where key is dataset_id and value is tuple of lists of image_infos and anns
+                        dst_image_infos_by_ds = defaultdict(lambda: ([], []))
+                        for dst_image_info, dst_ann in zip(dst_image_infos, dst_anns):
+                            dst_image_infos_by_ds[dst_image_info.dataset_id][0].append(
+                                dst_image_info
+                            )
+                            dst_image_infos_by_ds[dst_image_info.dataset_id][1].append(dst_ann)
+                        sly.logger.debug(f"Grouped {len(dst_anns)} annotations by dataset_id.")
+
+                        for dst_dataset_id, (
+                            dst_image_infos,
+                            dst_anns,
+                        ) in dst_image_infos_by_ds.items():
+                            g.api.annotation.upload_anns(
+                                [image_info.id for image_info in dst_image_infos], dst_anns
+                            )
+                            pbar.update(len(dst_anns))
+                            sly.logger.debug(
+                                f"Uploaded {len(dst_anns)} annotations successfully to dataset_id: {dst_dataset_id}."
+                            )
+                        # g.api.annotation.upload_anns(
+                        #     [image_info.id for image_info in dst_image_infos], dst_anns
+                        # )
+                        # pbar.update(len(dst_anns))
                         sly.logger.debug(f"Uploaded {len(dst_anns)} annotations successfully.")
                     except Exception as e:
-                        sly.logger.warning(f"There was an error while uploading annotations: {repr(e)}.")
+                        sly.logger.warning(
+                            f"There was an error while uploading annotations: {repr(e)}."
+                        )
                         for img_info, ann in zip(dst_image_infos, dst_anns):
                             try:
                                 g.api.annotation.upload_ann(img_info.id, ann)
