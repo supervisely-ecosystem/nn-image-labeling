@@ -116,11 +116,14 @@ def apply_model_ds(src_project, dst_project, inference_settings, res_project_met
                     t = time.time()
                     # upload_annotations
                     try:
+                        sly.logger.debug(f"Uploading {len(dst_anns)} annotations...")
                         g.api.annotation.upload_anns(
                             [image_info.id for image_info in dst_image_infos], dst_anns
                         )
                         pbar.update(len(dst_anns))
-                    except:
+                        sly.logger.debug(f"Uploaded {len(dst_anns)} annotations successfully.")
+                    except Exception as e:
+                        sly.logger.warning(f"There was an error while uploading annotations: {repr(e)}.")
                         for img_info, ann in zip(dst_image_infos, dst_anns):
                             try:
                                 g.api.annotation.upload_ann(img_info.id, ann)
