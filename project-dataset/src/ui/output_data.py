@@ -34,12 +34,12 @@ def apply_model_ds(src_project, dst_project, inference_settings, res_project_met
     import time
 
     timer = {}
-    dst_dataset_infos = []
+    dst_dataset_infos = {}
     try:
         # 1. Create destination datasets
         selected_datasets = g.selected_datasets
-        dst_dataset_infos = []
-        dst_image_infos_dict = {}  # name -> image_info
+        dst_dataset_infos = {}
+        dst_image_infos_dict = {}  # dataset_id -> name -> image_info
         src_ds_image_infos_dict = {}  # dataset_id -> image_id -> [image_infos]
         with inference_progress(
             message="Creating datasets...", total=len(selected_datasets)
@@ -53,11 +53,13 @@ def apply_model_ds(src_project, dst_project, inference_settings, res_project_met
                     id=src_dataset_info.id,
                     new_name=src_dataset_info.name,
                 )
-                dst_dataset_infos.append(dst_dataset_info)
+                dst_dataset_infos[src_dataset_info] = dst_dataset_info
                 timer.setdefault(src_dataset_info.id, {})["copy"] = time.time() - t
                 t = time.time()
                 for image_info in g.api.image.get_list(dst_dataset_info.id):
-                    dst_image_infos_dict[image_info.name] = image_info
+                    dst_image_infos_dict.setdefault(dst_dataset_info.id, {})[
+                        image_info.name
+                    ] = image_info
                 timer.setdefault(src_dataset_info.id, {})["dst_image_infos"] = time.time() - t
                 t = time.time()
                 src_ds_image_infos_dict[src_dataset_info.id] = {
@@ -93,6 +95,7 @@ def apply_model_ds(src_project, dst_project, inference_settings, res_project_met
                     timer.setdefault(src_dataset_info.id, {}).setdefault("apply_model", 0)
                     timer[src_dataset_info.id]["apply_model"] += time.time() - t
                     t = time.time()
+                    dst_dataset_info = dst_dataset_infos[src_dataset_info]
                     # Update project meta if needed
                     if res_project_meta != final_project_meta:
                         res_project_meta = final_project_meta
@@ -107,7 +110,9 @@ def apply_model_ds(src_project, dst_project, inference_settings, res_project_met
                         src_image_id = ann_info.image_id
                         src_image_info = src_ds_image_infos_dict[src_dataset_info.id][src_image_id]
 
-                        dst_image_infos.append(dst_image_infos_dict[src_image_info.name])
+                        dst_image_infos.append(
+                            dst_image_infos_dict[dst_dataset_info.id][src_image_info.name]
+                        )
                         dst_anns.append(
                             sly.Annotation.from_json(ann_info.annotation, res_project_meta)
                         )
@@ -142,7 +147,7 @@ def apply_model_ds(src_project, dst_project, inference_settings, res_project_met
                         timer[src_dataset_info.id]["upload_anns"] += time.time() - t
                         t = time.time()
     except Exception:
-        g.api.dataset.remove_batch([ds.id for ds in dst_dataset_infos])
+        g.api.dataset.remove_batch([ds.id for ds in dst_dataset_infos.values()])
         raise
     finally:
         sly.logger.debug("Timer:", extra={"timer": timer})
