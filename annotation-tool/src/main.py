@@ -3,11 +3,10 @@ import os
 import pathlib
 import sys
 from collections import defaultdict
-from requests.exceptions import HTTPError
-
 
 import supervisely as sly
 import yaml
+from requests.exceptions import HTTPError
 from supervisely.imaging.color import generate_rgb, random_rgb
 
 root_source_path = str(pathlib.Path(sys.argv[0]).parents[2])
@@ -446,8 +445,12 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
 
     if state["addMode"] == "merge":
         res_ann = ann.merge(res_ann)
-    else:
+    elif state["addMode"] == "replace":
         pass  # replace (data prepared, nothing to do)
+    elif state["addMode"] == "replace only labels":
+        # We need to retrieve image tags from the original annotation
+        # and merge it with the new annotation from the model.
+        res_ann = res_ann.add_tags(ann.img_tags)
 
     if "task type" in session_info.keys() and (
         not (
