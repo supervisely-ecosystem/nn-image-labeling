@@ -43,7 +43,11 @@ inference_settings = None
 # region ui-consants
 deployed_nn_tags = ["deployed_nn"]
 inference_modes = ["full image", "sliding window"]
-add_predictions_modes = ["merge with existing labels", "replace existing labels"]
+add_predictions_modes = [
+    "merge with existing labels",
+    "replace existing labels",
+    "replace existing labels and save image tags",
+]
 # endregion
 
 # region caches

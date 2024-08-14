@@ -30,7 +30,9 @@ card.lock()
 card.collapse()
 
 
-def apply_model_ds(src_project, dst_project, inference_settings, res_project_meta):
+def apply_model_ds(
+    src_project, dst_project, inference_settings, res_project_meta, save_imag_tags=False
+):
     import time
 
     timer = {}
