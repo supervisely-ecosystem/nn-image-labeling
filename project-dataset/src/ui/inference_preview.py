@@ -411,6 +411,7 @@ def apply_model_to_datasets(
 
         original_anns = None
         if add_mode == "replace existing labels and save image tags":
+            sly.logger.debug("Replacing existing labels and saving image tags...")
             img_infos_dict = {}  # dataset_id -> image_id -> [ImageInfo]
             merged_anns = []
             for ann_info in res_ann_infos:
