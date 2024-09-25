@@ -33,6 +33,37 @@ card.collapse()
 def apply_model_ds(
     src_project, dst_project, inference_settings, res_project_meta, save_imag_tags=False
 ):
+    def process_ds(src_dataset_info):
+        t = time.time()
+        dst_dataset_info = g.api.dataset.copy(
+            dst_project_id=dst_project.id,
+            id=src_dataset_info.id,
+            new_name=src_dataset_info.name,
+        )
+        dst_dataset_infos[src_dataset_info] = dst_dataset_info
+        timer.setdefault(src_dataset_info.id, {})["copy"] = time.time() - t
+        t = time.time()
+        for image_info in g.api.image.get_list(dst_dataset_info.id):
+            dst_image_infos_dict.setdefault(dst_dataset_info.id, {})[
+                image_info.name
+            ] = image_info
+        timer.setdefault(src_dataset_info.id, {})["dst_image_infos"] = time.time() - t
+        t = time.time()
+        src_ds_image_infos_dict[src_dataset_info.id] = {
+            image_info.id: image_info
+            for image_info in g.api.image.get_list(src_dataset_info.id)
+        }
+        timer.setdefault(src_dataset_info.id, {})["src_image_infos"] = time.time() - t
+
+        pbar.update(1)
+
+    def process_ds_tree(src_ds_tree):
+        for src_dataset_info, children in src_ds_tree:
+            process_ds(src_dataset_info)
+            if children:
+                process_ds_tree(children)
+
+
     import time
 
     timer = {}
@@ -46,35 +77,11 @@ def apply_model_ds(
         with inference_progress(
             message="Creating datasets...", total=len(selected_datasets)
         ) as pbar:
-
-            src_dataset_infos = g.api.dataset.get_list(src_project)
-            for src_dataset_info in src_dataset_infos:
-                t = time.time()
-                dst_dataset_info = g.api.dataset.copy(
-                    dst_project_id=dst_project.id,
-                    id=src_dataset_info.id,
-                    new_name=src_dataset_info.name,
-                )
-                dst_dataset_infos[src_dataset_info] = dst_dataset_info
-                timer.setdefault(src_dataset_info.id, {})["copy"] = time.time() - t
-                t = time.time()
-                for image_info in g.api.image.get_list(dst_dataset_info.id):
-                    dst_image_infos_dict.setdefault(dst_dataset_info.id, {})[
-                        image_info.name
-                    ] = image_info
-                timer.setdefault(src_dataset_info.id, {})["dst_image_infos"] = time.time() - t
-                t = time.time()
-                src_ds_image_infos_dict[src_dataset_info.id] = {
-                    image_info.id: image_info
-                    for image_info in g.api.image.get_list(src_dataset_info.id)
-                }
-                timer.setdefault(src_dataset_info.id, {})["src_image_infos"] = time.time() - t
-
-                pbar.update(1)
-
+            src_ds_tree = g.api.dataset.get_tree(src_project)
+            process_ds_tree(src_ds_tree)
         # 2. Apply model to the datasets
         with inference_progress(message="Processing images...", total=len(g.input_images)) as pbar:
-            for src_dataset_info in src_dataset_infos:
+            for src_dataset_info in list(dst_dataset_infos.keys()):
                 # iterating over batches of predictions
                 t = time.time()
                 for (
