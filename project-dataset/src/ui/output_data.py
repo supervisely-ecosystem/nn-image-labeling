@@ -78,6 +78,7 @@ def apply_model_ds(
             message="Creating datasets...", total=len(selected_datasets)
         ) as pbar:
             src_ds_tree = api.dataset.get_tree(src_project)
+            src_ds_tree = {k: v for k, v in src_ds_tree.items() if k.id in selected_datasets}
             process_ds_tree(src_ds_tree)
         # 2. Apply model to the datasets
         with inference_progress(message="Processing images...", total=len(g.input_images)) as pbar:
