@@ -35,32 +35,34 @@ card.collapse()
 def apply_model_ds(
     src_project, dst_project, inference_settings, res_project_meta, save_imag_tags=False
 ):
-    def process_ds(src_dataset_info):
+    def process_ds(src_ds_info, parent_id):
         t = time.time()
-        dst_dataset_info = api.dataset.copy(
-            dst_project_id=dst_project.id,
-            id=src_dataset_info.id,
-            new_name=src_dataset_info.name,
+        dst_dataset_info = api.dataset.create(
+            dst_project.id, src_ds_info.name, src_ds_info.description, parent_id=parent_id
         )
-        dst_dataset_infos[src_dataset_info] = dst_dataset_info
-        timer.setdefault(src_dataset_info.id, {})["copy"] = time.time() - t
-        t = time.time()
-        for image_info in api.image.get_list(dst_dataset_info.id):
-            dst_image_infos_dict.setdefault(dst_dataset_info.id, {})[image_info.name] = image_info
-        timer.setdefault(src_dataset_info.id, {})["dst_image_infos"] = time.time() - t
-        t = time.time()
-        src_ds_image_infos_dict[src_dataset_info.id] = {
-            image_info.id: image_info for image_info in api.image.get_list(src_dataset_info.id)
+        dst_dataset_infos[src_ds_info] = dst_dataset_info
+
+        src_images = api.image.get_list(src_ds_info.id)
+        src_ds_image_infos_dict[src_ds_info.id] = {
+            image_info.id: image_info for image_info in src_images
         }
-        timer.setdefault(src_dataset_info.id, {})["src_image_infos"] = time.time() - t
+        src_image_ids = [image.id for image in src_images]
+        if len(src_image_ids) > 0:
+            dst_img_infos = api.image.copy_batch(dst_dataset_info.id, src_image_ids)
+        else:
+            dst_img_infos = []
+        for image_info in dst_img_infos:
+            dst_image_infos_dict.setdefault(dst_dataset_info.id, {})[image_info.name] = image_info
+        timer.setdefault(src_ds_info.id, {})["copy"] = time.time() - t
 
         pbar.update(1)
+        return dst_dataset_info.id
 
-    def process_ds_tree(ds_tree):
+    def process_ds_tree(ds_tree, parent_id=None):
         for ds_info, children in ds_tree.items():
-            process_ds(ds_info)
+            current_ds_id = process_ds(ds_info, parent_id)
             if children:
-                process_ds_tree(children)
+                process_ds_tree(children, current_ds_id)
 
     import time
 
