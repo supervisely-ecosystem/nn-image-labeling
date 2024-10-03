@@ -122,6 +122,15 @@ def create_preview() -> None:
         full_preview()
 
 
+def get_random_image():
+    images = g.input_images
+    if images is None or len(images) == 0:
+        raise RuntimeError(
+            "There are no selected images to choose from. Please, check input data and try again."
+        )
+    return choice(images)
+
+
 def full_preview() -> None:
     """Create a full image preview of the model inference and show it in the gallery."""
     preview_video.hide()
@@ -135,7 +144,7 @@ def full_preview() -> None:
         )
 
     if random_image_checkbox.is_checked():
-        image_info: sly.ImageInfo = choice(g.input_images)
+        image_info = get_random_image()
     else:
         image_info = get_selected_image()
 
@@ -170,7 +179,7 @@ def window_preview() -> None:
     """Create a sliding window preview of the model inference and show it in the gallery."""
     preview_gallery.hide()
     if random_image_checkbox.is_checked():
-        image_info: sly.ImageInfo = choice(g.input_images)
+        image_info = get_random_image()
     else:
         image_info = get_selected_image()
 
