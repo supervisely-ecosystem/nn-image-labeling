@@ -64,26 +64,56 @@ def apply_model_ds(
             if children:
                 process_ds_tree(children, current_ds_id)
 
+    def count_selected_ds(data):
+        ds_count = 0
+        images_count = 0
+
+        for ds_info, children in data.items():
+            ds_count += 1
+            images_count += ds_info.images_count
+
+            if children:
+                nested_ds_count, nested_images_count = count_selected_ds(children)
+                ds_count += nested_ds_count
+                images_count += nested_images_count
+
+        return ds_count, images_count
+
+    def ds_tree_to_list(data):
+        dataset_list = []
+
+        for ds_info, children in data.items():
+            dataset_list.append(ds_info)
+            if children:
+                dataset_list.extend(ds_tree_to_list(children))
+
+        return dataset_list
+
     import time
 
     timer = {}
     dst_dataset_infos = {}
     try:
         # 1. Create destination datasets
-        selected_datasets = g.selected_datasets
+        src_ds_tree = api.dataset.get_tree(src_project)
+        src_ds_tree = {k: v for k, v in src_ds_tree.items() if k.id in g.selected_datasets}
+        src_ds_list = ds_tree_to_list(src_ds_tree)
+        selected_ds_count, selected_images_count = count_selected_ds(src_ds_tree)
+
         dst_dataset_infos = {}
         dst_image_infos_dict = {}  # dataset_id -> name -> image_info
         src_ds_image_infos_dict = {}  # dataset_id -> image_id -> [image_infos]
-        with inference_progress(
-            message="Creating datasets...", total=len(selected_datasets)
-        ) as pbar:
-            src_ds_tree = api.dataset.get_tree(src_project)
-            src_ds_tree = {k: v for k, v in src_ds_tree.items() if k.id in selected_datasets}
+
+        with inference_progress(message="Creating datasets...", total=selected_ds_count) as pbar:
             process_ds_tree(src_ds_tree)
         # 2. Apply model to the datasets
-        with inference_progress(message="Processing images...", total=len(g.input_images)) as pbar:
-            for src_dataset_info in list(dst_dataset_infos.keys()):
+        with inference_progress(
+            message="Processing images...", total=selected_images_count
+        ) as pbar:
+            for src_dataset_info in src_ds_list:
                 # iterating over batches of predictions
+                if src_dataset_info.images_count == 0:
+                    continue
                 t = time.time()
                 for (
                     _,
