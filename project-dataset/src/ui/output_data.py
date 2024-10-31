@@ -227,7 +227,7 @@ def apply_model():
 
         with inference_progress(message="Processing images...", total=len(g.input_images)) as pbar:
             for dataset_id in g.selected_datasets:
-                dataset_info = api.dataset.get_info_by_id(dataset_id)
+                dataset_info = api.dataset.get_info_by_id(dataset_id, raise_error=True)
                 res_dataset = api.dataset.create(
                     res_project.id, dataset_info.name, dataset_info.description
                 )
