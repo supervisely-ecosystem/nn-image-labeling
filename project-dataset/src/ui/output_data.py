@@ -253,7 +253,7 @@ def apply_model():
                         ):
                             if not api.project.exists(g.project_info.id, g.project_info.name):
                                 raise RuntimeError("Input project no longer exists")
-                            sly.logger.warning(
+                            sly.logger.error(
                                 f"Input dataset (id: {dataset_info.id}) no longer exists, images could not be processed."
                             )
                             break
