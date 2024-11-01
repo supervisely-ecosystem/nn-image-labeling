@@ -248,6 +248,16 @@ def apply_model():
                             msg=f"Couldn't process images by batch, images will be processed one by one, error: {e}."
                         )
 
+                        if not api.dataset.exists(
+                            g.project_info.id, dataset_info.name, dataset_info.parent_id
+                        ):
+                            if not api.project.exists(g.project_info.id, g.project_info.name):
+                                raise RuntimeError("Input project no longer exists")
+                            sly.logger.warning(
+                                f"Input dataset (id: {dataset_info.id}) no longer exists, images could not be processed."
+                            )
+                            break
+
                         image_ids, res_names, res_anns, res_metas = [], [], [], []
                         for image_info in batched_image_infos:
                             try:
