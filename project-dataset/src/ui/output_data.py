@@ -229,7 +229,10 @@ def apply_model():
             for dataset_id in g.selected_datasets:
                 dataset_info = api.dataset.get_info_by_id(dataset_id, raise_error=True)
                 res_dataset = api.dataset.create(
-                    res_project.id, dataset_info.name, dataset_info.description
+                    res_project.id,
+                    dataset_info.name,
+                    dataset_info.description,
+                    dataset_info.parent_id,
                 )
 
                 final_project_meta = None
