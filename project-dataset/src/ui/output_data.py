@@ -227,7 +227,14 @@ def apply_model():
 
         with inference_progress(message="Processing images...", total=len(g.input_images)) as pbar:
             for dataset_id in g.selected_datasets:
-                dataset_info = api.dataset.get_info_by_id(dataset_id, raise_error=True)
+                dataset_info = api.dataset.get_info_by_id(dataset_id)
+                if dataset_info is None:
+                    if not api.project.exists(g.project_info.id, g.project_info.name):
+                        raise RuntimeError("Input project no longer exists")
+                    sly.logger.error(
+                        f"Input dataset (id: {dataset_info.id}) is not found, images could not be processed."
+                    )
+                    continue
                 res_dataset = api.dataset.create(
                     res_project.id,
                     dataset_info.name,
@@ -251,17 +258,6 @@ def apply_model():
                         sly.logger.warn(
                             msg=f"Couldn't process images by batch, images will be processed one by one, error: {e}."
                         )
-
-                        if not api.dataset.exists(
-                            g.project_info.id, dataset_info.name, dataset_info.parent_id
-                        ):
-                            if not api.project.exists(g.project_info.id, g.project_info.name):
-                                raise RuntimeError("Input project no longer exists")
-                            sly.logger.error(
-                                f"Input dataset (id: {dataset_info.id}) no longer exists, images could not be processed."
-                            )
-                            break
-
                         image_ids, res_names, res_anns, res_metas = [], [], [], []
                         for image_info in batched_image_infos:
                             try:
