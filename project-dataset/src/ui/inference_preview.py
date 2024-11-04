@@ -380,7 +380,7 @@ def apply_model_to_datasets(
     inference_mode = settings.inference_mode.get_value()
 
     print(f"Inference mode: {inference_mode}")
-    api: sly.Api = api
+    api: sly.Api = g.api
 
     if inference_mode == "sliding window":
         inference_settings.update(get_sliding_window_params())
@@ -556,7 +556,7 @@ def apply_model_to_images(
     image_ids = [image_info.id for image_info in image_infos]
 
     print(f"Inference mode: {inference_mode}")
-    api: sly.Api = api
+    api: sly.Api = g.api
     retries = 5
     if inference_mode == "sliding window":
         inference_settings.update(get_sliding_window_params())
@@ -670,7 +670,7 @@ def apply_model_to_images(
                 )
                 image_info = api.image.get_info_by_id(id=image_id)
                 sly.logger.warn(
-                    f"Couldn't process annotation prediction for image: {image_info.name} (ID: {image_id}). Image remain unchanged. Error: {e}"
+                    f"Couldn't process annotation prediction for image: {image_info.name if image_info else "Image not found"} (ID: {image_id}). Image remain unchanged. Error: {e}"
                 )
                 pred_json = sly.Annotation(img_size=(image_info.height, image_info.width)).to_json()
                 ann_pred_json.append(pred_json)
