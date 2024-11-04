@@ -380,7 +380,7 @@ def apply_model_to_datasets(
     inference_mode = settings.inference_mode.get_value()
 
     print(f"Inference mode: {inference_mode}")
-    api: sly.Api = api
+    api: sly.Api = g.api
 
     if inference_mode == "sliding window":
         inference_settings.update(get_sliding_window_params())
