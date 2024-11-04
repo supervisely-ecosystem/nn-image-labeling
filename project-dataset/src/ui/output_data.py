@@ -231,8 +231,9 @@ def apply_model():
                 res_dataset = api.dataset.create(
                     res_project.id, dataset_info.name, dataset_info.description
                 )
-                image_infos = api.image.get_list(dataset_info.id)
 
+                final_project_meta = None
+                image_infos = api.image.get_list(dataset_info.id)
                 for batched_image_infos in sly.batched(image_infos, batch_size=10):
                     try:
                         image_ids, res_names, res_metas = [], [], []
