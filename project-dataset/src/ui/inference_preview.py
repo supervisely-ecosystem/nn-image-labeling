@@ -669,8 +669,13 @@ def apply_model_to_images(
                     },
                 )
                 image_info = api.image.get_info_by_id(id=image_id)
+                if image_info is None:
+                    sly.logger.warn(
+                    f"Image (id: {image_id}) is either archived, doesn't exist or you don't have enough permissions to access it"
+                )
+                
                 sly.logger.warn(
-                    f"Couldn't process annotation prediction for image: {image_info.name if image_info else "Image not found"} (ID: {image_id}). Image remain unchanged. Error: {e}"
+                    f"Couldn't process annotation prediction for image: {image_info.name or "Image not found"} (ID: {image_id}). Image remain unchanged. Error: {e}"
                 )
                 pred_json = sly.Annotation(img_size=(image_info.height, image_info.width)).to_json()
                 ann_pred_json.append(pred_json)
