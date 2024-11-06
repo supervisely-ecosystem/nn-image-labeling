@@ -232,7 +232,7 @@ def apply_model():
                     if not api.project.exists(g.workspace_id, g.project_info.name):
                         raise RuntimeError("Input project no longer exists")
                     sly.logger.error(
-                        f"Input dataset (id: {dataset_info.id}) is not found, images could not be processed."
+                        f"Input dataset (id: {dataset_id}) is not found, images could not be processed."
                     )
                     continue
                 res_dataset = api.dataset.create(
