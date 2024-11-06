@@ -229,7 +229,7 @@ def apply_model():
             for dataset_id in g.selected_datasets:
                 dataset_info = api.dataset.get_info_by_id(dataset_id)
                 if dataset_info is None:
-                    if not api.project.exists(g.project_info.id, g.project_info.name):
+                    if not api.project.exists(g.workspace_id, g.project_info.name):
                         raise RuntimeError("Input project no longer exists")
                     sly.logger.error(
                         f"Input dataset (id: {dataset_info.id}) is not found, images could not be processed."
