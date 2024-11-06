@@ -380,6 +380,7 @@ def apply_model_to_datasets(
     inference_mode = settings.inference_mode.get_value()
 
     print(f"Inference mode: {inference_mode}")
+    api: sly.Api = g.api
 
     if inference_mode == "sliding window":
         inference_settings.update(get_sliding_window_params())
@@ -389,14 +390,14 @@ def apply_model_to_datasets(
         inference_settings["classes"] = classes
 
     inference_session = sly.nn.inference.Session(
-        g.api, g.model_session_id, inference_settings=inference_settings
+        api, g.model_session_id, inference_settings=inference_settings
     )
     res_project_meta = g.project_meta.clone()
     if image_infos is None:
         all_image_infos = {
             image_info.id: image_info
             for dataset_id in dataset_ids
-            for image_info in g.api.image.get_list(dataset_id=dataset_id)
+            for image_info in api.image.get_list(dataset_id=dataset_id)
         }
     else:
         all_image_infos = {image_info.id: image_info for image_info in image_infos}
@@ -428,7 +429,7 @@ def apply_model_to_datasets(
 
             # download original ann infos
             for dataset_id, ds_image_infos in img_infos_dict.items():
-                original_ann_infos = g.api.annotation.download_batch(
+                original_ann_infos = api.annotation.download_batch(
                     dataset_id, [image_info.id for image_info in ds_image_infos]
                 )
                 original_anns_dict = {
@@ -451,7 +452,7 @@ def apply_model_to_datasets(
 
             # download original ann infos
             for dataset_id, ds_image_infos in img_infos_dict.items():
-                original_ann_infos = g.api.annotation.download_batch(
+                original_ann_infos = api.annotation.download_batch(
                     dataset_id, [image_info.id for image_info in ds_image_infos]
                 )
                 original_anns_dict = {
@@ -491,7 +492,7 @@ def apply_model_to_datasets(
 
             # download original ann infos
             for dataset_id, ds_image_infos in img_infos_dict.items():
-                original_ann_infos = g.api.annotation.download_batch(
+                original_ann_infos = api.annotation.download_batch(
                     dataset_id, [image_info.id for image_info in ds_image_infos]
                 )
                 original_anns_dict = {
@@ -514,7 +515,7 @@ def apply_model_to_datasets(
 
             # download original ann infos
             for dataset_id, ds_image_infos in img_infos_dict.items():
-                original_ann_infos = g.api.annotation.download_batch(
+                original_ann_infos = api.annotation.download_batch(
                     dataset_id, [image_info.id for image_info in ds_image_infos]
                 )
                 original_anns_dict = {
@@ -555,7 +556,8 @@ def apply_model_to_images(
     image_ids = [image_info.id for image_info in image_infos]
 
     print(f"Inference mode: {inference_mode}")
-
+    api: sly.Api = g.api
+    retries = 5
     if inference_mode == "sliding window":
         inference_settings.update(get_sliding_window_params())
         sly.logger.info("Sliding window is enabled. Inference settings updated.")
@@ -568,23 +570,25 @@ def apply_model_to_images(
 
                 def get_inference_progress(inference_request_uuid):
                     sly.logger.debug("Requesting inference progress...")
-                    result = g.api.task.send_request(
+                    result = api.task.send_request(
                         g.model_session_id,
                         "get_inference_progress",
                         data={"inference_request_uuid": inference_request_uuid},
+                        retries=retries,
                     )
                     return result
 
                 current = 0
                 ann_pred_json = []
                 for image_id in image_ids:
-                    pred_json = g.api.task.send_request(
+                    pred_json = api.task.send_request(
                         g.model_session_id,
                         "inference_image_id_async",
                         data={
                             "image_id": image_id,
                             "settings": inference_settings,
                         },
+                        retries=retries,
                     )
                     g.inference_request_uuid = pred_json["inference_request_uuid"]
 
@@ -606,7 +610,7 @@ def apply_model_to_images(
                     ann_pred_json.append(result)
         else:
             sly.logger.debug("Running inference in full image mode...")
-            ann_pred_json = g.api.task.send_request(
+            ann_pred_json = api.task.send_request(
                 g.model_session_id,
                 "inference_batch_ids",
                 data={
@@ -614,6 +618,7 @@ def apply_model_to_images(
                     "batch_ids": image_ids,
                     "settings": inference_settings,
                 },
+                retries=retries,
             )
         if not isinstance(ann_pred_json, list):
             raise ValueError(
@@ -641,7 +646,7 @@ def apply_model_to_images(
         ann_pred_json = []
         for image_id in image_ids:
             try:
-                pred_json = g.api.task.send_request(
+                pred_json = api.task.send_request(
                     g.model_session_id,
                     "inference_batch_ids",
                     data={
@@ -649,6 +654,7 @@ def apply_model_to_images(
                         "batch_ids": [image_id],
                         "settings": inference_settings,
                     },
+                    retries=retries,
                 )[0]
                 validate_ann(pred_json)
                 ann_pred_json.append(pred_json)
@@ -662,9 +668,16 @@ def apply_model_to_images(
                         "settings": str(inference_settings),
                     },
                 )
-                image_info = g.api.image.get_info_by_id(id=image_id)
+                image_info = api.image.get_info_by_id(id=image_id)
+                if image_info is None:
+                    img_name = "Image not found"
+                    sly.logger.warn(
+                    f"Image (id: {image_id}) is either archived, doesn't exist or you don't have enough permissions to access it"
+                )
+                else:
+                    img_name = image_info.name 
                 sly.logger.warn(
-                    f"Couldn't process annotation prediction for image: {image_info.name} (ID: {image_id}). Image remain unchanged. Error: {e}"
+                    f"Couldn't process annotation prediction for image: {img_name} (ID: {image_id}). Image remain unchanged. Error: {e}"
                 )
                 pred_json = sly.Annotation(img_size=(image_info.height, image_info.width)).to_json()
                 ann_pred_json.append(pred_json)
@@ -682,7 +695,7 @@ def apply_model_to_images(
                 extra={"image_id": img_id, "details": repr(e)},
             )
             sly.logger.debug("Response from serving app", extra={"serving_response": pred_json})
-            img_info = g.api.image.get_info_by_id(img_id)
+            img_info = api.image.get_info_by_id(img_id)
             ann_pred = sly.Annotation(img_size=(img_info.height, img_info.width))
             ann_preds.append(ann_pred)
 
@@ -699,7 +712,7 @@ def apply_model_to_images(
 
     original_anns = None
     if add_mode == "replace existing labels and save image tags":
-        original_anns = g.api.annotation.download_batch(dataset_id, image_ids)
+        original_anns = api.annotation.download_batch(dataset_id, image_ids)
         original_anns = [
             sly.Annotation.from_json(ann_info.annotation, g.project_meta)
             for ann_info in original_anns
@@ -708,7 +721,7 @@ def apply_model_to_images(
         for ann, pred in zip(original_anns, res_anns):
             merged_anns.append(pred.clone(img_tags=ann.img_tags))
     elif add_mode == "merge with existing labels":
-        original_anns = g.api.annotation.download_batch(dataset_id, image_ids)
+        original_anns = api.annotation.download_batch(dataset_id, image_ids)
         original_anns = [
             sly.Annotation.from_json(ann_info.annotation, g.project_meta)
             for ann_info in original_anns
