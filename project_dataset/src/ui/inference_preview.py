@@ -1,4 +1,3 @@
-import importlib
 import os
 from datetime import datetime
 from random import choice
@@ -24,9 +23,9 @@ from supervisely.app.widgets import (
     VideoPlayer,
 )
 
-g = importlib.import_module("project-dataset.src.globals")
-settings = importlib.import_module("project-dataset.src.ui.inference_settings")
-nn_info = importlib.import_module("project-dataset.src.ui.nn_info")
+import project_dataset.src.globals as g
+import project_dataset.src.ui.inference_settings as settings
+import project_dataset.src.ui.nn_info as nn_info
 
 preview_gallery = GridGallery(
     columns_number=2,

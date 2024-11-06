@@ -4,7 +4,7 @@ venv
 supervisely_lib
 supervisely
 shared_utils/__pycache__
-project-dataset/src/__pycache__
+project_dataset/src/__pycache__
 .DS_Store
 debug
 __pycache__/

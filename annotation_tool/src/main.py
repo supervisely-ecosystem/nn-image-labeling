@@ -1,4 +1,3 @@
-import importlib
 import os
 import pathlib
 import sys
@@ -23,11 +22,11 @@ from shared_utils.connect import get_model_info
 from shared_utils.inference import postprocess
 from shared_utils.ui2 import set_error
 
-w = importlib.import_module("annotation-tool.src.workflow")
+import annotation_tool.src.workflow as w
 
 if sly.is_development():
     load_dotenv(os.path.expanduser("~/supervisely.env"))
-    load_dotenv("annotation-tool/debug.env")
+    load_dotenv("annotation_tool/debug.env")
 
 owner_id = int(os.environ["context.userId"])
 team_id = int(os.environ["context.teamId"])

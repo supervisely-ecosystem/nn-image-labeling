@@ -1,14 +1,12 @@
-import importlib
-
 import supervisely as sly
 import yaml
 from supervisely.app.widgets import Button, Card, Container, ModelInfo, SelectAppSession, Text
 
-g = importlib.import_module("project-dataset.src.globals")
-inference_preview = importlib.import_module("project-dataset.src.ui.inference_preview")
-inference_settings = importlib.import_module("project-dataset.src.ui.inference_settings")
-nn_info = importlib.import_module("project-dataset.src.ui.nn_info")
-output_data = importlib.import_module("project-dataset.src.ui.output_data")
+import project_dataset.src.globals as g
+import project_dataset.src.ui.inference_preview as inference_preview
+import project_dataset.src.ui.inference_settings as inference_settings
+import project_dataset.src.ui.nn_info as nn_info
+import project_dataset.src.ui.output_data as output_data
 
 select_session = SelectAppSession(g.team_id, g.deployed_nn_tags)
 connect_button = Button("Connect", icon="zmdi zmdi-check")

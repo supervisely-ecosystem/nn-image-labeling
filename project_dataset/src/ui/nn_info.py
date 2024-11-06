@@ -1,9 +1,6 @@
-import importlib
-
 import supervisely as sly
 from supervisely.app.widgets import Card, ClassesListSelector, Container, Field, TagsListSelector
-
-g = importlib.import_module("project-dataset.src.globals")
+import project_dataset.src.globals as g
 
 select_classes = ClassesListSelector(multiple=True)
 classes_field = Field(

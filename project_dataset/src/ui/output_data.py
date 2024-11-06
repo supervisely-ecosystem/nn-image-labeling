@@ -1,13 +1,11 @@
-import importlib
-
 import supervisely as sly
 import yaml
 from supervisely.app.widgets import Button, Card, Container, Input, Progress, ProjectThumbnail
 
-g = importlib.import_module("project-dataset.src.globals")
-settings = importlib.import_module("project-dataset.src.ui.inference_settings")
-inference_preview = importlib.import_module("project-dataset.src.ui.inference_preview")
-nn_info = importlib.import_module("project-dataset.src.ui.nn_info")
+import project_dataset.src.globals as g
+import project_dataset.src.ui.inference_settings as settings
+import project_dataset.src.ui.inference_preview as inference_preview
+import project_dataset.src.ui.nn_info as nn_info
 
 output_project_name = Input(f"{g.project_info.name}_inference", minlength=1)
 apply_button = Button("Apply model to input data", icon="zmdi zmdi-check")
@@ -313,6 +311,6 @@ def apply_model():
     # -------------------------------------- Add Workflow Output ------------------------------------- #
     g.workflow.add_output(project_id=res_project.id)
     # ----------------------------------------------- - ---------------------------------------------- #
-    main = importlib.import_module("project-dataset.src.main")
+    import project_dataset.src.main as main
 
     main.app.stop()

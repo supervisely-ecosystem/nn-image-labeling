@@ -1,10 +1,9 @@
-import importlib
 import os
 
 import supervisely as sly
 from dotenv import load_dotenv
 
-w = importlib.import_module("project-dataset.src.workflow")
+import project_dataset.src.workflow as w
 
 ABSOLUTE_PATH = os.path.dirname(os.path.abspath(__file__))
 PARENT_DIR = os.path.dirname(ABSOLUTE_PATH)
