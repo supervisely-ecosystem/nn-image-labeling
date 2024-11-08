@@ -200,6 +200,8 @@ def apply_model():
     try:
         inference_settings = yaml.safe_load(settings.additional_settings.get_value())
         sly.logger.info(f"Final Inference Settings: {inference_settings}")
+        if inference_settings is None:
+            inference_settings = {}
     except Exception as e:
         inference_settings = {}
         sly.logger.warning(
