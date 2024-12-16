@@ -552,7 +552,6 @@ def apply_model_to_images(
     :rtype: Tuple[List[sly.Annotation], List[sly.Annotation], sly.ProjectMeta]
     """
     if g.model_info["app_name"].startswith("Serve Segment Anything"):
-        print("using sam model...")
         inference_settings["mode"] = "raw"
     # Reading parameters from widgets: inference_mode.
     inference_mode = settings.inference_mode.get_value()

@@ -201,9 +201,7 @@ def apply_model():
         inference_settings = yaml.safe_load(settings.additional_settings.get_value())
         if inference_settings is None:
             inference_settings = {}
-        print(g.model_info)
         if g.model_info["app_name"].startswith("Serve Segment Anything"):
-            print("using sam model...")
             inference_settings["mode"] = "raw"
         sly.logger.info(f"Final Inference Settings: {inference_settings}")
 
