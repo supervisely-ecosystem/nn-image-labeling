@@ -41,7 +41,7 @@ inference_settings = None
 # endregion
 
 # region ui-consants
-deployed_nn_tags = ["deployed_nn"]
+deployed_nn_tags = ["deployed_nn", "deployed_nn_object_segmentation"]
 inference_modes = ["full image", "sliding window"]
 add_predictions_modes = [
     "merge with existing labels",
