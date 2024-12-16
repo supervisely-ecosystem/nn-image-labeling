@@ -551,6 +551,9 @@ def apply_model_to_images(
     :return: Original annotations, result annotations, result project meta.
     :rtype: Tuple[List[sly.Annotation], List[sly.Annotation], sly.ProjectMeta]
     """
+    if g.model_info["app_name"].startswith("Serve Segment Anything"):
+        print("using sam model...")
+        inference_settings["mode"] = "raw"
     # Reading parameters from widgets: inference_mode.
     inference_mode = settings.inference_mode.get_value()
     image_ids = [image_info.id for image_info in image_infos]
@@ -672,10 +675,10 @@ def apply_model_to_images(
                 if image_info is None:
                     img_name = "Image not found"
                     sly.logger.warn(
-                    f"Image (id: {image_id}) is either archived, doesn't exist or you don't have enough permissions to access it"
-                )
+                        f"Image (id: {image_id}) is either archived, doesn't exist or you don't have enough permissions to access it"
+                    )
                 else:
-                    img_name = image_info.name 
+                    img_name = image_info.name
                 sly.logger.warn(
                     f"Couldn't process annotation prediction for image: {img_name} (ID: {image_id}). Image remain unchanged. Error: {e}"
                 )
