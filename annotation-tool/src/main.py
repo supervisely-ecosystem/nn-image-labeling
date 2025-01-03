@@ -226,7 +226,33 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
                     settings["bbox_class_name"] = label_roi.obj_class.name
                 else:
                     points_outside_box = True
-            if "point" not in geometries or points_outside_box:
+            elif "line" in geometries:
+                # check if points are located inside object roi
+                points = []
+                for label in current_ann.labels:
+                    if label.geometry.geometry_name() == "line":
+                        if object_roi.contains(label.geometry.to_bbox()):
+                            points.extend(label.geometry.exterior)
+                if len(points) > 0:
+                    settings["mode"] = "points"
+                    app_logger.info("Switching model to points mode")
+                    settings["input_image_id"] = image_id
+                    settings["point_coordinates"] = [[point.col, point.row] for point in points]
+                    point_labels = [1] * len(points)
+                    settings["point_labels"] = point_labels
+                    settings["bbox_coordinates"] = [
+                        object_roi.top,
+                        object_roi.left,
+                        object_roi.bottom,
+                        object_roi.right,
+                    ]
+                    settings["points_class_name"] = label_roi.obj_class.name + "_mask"
+                    settings["init_mask"] = None
+                    # settings["points_class_name"]
+                else:
+                    points_outside_box = True
+            if "line" not in geometries and ("point" not in geometries or points_outside_box):
+                # if "point" not in geometries or points_outside_box:
                 settings["mode"] = "bbox"
                 app_logger.info("Switching model to bbox mode")
                 settings["bbox_coordinates"] = [
