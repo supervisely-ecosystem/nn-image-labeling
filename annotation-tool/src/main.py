@@ -421,8 +421,40 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
         ann_pred_json = ann_pred_json["annotation"]
     try:
         ann_pred = sly.Annotation.from_json(ann_pred_json, model_meta)
+
+        try:
+            # Convert polyline points to smart tool object
+            if label_roi is not None:
+                if label_roi.geometry.geometry_name() == "line":
+                    label_roi_bbox = ann_pred.labels[0].geometry.to_bbox()
+                    ann_pred_json = ann_pred.to_json()
+
+                    object = ann_pred_json["objects"]
+                    smart_tool_input = {
+                        "visible": True,
+                        "crop": [
+                            [
+                                label_roi_bbox.left,
+                                label_roi_bbox.top,
+                            ],
+                            [
+                                label_roi_bbox.right,
+                                label_roi_bbox.bottom,
+                            ],
+                        ],
+                        "positive": [[point.col, point.row] for point in points],
+                        "negative": [],
+                    }
+                    ann_pred_json["objects"][0]["smartToolInput"] = smart_tool_input
+                    ann_pred = sly.Annotation.from_json(ann_pred_json, model_meta)
+        except Exception as e:
+            sly.logger.warning(
+                "Error converting polyline points to smart tool object",
+                extra={"image_id": image_id, "figure_id": figure_id, "details": repr(e)},
+            )
+
     except Exception as e:
-        sly.logger.warn(
+        sly.logger.warning(
             "Can not process predictions from serving",
             extra={"image_id": image_id, "details": repr(e)},
         )
