@@ -28,6 +28,14 @@ Any NN can be integrated into Labeling interface if it has properly implemented 
 
 # What's New
 
+### v1.7.5
+
+- NN Models can now be applied to `Polyline` figures. All points of the polyline are positive points
+
+<div align="center" markdown>
+  <img src="https://private-user-images.githubusercontent.com/48913536/400758233-3b26f64e-2ab0-4a24-9f04-a5b9ff084d4b.gif?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MzYyNTE3ODYsIm5iZiI6MTczNjI1MTQ4NiwicGF0aCI6Ii80ODkxMzUzNi80MDA3NTgyMzMtM2IyNmY2NGUtMmFiMC00YTI0LTlmMDQtYTViOWZmMDg0ZDRiLmdpZj9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNTAxMDclMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjUwMTA3VDEyMDQ0NlomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPWU4ODY5YzEzYzNhMDgxZjU0OWRhN2ZkNDMxNjkyMWMzN2FlNTE3ZjE4MmI0ODM5MzI0NzFmYmVkMTRmMjdlZWMmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.RC332Ugu7yQINA3cxrDUy_40IM0KS7NMDEiNuLrZOD8" width="50%">
+</div>
+
 ### v1.6.0
 
 - ☑️ Added checkbox to always add suffix to model class/tag name even if it doesn't have conflicts with existing one
