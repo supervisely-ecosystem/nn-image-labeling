@@ -106,7 +106,7 @@ def inference_mode_changed(mode: str) -> None:
 def show_load_inference_settings(checked: bool) -> None:
     """Shows or hides the load settings button based on the checkbox value."""
     if checked:
-        additional_settings_input.set_value("/apply-nn-to-project-dataset/")
+        additional_settings_input.set_value("/nn-image-labeling/")
         additional_settings_btn.text = "Load Settings"
         additional_settings_btn.icon = "zmdi zmdi-cloud-download"
         additional_settings_text.set(

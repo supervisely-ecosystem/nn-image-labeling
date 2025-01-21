@@ -66,7 +66,7 @@ def model_selected() -> None:
     model_info.set_session_id(g.model_session_id)
     g.model_info = g.api.task.send_request(g.model_session_id, "get_session_info", data={})
     g.additional_settings_save_path = "/" + os.path.join(
-        "apply-nn-to-project-dataset",
+        "nn-image-labeling",
         f"{g.task_id}",
         "inference_settings.yaml",
     )
