@@ -31,6 +31,12 @@ App connects to the deployed Neural Network and applies it to the images project
 
 # What's New
 
+### v1.7.38
+
+- Added support for saving and loading inference settings from `.yaml` file
+
+![save-load-inf-settings](https://github.com/user-attachments/assets/c60a5a84-e2a3-4157-9d5b-5dc795e89014)
+
 ### v1.6.0
 
 - ☑️ Added checkbox to always add suffix to model class/tag name even if it doesn't have conflicts with existing one
@@ -45,11 +51,9 @@ App connects to the deployed Neural Network and applies it to the images project
 
 https://user-images.githubusercontent.com/33942379/171401791-f389eee4-4fdc-4fed-bbcc-409dc306e045.mp4
 
-
 - Inference preview ob both random or specific image
 
 https://user-images.githubusercontent.com/33942379/171401798-0b425683-4138-4b01-b008-50f0fc98eb0e.mp4
-
 
 # How To Run
 

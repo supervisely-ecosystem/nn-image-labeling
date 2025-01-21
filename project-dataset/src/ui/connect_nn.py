@@ -1,4 +1,5 @@
 import importlib
+import os
 
 import supervisely as sly
 import yaml
@@ -64,6 +65,14 @@ def model_selected() -> None:
     error_container.hide()
     model_info.set_session_id(g.model_session_id)
     g.model_info = g.api.task.send_request(g.model_session_id, "get_session_info", data={})
+    g.additional_settings_save_path = "/" + os.path.join(
+        "apply-nn-to-project-dataset",
+        f"{g.task_id}",
+        "inference_settings.yaml",
+    )
+    if not inference_settings.additional_setting_load_checkbox.is_checked():
+        inference_settings.additional_settings_input.set_value(g.additional_settings_save_path)
+
     sly.logger.debug(f"Model info was saved to globals: {g.model_info}")
     model_info.show()
     disconnect_button.show()
