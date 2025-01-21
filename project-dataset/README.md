@@ -31,11 +31,11 @@ App connects to the deployed Neural Network and applies it to the images project
 
 # What's New
 
-### v1.7.39
+### v1.7.40
 
-- Added support for saving and loading inference settings from `.yaml` file. Now you can save your settings and load them later to apply to the same or another project. By default, the settings are saved to the `.yaml` file in the `nn-image-labeling` folder followed by a subfolder with task id of the app. You can change the path to the file in the GUI.
+- Added support for saving and loading inference settings from `.yaml` template file. Now you can save your settings templates and load them later to apply to the same or another project. Settings are saved to the template folder located in the Team Files: `nn-image-labeling/inf-settings-templates/`.
 
-![save-load-inf-settings](https://github.com/user-attachments/assets/0e303118-9139-4371-91c6-98c4ea95cff2)
+![save-load-inf-settings](https://github.com/user-attachments/assets/ff5c68ac-ed0f-41f0-966f-d61c0b6b8d25)
 
 ### v1.6.0
 

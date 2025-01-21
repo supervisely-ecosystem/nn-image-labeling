@@ -1,5 +1,7 @@
 import importlib
+import json
 import os
+from pathlib import Path
 
 import yaml
 from supervisely.app.widgets import (
@@ -14,7 +16,31 @@ from supervisely.app.widgets import (
     Select,
     Text,
 )
-from supervisely.io.fs import silent_remove
+from supervisely.io.fs import get_file_ext, silent_remove
+
+
+def load_templates():
+    file_infos = g.api.file.list(g.team_id, g.remote_template_dir, False, "fileinfo")
+    if len(file_infos) == 0:
+        additional_settings_text_result.set("No templates found", status="info")
+        additional_settings_text_result.show()
+        return [], {}
+
+    items = []
+    items_map = {}
+    for file_info in file_infos:
+        local_path = os.path.join(g.STATIC_DIR, file_info.name)
+        if get_file_ext(local_path) != ".yaml":
+            continue
+
+        g.api.file.download(g.team_id, file_info.path, local_path)
+        with open(local_path, "r") as file:
+            inference_settings = yaml.safe_load(file)
+        items.append(Select.Item(file_info.name, file_info.name))
+        items_map[file_info.name] = inference_settings
+        silent_remove(local_path)
+    return items, items_map
+
 
 g = importlib.import_module("project-dataset.src.globals")
 inference_preview = importlib.import_module("project-dataset.src.ui.inference_preview")
@@ -45,16 +71,24 @@ add_predictions_mode_field = Field(
 
 additional_setting_load_checkbox = Checkbox("Load additional settings from file", checked=False)
 additional_settings = Editor(language_mode="yaml", height_lines=20)
-additional_settings_input = Input("")
+additional_settings_input = Input("settings_template.yaml")
 
 additional_settings_btn = Button(text="Save settings", icon="zmdi zmdi-floppy")
 additional_settings_reset_btn = Button(text="Reset settings", plain=True, icon="zmdi zmdi-refresh")
 
-additional_settings_text = Text("Enter path to save inference settings")
+additional_settings_text = Text(
+    "<b>Enter name of the template with '.yaml' extension to save inference settings</b>"
+)
 additional_settings_text_result = Text(
     "<b>Settings have been saved successfully</b>", status="success"
 )
 additional_settings_text_result.hide()
+
+items, g.templates_map = load_templates()
+additional_settings_selector = Select(items, placeholder="Select template")
+additional_settings_selector.hide()
+additional_settings_selector_refresh_btn = Button("", "text", icon="zmdi zmdi-refresh")
+additional_settings_selector_refresh_btn.hide()
 
 additional_settings_container = Container(
     [
@@ -62,6 +96,7 @@ additional_settings_container = Container(
         additional_settings,
         additional_settings_text,
         additional_settings_input,
+        Flexbox([additional_settings_selector, additional_settings_selector_refresh_btn], gap=3),
         Flexbox([additional_settings_btn, additional_settings_reset_btn], gap=5),
         additional_settings_text_result,
     ]
@@ -106,47 +141,38 @@ def inference_mode_changed(mode: str) -> None:
 def show_load_inference_settings(checked: bool) -> None:
     """Shows or hides the load settings button based on the checkbox value."""
     if checked:
-        additional_settings_input.set_value("/nn-image-labeling/")
+        additional_settings_text.set("<b>Select inference settings template</b>", status="text")
+        additional_settings_input.hide()
+        additional_settings_selector.show()
+        additional_settings_selector_refresh_btn.show()
         additional_settings_btn.text = "Load Settings"
         additional_settings_btn.icon = "zmdi zmdi-cloud-download"
-        additional_settings_text.set(
-            "<b>Enter path to '.yaml' file to load inference settings</b>", status="text"
-        )
+        if len(items) == 0:
+            additional_settings_btn.disable()
+            additional_settings_text_result.set("No templates found", status="info")
+            additional_settings_text_result.show()
+
         additional_settings_text_result.hide()
-        additional_settings_text_result.set(
-            "Settings have been loaded successfully", status="success"
-        )
     else:
-        additional_settings_input.set_value(g.additional_settings_save_path)
+        additional_settings_selector.hide()
+        additional_settings_selector_refresh_btn.hide()
+        additional_settings_input.show()
         additional_settings_btn.text = "Save Settings"
         additional_settings_btn.icon = "zmdi zmdi-floppy"
+        additional_settings_btn.enable()
         additional_settings_text.set(
-            "<b>Enter path to '.yaml' file to save inference settings</b>", status="text"
+            "<b>Enter name of the template with '.yaml' extension to save inference settings</b>",
+            status="text",
         )
         additional_settings_text_result.hide()
-        additional_settings_text_result.set(
-            "Settings have been saved successfully", status="success"
-        )
 
 
 @additional_settings_btn.click
 def save_load_settings():
     # Load settings
     if additional_setting_load_checkbox.is_checked():
-        remote_settings_path = additional_settings_input.get_value()
-        file_info = g.api.file.get_info_by_path(g.team_id, remote_settings_path)
-        if file_info is None:
-            additional_settings_text_result.set(
-                "Settings file not found, please check the path", status="warning"
-            )
-            additional_settings_text_result.show()
-            return
-        local_settings_path = os.path.join(g.STATIC_DIR, "inference_settings.yaml")
-        if os.path.exists(local_settings_path):
-            silent_remove(local_settings_path)
-        g.api.file.download(g.team_id, remote_settings_path, local_settings_path)
-        with open(local_settings_path, "r") as file:
-            inference_settings = yaml.safe_load(file)
+        template_name = additional_settings_selector.get_value()
+        inference_settings = g.templates_map[template_name]
         additional_settings.set_text(yaml.dump(inference_settings))
         additional_settings_text_result.set(
             "Settings have been loaded successfully", status="success"
@@ -154,13 +180,20 @@ def save_load_settings():
         additional_settings_text_result.show()
     # Save settings
     else:
+        remote_settings_path = g.remote_template_dir + additional_settings_input.get_value()
+        if not remote_settings_path.endswith(".yaml"):
+            additional_settings_text_result.set(
+                "File name should have '.yaml' extension", status="warning"
+            )
+            additional_settings_text_result.show()
+            return
+
         inference_settings = additional_settings.get_text()
         local_settings_path = os.path.join(g.STATIC_DIR, "inference_settings.yaml")
         if os.path.exists(local_settings_path):
             silent_remove(local_settings_path)
         with open(local_settings_path, "w") as file:
             file.write(inference_settings)
-        remote_settings_path = additional_settings_input.get_value()
         file_info = g.api.file.get_info_by_path(g.team_id, remote_settings_path)
         if file_info:
             additional_settings_text_result.set(
@@ -171,7 +204,7 @@ def save_load_settings():
 
         g.api.file.upload(g.team_id, local_settings_path, remote_settings_path)
         additional_settings_text_result.set(
-            "Settings have been saved successfully", status="success"
+            f"Settings have been saved successfully to: '{remote_settings_path}'", status="success"
         )
         additional_settings_text_result.show()
 
@@ -181,3 +214,11 @@ def reset_inference_settings():
     additional_settings.set_text(g.inference_settings["settings"])
     additional_settings_text_result.set("Settings have been reset successfully", status="success")
     additional_settings_text_result.show()
+
+
+@additional_settings_selector_refresh_btn.click
+def refresh_tempaltes():
+    items, g.templates_map = load_templates()
+    additional_settings_selector.set(items)
+    if len(items) == 0:
+        additional_settings_btn.disable()

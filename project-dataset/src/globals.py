@@ -15,7 +15,6 @@ if sly.is_development():
     load_dotenv(os.path.join(PARENT_DIR, "local.env"))
     load_dotenv(os.path.expanduser("~/supervisely.env"))
 
-task_id = sly.env.task_id()
 team_id = sly.env.team_id()
 workspace_id = sly.env.workspace_id()
 project_id = sly.env.project_id(raise_not_found=False)
@@ -39,7 +38,8 @@ selected_datasets = None
 model_session_id = None
 model_meta = None
 inference_settings = None
-additional_settings_save_path = None
+remote_template_dir = "/nn-image-labeling/inf-settings-templates/"
+templates_map = {}
 # endregion
 
 # region ui-consants
