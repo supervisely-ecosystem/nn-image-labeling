@@ -28,10 +28,9 @@ App connects to the deployed Neural Network and applies it to the images project
     <img src="https://i.imgur.com/Edy7B1H.png" alt="SLY_EMBEDED_VIDEO_LINK"  style="max-width:50%;">
 </a>
 
-
 # What's New
 
-### v1.7.40
+### v1.7.41
 
 - Added support for saving and loading inference settings from `.yaml` template file. Now you can save your settings templates and load them later to apply to the same or another project. Settings are saved to the template folder located in the Team Files: `nn-image-labeling/inf-settings-templates/`.
 
@@ -60,4 +59,3 @@ https://user-images.githubusercontent.com/33942379/171401798-0b425683-4138-4b01-
 0. Add this app to your team from Ecosystem
 1. Be sure that NN you are going to use is deployed in your team
 2. Start app from the context menu of the images project or dataset. 
-

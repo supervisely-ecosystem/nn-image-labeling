@@ -222,3 +222,5 @@ def refresh_tempaltes():
     additional_settings_selector.set(items)
     if len(items) == 0:
         additional_settings_btn.disable()
+    else:
+        additional_settings_btn.enable()
