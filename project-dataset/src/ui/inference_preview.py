@@ -23,6 +23,7 @@ from supervisely.app.widgets import (
     Select,
     VideoPlayer,
 )
+from supervisely.imaging.color import generate_rgb, random_rgb
 
 g = importlib.import_module("project-dataset.src.globals")
 settings = importlib.import_module("project-dataset.src.ui.inference_settings")
@@ -689,6 +690,24 @@ def apply_model_to_images(
         try:
             if isinstance(pred_json, dict) and "annotation" in pred_json.keys():
                 pred_json = pred_json["annotation"]
+            if g.model_info["task type"] == "prompt-based object detection":
+                # add tag to model meta if necessary
+                if not g.model_meta.get_tag_meta("confidence"):
+                    g.model_meta = g.model_meta.add_tag_meta(
+                        sly.TagMeta("confidence", value_type="any_number")
+                    )
+                # add obj class to model meta if necessary
+                for obj in pred_json["objects"]:
+                    class_name = obj["classTitle"]
+                    obj_class = g.model_meta.get_obj_class(class_name)
+                    if obj_class is None:
+                        if len(g.box_colors) > 0:
+                            color = generate_rgb(g.box_colors)
+                        else:
+                            color = random_rgb()
+                        g.box_colors.append(color)
+                        obj_class = sly.ObjClass(class_name, sly.Rectangle, color)
+                        g.model_meta = g.model_meta.add_obj_class(obj_class)
             ann_pred = sly.Annotation.from_json(pred_json, g.model_meta)
             ann_preds.append(ann_pred)
         except Exception as e:
@@ -701,14 +720,31 @@ def apply_model_to_images(
             ann_pred = sly.Annotation(img_size=(img_info.height, img_info.width))
             ann_preds.append(ann_pred)
 
+    if g.model_info["task type"] == "prompt-based object detection":
+        # add tag to project meta if necessary
+        if not g.project_meta.get_tag_meta("confidence"):
+            g.project_meta = g.project_meta.add_tag_meta(
+                sly.TagMeta("confidence", value_type="any_number")
+            )
+            api.project.update_meta(g.project_id, g.project_meta)
+        # add obj class to project meta if necessary
+        for ann_pred in ann_preds:
+            for label in ann_pred.labels:
+                if not g.project_meta.get_obj_class(label.obj_class.name):
+                    g.project_meta = g.project_meta.add_obj_class(label.obj_class)
+                    api.project.update_meta(g.project_id, g.project_meta)
+
     res_project_meta = g.project_meta.clone()
-    res_anns = []
-    for ann_pred in ann_preds:
-        res_ann, res_project_meta = postprocess(
-            ann_pred,
-            res_project_meta,
-        )
-        res_anns.append(res_ann)
+    if g.model_info["task type"] == "prompt-based object detection":
+        res_anns = ann_preds
+    else:
+        res_anns = []
+        for ann_pred in ann_preds:
+            res_ann, res_project_meta = postprocess(
+                ann_pred,
+                res_project_meta,
+            )
+            res_anns.append(res_ann)
 
     add_mode = settings.add_predictions_mode.get_value()
 
