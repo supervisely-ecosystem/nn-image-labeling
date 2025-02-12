@@ -193,6 +193,90 @@ def apply_model_ds(
         sly.logger.debug("Timer:", extra={"timer": timer})
 
 
+def apply_model_safe(res_project, res_project_meta, inference_settings, batch_size=10):
+    with inference_progress(message="Processing images...", total=len(g.input_images)) as pbar:
+        for dataset_id in g.selected_datasets:
+            dataset_info = api.dataset.get_info_by_id(dataset_id)
+            if dataset_info is None:
+                if not api.project.exists(g.workspace_id, g.project_info.name):
+                    raise RuntimeError("Input project no longer exists")
+                sly.logger.error(
+                    f"Input dataset (id: {dataset_id}) is not found, images could not be processed."
+                )
+                continue
+            res_dataset = api.dataset.create(
+                res_project.id,
+                dataset_info.name,
+                dataset_info.description,
+                dataset_info.parent_id,
+            )
+
+            final_project_meta = None
+            image_infos = api.image.get_list(dataset_info.id)
+            for batched_image_infos in sly.batched(image_infos, batch_size=batch_size):
+                try:
+                    image_ids, res_names, res_metas = [], [], []
+                    for image_info in batched_image_infos:
+                        image_ids.append(image_info.id)
+                        res_names.append(image_info.name)
+                        res_metas.append(image_info.meta)
+                    _, res_anns, final_project_meta = inference_preview.apply_model_to_images(
+                        dataset_info.id, batched_image_infos, inference_settings
+                    )
+                except Exception as e:
+                    sly.logger.warn(
+                        msg=f"Couldn't process images by batch, images will be processed one by one, error: {e}."
+                    )
+                    image_ids, res_names, res_anns, res_metas = [], [], [], []
+                    for image_info in batched_image_infos:
+                        try:
+                            _, res_ann, final_project_meta = inference_preview.apply_model_to_image(
+                                image_info, inference_settings
+                            )
+
+                            image_ids.append(image_info.id)
+                            res_names.append(image_info.name)
+                            res_anns.append(res_ann)
+                            res_metas.append(image_info.meta)
+                        except Exception as e:
+                            sly.logger.warn(
+                                msg=f"Image: {image_info.name} (ID: {image_info.id}) couldn't be processed, image will be skipped, error: {e}.",
+                                extra={
+                                    "image_name": image_info.name,
+                                    "image_id": image_info.id,
+                                    "image_meta": image_info.meta,
+                                },
+                            )
+                            continue
+
+                if res_project_meta != final_project_meta:
+                    res_project_meta = final_project_meta
+                    api.project.update_meta(res_project.id, res_project_meta.to_json())
+
+                res_images_infos = api.image.upload_ids(
+                    res_dataset.id, res_names, image_ids, metas=res_metas
+                )
+                res_ids = [image_info.id for image_info in res_images_infos]
+                try:
+                    api.annotation.upload_anns(res_ids, res_anns)
+                except:
+                    for res_img_info, ann in zip(res_images_infos, res_anns):
+                        try:
+                            api.annotation.upload_ann(res_img_info.id, ann)
+                        except Exception as e:
+                            sly.logger.warn(
+                                msg=f"Image: {res_img_info.name} (Image ID: {res_img_info.id}) couldn't be uploaded, image will be skipped, error: {e}.",
+                                extra={
+                                    "image_name": res_img_info.name,
+                                    "image_id": res_img_info.id,
+                                    "image_meta": res_img_info.meta,
+                                    "image_ann": ann,
+                                },
+                            )
+                            continue
+                pbar.update(len(batched_image_infos))
+
+
 @apply_button.click
 def apply_model():
     """Applies the model to the input data and creates a new project with the predictions.
@@ -222,97 +306,19 @@ def apply_model():
     g.workflow.add_input(project_id=g.selected_project, session_id=g.model_session_id)
     # ----------------------------------------------- - ---------------------------------------------- #
 
-    try:
-        apply_model_ds(g.selected_project, res_project, inference_settings, res_project_meta)
-    except Exception as e:
-        sly.logger.warn(
-            msg=f"Couldn't apply model to the input data, error: {e}.",
-            exc_info=True,
-        )
+    if g.model_info["task type"] == "prompt-based object detection":
+        apply_model_safe(res_project, res_project_meta, inference_settings, batch_size=2)
+    else:
+        try:
+            apply_model_ds(g.selected_project, res_project, inference_settings, res_project_meta)
+        except Exception as e:
+            sly.logger.warn(
+                msg=f"Couldn't apply model to the input data, error: {e}.",
+                exc_info=True,
+            )
 
-        with inference_progress(message="Processing images...", total=len(g.input_images)) as pbar:
-            for dataset_id in g.selected_datasets:
-                dataset_info = api.dataset.get_info_by_id(dataset_id)
-                if dataset_info is None:
-                    if not api.project.exists(g.workspace_id, g.project_info.name):
-                        raise RuntimeError("Input project no longer exists")
-                    sly.logger.error(
-                        f"Input dataset (id: {dataset_id}) is not found, images could not be processed."
-                    )
-                    continue
-                res_dataset = api.dataset.create(
-                    res_project.id,
-                    dataset_info.name,
-                    dataset_info.description,
-                    dataset_info.parent_id,
-                )
+            apply_model_safe(res_project, res_project_meta, inference_settings)
 
-                final_project_meta = None
-                image_infos = api.image.get_list(dataset_info.id)
-                for batched_image_infos in sly.batched(image_infos, batch_size=10):
-                    try:
-                        image_ids, res_names, res_metas = [], [], []
-                        for image_info in batched_image_infos:
-                            image_ids.append(image_info.id)
-                            res_names.append(image_info.name)
-                            res_metas.append(image_info.meta)
-                        _, res_anns, final_project_meta = inference_preview.apply_model_to_images(
-                            dataset_info.id, batched_image_infos, inference_settings
-                        )
-                    except Exception as e:
-                        sly.logger.warn(
-                            msg=f"Couldn't process images by batch, images will be processed one by one, error: {e}."
-                        )
-                        image_ids, res_names, res_anns, res_metas = [], [], [], []
-                        for image_info in batched_image_infos:
-                            try:
-                                _, res_ann, final_project_meta = (
-                                    inference_preview.apply_model_to_image(
-                                        image_info, inference_settings
-                                    )
-                                )
-
-                                image_ids.append(image_info.id)
-                                res_names.append(image_info.name)
-                                res_anns.append(res_ann)
-                                res_metas.append(image_info.meta)
-                            except Exception as e:
-                                sly.logger.warn(
-                                    msg=f"Image: {image_info.name} (ID: {image_info.id}) couldn't be processed, image will be skipped, error: {e}.",
-                                    extra={
-                                        "image_name": image_info.name,
-                                        "image_id": image_info.id,
-                                        "image_meta": image_info.meta,
-                                    },
-                                )
-                                continue
-
-                    if res_project_meta != final_project_meta:
-                        res_project_meta = final_project_meta
-                        api.project.update_meta(res_project.id, res_project_meta.to_json())
-
-                    res_images_infos = api.image.upload_ids(
-                        res_dataset.id, res_names, image_ids, metas=res_metas
-                    )
-                    res_ids = [image_info.id for image_info in res_images_infos]
-                    try:
-                        api.annotation.upload_anns(res_ids, res_anns)
-                    except:
-                        for res_img_info, ann in zip(res_images_infos, res_anns):
-                            try:
-                                api.annotation.upload_ann(res_img_info.id, ann)
-                            except Exception as e:
-                                sly.logger.warn(
-                                    msg=f"Image: {res_img_info.name} (Image ID: {res_img_info.id}) couldn't be uploaded, image will be skipped, error: {e}.",
-                                    extra={
-                                        "image_name": res_img_info.name,
-                                        "image_id": res_img_info.id,
-                                        "image_meta": res_img_info.meta,
-                                        "image_ann": ann,
-                                    },
-                                )
-                                continue
-                    pbar.update(len(batched_image_infos))
     output_project_thumbnail.set(api.project.get_info_by_id(res_project.id))
     output_project_thumbnail.show()
     # -------------------------------------- Add Workflow Output ------------------------------------- #

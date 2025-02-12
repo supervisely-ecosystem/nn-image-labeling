@@ -63,3 +63,6 @@ det_model_meta = None
 model_info = None
 inference_request_uuid = None
 # endregion
+
+# list for storing colors of bounding boxes (used in prompt-based object detection)
+box_colors = []

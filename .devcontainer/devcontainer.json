@@ -1,0 +1,11 @@
+{
+    "image": "supervisely/labeling:6.73.138",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.black-formatter"
+            ]
+        }
+    }
+}
