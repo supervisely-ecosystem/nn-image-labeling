@@ -61,6 +61,13 @@ class_tag_suffix_field = Field(
 )
 always_add_suffix = Checkbox("Always add suffix to model predictions")
 
+# ignore prediction if IoU with existing label ≥ threshold",
+ignore_labels_if_iou = Checkbox("enable")
+iou_threshold_field = Field(
+    content=Container([ignore_labels_if_iou]),
+    title="Skip predictions if IoU with existing label ≥ threshold",
+    description="If enabled, the `nms_iou_thresh_with_gt` setting will be used to filter predictions based on IoU with existing labels.",
+)
 add_predictions_mode = Select(items=[Select.Item(mode) for mode in g.add_predictions_modes])
 add_predictions_mode.set_value(g.add_predictions_modes[0])
 add_predictions_mode_field = Field(
@@ -116,6 +123,7 @@ card = Card(
             class_tag_suffix_field,
             always_add_suffix,
             add_predictions_mode_field,
+            iou_threshold_field,
             additional_settings_field,
         ]
     ),

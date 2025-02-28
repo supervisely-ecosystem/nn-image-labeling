@@ -7,8 +7,9 @@ from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
 import cv2
 import numpy as np
-import supervisely as sly
 import yaml
+
+import supervisely as sly
 from supervisely.api.annotation_api import AnnotationInfo
 from supervisely.app.widgets import (
     Button,
@@ -137,6 +138,8 @@ def full_preview() -> None:
     preview_video.hide()
     try:
         inference_settings = yaml.safe_load(settings.additional_settings.get_value())
+        if not settings.ignore_labels_if_iou.is_checked():
+            inference_settings.pop("nms_iou_thresh_with_gt", None)
     except Exception as e:
         inference_settings = {}
         sly.logger.warning(
@@ -190,6 +193,8 @@ def window_preview() -> None:
 
     check_sliding_sizes_by_image(image_info)
     inference_setting = get_sliding_window_params()
+    if not settings.ignore_labels_if_iou.is_checked():
+        inference_setting.pop("nms_iou_thresh_with_gt", None)
 
     ann_pred_res = g.api.task.send_request(
         g.model_session_id,
