@@ -552,6 +552,7 @@ def apply_model_to_images(
     :return: Original annotations, result annotations, result project meta.
     :rtype: Tuple[List[sly.Annotation], List[sly.Annotation], sly.ProjectMeta]
     """
+    sly.logger.info("APPLYING WITH INFERENCE SETTINGS", extra={"inference_settings": inference_settings})
     if g.model_info["app_name"].startswith("Serve Segment Anything"):
         inference_settings["mode"] = "raw"
     # Reading parameters from widgets: inference_mode.
