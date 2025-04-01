@@ -53,6 +53,7 @@ add_predictions_modes = [
 # endregion
 
 # region caches
+selected_datasets_aggregated = None
 input_images = None
 project_info = api.project.get_info_by_id(project_id)
 project_meta = sly.ProjectMeta.from_json(api.project.get_meta(project_id))
