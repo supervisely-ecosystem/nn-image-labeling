@@ -95,8 +95,7 @@ def apply_model_ds(
     dst_dataset_infos = {}
     try:
         # 1. Create destination datasets
-        src_ds_tree = api.dataset.get_tree(src_project)
-        src_ds_tree = {k: v for k, v in src_ds_tree.items() if k.id in g.selected_datasets}
+        src_ds_tree = g.src_ds_tree 
         src_ds_list = ds_tree_to_list(src_ds_tree)
         selected_ds_count, selected_images_count = count_selected_ds(src_ds_tree)
 
@@ -195,15 +194,7 @@ def apply_model_ds(
 
 def apply_model_safe(res_project, res_project_meta, inference_settings, batch_size=10):
     with inference_progress(message="Processing images...", total=len(g.input_images)) as pbar:
-        for dataset_id in g.selected_datasets:
-            dataset_info = api.dataset.get_info_by_id(dataset_id)
-            if dataset_info is None:
-                if not api.project.exists(g.workspace_id, g.project_info.name):
-                    raise RuntimeError("Input project no longer exists")
-                sly.logger.error(
-                    f"Input dataset (id: {dataset_id}) is not found, images could not be processed."
-                )
-                continue
+        for dataset_info in g.selected_datasets_aggregated:
             res_dataset = api.dataset.create(
                 res_project.id,
                 dataset_info.name,
