@@ -106,7 +106,7 @@ def apply_model_ds(
         # 1. Create destination datasets
         src_ds_list = g.selected_datasets_aggregated
         selected_ids = [ds.id for ds in src_ds_list]
-        src_ds_tree = filter_tree(g.src_ds_tree.items(), selected_ids)
+        src_ds_tree = filter_tree(g.src_ds_tree, selected_ids)
         selected_ds_count = len(selected_ids)
         selected_images_count = sum(ds.images_count for ds in src_ds_list)
 
