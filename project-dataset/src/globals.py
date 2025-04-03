@@ -58,6 +58,8 @@ input_images = None
 project_info = api.project.get_info_by_id(project_id)
 project_meta = sly.ProjectMeta.from_json(api.project.get_meta(project_id))
 src_ds_tree = api.dataset.get_tree(project_id)
+project_datasets = api.dataset.get_list(project_id, recursive=True)
+id_to_info = {ds.id: ds for ds in project_datasets}
 # endregion
 
 # region sliding window parameters
