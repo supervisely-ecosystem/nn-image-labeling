@@ -79,15 +79,24 @@ def apply_model_ds(
 
         return ds_count, images_count
 
-    def ds_tree_to_list(data):
-        dataset_list = []
+    # def ds_tree_to_list(data):
+    #     dataset_list = []
 
-        for ds_info, children in data.items():
-            dataset_list.append(ds_info)
+    #     for ds_info, children in data.items():
+    #         dataset_list.append(ds_info)
+    #         if children:
+    #             dataset_list.extend(ds_tree_to_list(children))
+
+    #     return dataset_list
+
+    def filter_tree(ds_tree, ids):
+        filtered_tree = {}
+        for ds_info, children in ds_tree.items():
+            if ds_info.id in ids:
+                filtered_tree[ds_info] = children
             if children:
-                dataset_list.extend(ds_tree_to_list(children))
-
-        return dataset_list
+                filtered_tree[ds_info] = filter_tree(children, ids)
+        return filtered_tree
 
     import time
 
@@ -95,9 +104,11 @@ def apply_model_ds(
     dst_dataset_infos = {}
     try:
         # 1. Create destination datasets
-        src_ds_tree = g.src_ds_tree 
-        src_ds_list = ds_tree_to_list(src_ds_tree)
-        selected_ds_count, selected_images_count = count_selected_ds(src_ds_tree)
+        src_ds_list = g.selected_datasets_aggregated
+        selected_ids = [ds.id for ds in src_ds_list]
+        src_ds_tree = filter_tree(g.src_ds_tree, selected_ids)
+        selected_ds_count = len(selected_ids)
+        selected_images_count = sum(ds.images_count for ds in src_ds_list)
 
         dst_dataset_infos = {}
         dst_image_infos_dict = {}  # dataset_id -> name -> image_info

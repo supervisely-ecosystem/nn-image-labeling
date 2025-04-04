@@ -72,29 +72,32 @@ def datasets_changed():
         f"Change button was clicked. Project: {g.selected_project}, Datasets: {g.selected_datasets}"
     )
 
+
 def get_selected_datasets() -> list:
-    api: sly.Api = g.api
     selected_ids = set(g.selected_datasets)
     all_datasets = []
 
-    project_datasets = api.dataset.get_list(g.project_id, recursive=True)
     if not g.selected_datasets:
-        return project_datasets
+        return g.project_datasets
 
     parent_to_children = defaultdict(list)
-    id_to_info = {ds.id: ds for ds in project_datasets}
-    for ds in project_datasets:
+    for ds in g.project_datasets:
         current = ds
         while parent_id := current.parent_id:
             parent_to_children[parent_id].append(ds)
-            current = id_to_info[parent_id]
+            current = g.id_to_info[parent_id]
 
-    for dataset in project_datasets:
+    for dataset in g.project_datasets:
         if dataset.id in selected_ids:
             datasets = [dataset] + parent_to_children.get(dataset.id, [])
+            if len(datasets) > 1:
+                sly.logger.debug(
+                    f"Adding dataset {len(datasets) - 1} children dataset(s) to the selected dataset '{dataset.name}'."
+                )
             all_datasets.extend(datasets)
 
     return all_datasets
+
 
 def cache_input_images() -> None:
     """Cache input images for the model inference."""
