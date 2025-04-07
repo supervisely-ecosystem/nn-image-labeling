@@ -1,5 +1,5 @@
 {
-    "image": "supervisely/labeling:6.73.311",
+    "image": "supervisely/labeling:6.73.341",
     "customizations": {
         "vscode": {
             "extensions": [
