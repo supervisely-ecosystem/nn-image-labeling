@@ -55,11 +55,21 @@ add_predictions_modes = [
 # region caches
 selected_datasets_aggregated = None
 input_images = None
-project_info = api.project.get_info_by_id(project_id)
-project_meta = sly.ProjectMeta.from_json(api.project.get_meta(project_id))
-src_ds_tree = api.dataset.get_tree(project_id)
-project_datasets = api.dataset.get_list(project_id, recursive=True)
-id_to_info = {ds.id: ds for ds in project_datasets}
+project_info = None
+project_meta = None
+src_ds_tree = None
+project_datasets = None
+id_to_info = None
+
+def init_cache_globals(project_id):
+    global project_info, project_meta, src_ds_tree, project_datasets, id_to_info
+    project_info = api.project.get_info_by_id(project_id)
+    project_meta = sly.ProjectMeta.from_json(api.project.get_meta(project_id))
+    src_ds_tree = api.dataset.get_tree(project_id)
+    project_datasets = api.dataset.get_list(project_id, recursive=True)
+    id_to_info = {ds.id: ds for ds in project_datasets}
+
+init_cache_globals(project_id)
 # endregion
 
 # region sliding window parameters

@@ -38,11 +38,13 @@ def datasets_selected() -> None:
     selected_project = select_dataset.get_selected_project_id()
     if selected_project != g.selected_project:
         g.project_meta = sly.ProjectMeta.from_json(g.api.project.get_meta(selected_project))
+    g.init_cache_globals(selected_project)
     g.selected_project = selected_project
     g.selected_datasets = select_dataset.get_selected_ids()
     sly.logger.info(
         f"Select button was clicked. Project: {g.selected_project}, Datasets: {g.selected_datasets}"
     )
+
     if not g.selected_datasets:
         no_datasets_text.show()
         return
