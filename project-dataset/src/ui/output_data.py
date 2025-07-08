@@ -90,13 +90,14 @@ def apply_model_ds(
     #     return dataset_list
 
     def filter_tree(ds_tree, ids):
-        filtered_tree = {}
+        filtered = {}
         for ds_info, children in ds_tree.items():
+            filtered_children = filter_tree(children, ids) if children else {}
             if ds_info.id in ids:
-                filtered_tree[ds_info] = children
-            if children:
-                filtered_tree[ds_info] = filter_tree(children, ids)
-        return filtered_tree
+                filtered[ds_info] = filtered_children
+            else:
+                filtered.update(filtered_children)
+        return filtered
 
     import time
 
