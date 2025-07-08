@@ -9,7 +9,7 @@ connect_nn = importlib.import_module("project-dataset.src.ui.connect_nn")
 inference_preview = importlib.import_module("project-dataset.src.ui.inference_preview")
 
 select_dataset = SelectDatasetTree(
-    multiselect=True, project_id=g.project_id, default_id=g.dataset_id, select_all_datasets=True
+    multiselect=True, project_id=g.project_id, default_id=g.dataset_id, select_all_datasets=True, width=300
 )
 if g.dataset_id:
     select_dataset.set_dataset_ids([g.dataset_id])
