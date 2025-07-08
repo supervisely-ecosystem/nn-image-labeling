@@ -2,14 +2,18 @@ import importlib
 from collections import defaultdict
 
 import supervisely as sly
-from supervisely.app.widgets import Button, Card, Container, SelectDataset, Text
+from supervisely.app.widgets import Button, Card, Container, SelectDatasetTree, Text
 
 g = importlib.import_module("project-dataset.src.globals")
 connect_nn = importlib.import_module("project-dataset.src.ui.connect_nn")
 inference_preview = importlib.import_module("project-dataset.src.ui.inference_preview")
 
-select_dataset = SelectDataset(
-    multiselect=True, project_id=g.project_id, default_id=g.dataset_id, select_all_datasets=True
+select_dataset = SelectDatasetTree(
+    multiselect=True,
+    project_id=g.project_id,
+    default_id=g.dataset_id,
+    select_all_datasets=g.dataset_id is None,
+    width=250,
 )
 if g.dataset_id:
     select_dataset.set_dataset_ids([g.dataset_id])
