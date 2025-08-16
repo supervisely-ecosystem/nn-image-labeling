@@ -10,20 +10,11 @@ import numpy as np
 import supervisely as sly
 import yaml
 from supervisely.api.annotation_api import AnnotationInfo
-from supervisely.app.widgets import (
-    Button,
-    Card,
-    Checkbox,
-    Container,
-    Empty,
-    Field,
-    GridGallery,
-    InputNumber,
-    ReloadableArea,
-    Select,
-    VideoPlayer,
-)
+from supervisely.app.widgets import (Button, Card, Checkbox, Container, Empty,
+                                     Field, GridGallery, InputNumber,
+                                     ReloadableArea, Select, VideoPlayer)
 from supervisely.imaging.color import generate_rgb, random_rgb
+from supervisely.nn.inference.inference import _exclude_duplicated_predictions
 
 g = importlib.import_module("project-dataset.src.globals")
 settings = importlib.import_module("project-dataset.src.ui.inference_settings")
@@ -103,7 +94,11 @@ card = Card(
     "Preview the model inference on a random image.",
     content=Container([preview_gallery, sliding_window_container]),
     content_top_right=Container(
-        [image_selector_ra, Container([Empty(), random_image_checkbox]), preview_button],
+        [
+            image_selector_ra,
+            Container([Empty(), random_image_checkbox]),
+            preview_button,
+        ],
         direction="horizontal",
         style="padding: 5px",
     ),
@@ -290,7 +285,11 @@ def write_video(
     if image_np.shape[1] > max_video_size:
         scale_ratio = max_video_size / image_np.shape[1]
         image_np = cv2.resize(
-            image_np, (int(image_np.shape[1] * scale_ratio), int(image_np.shape[0] * scale_ratio))
+            image_np,
+            (
+                int(image_np.shape[1] * scale_ratio),
+                int(image_np.shape[0] * scale_ratio),
+            ),
         )
 
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -353,6 +352,7 @@ def apply_model_to_image(
         )
     else:
         original_ann = original_anns[0]
+
     return original_ann, result_anns[0], res_project_meta
 
 
@@ -441,9 +441,13 @@ def apply_model_to_datasets(
                     orig_ann = sly.Annotation.from_json(
                         original_ann_info.annotation, res_project_meta
                     )
-                    pred_ann = sly.Annotation.from_json(ann_info.annotation, res_project_meta)
+                    pred_ann = sly.Annotation.from_json(
+                        ann_info.annotation, res_project_meta
+                    )
                     pred_ann = pred_ann.clone(img_tags=orig_ann.img_tags)
-                    merged_anns.append(original_ann_info._replace(annotation=pred_ann.to_json()))
+                    merged_anns.append(
+                        original_ann_info._replace(annotation=pred_ann.to_json())
+                    )
         elif add_mode == "merge with existing labels":
             img_infos_dict = {}  # dataset_id -> image_id -> [ImageInfo]
             merged_anns = []
@@ -464,9 +468,13 @@ def apply_model_to_datasets(
                     orig_ann = sly.Annotation.from_json(
                         original_ann_info.annotation, res_project_meta
                     )
-                    pred_ann = sly.Annotation.from_json(ann_info.annotation, res_project_meta)
+                    pred_ann = sly.Annotation.from_json(
+                        ann_info.annotation, res_project_meta
+                    )
                     merged_anns.append(
-                        original_ann_info._replace(annotation=orig_ann.merge(pred_ann).to_json())
+                        original_ann_info._replace(
+                            annotation=orig_ann.merge(pred_ann).to_json()
+                        )
                     )
         else:
             merged_anns = res_ann_infos
@@ -504,9 +512,13 @@ def apply_model_to_datasets(
                     orig_ann = sly.Annotation.from_json(
                         original_ann_info.annotation, res_project_meta
                     )
-                    pred_ann = sly.Annotation.from_json(ann_info.annotation, res_project_meta)
+                    pred_ann = sly.Annotation.from_json(
+                        ann_info.annotation, res_project_meta
+                    )
                     pred_ann = pred_ann.clone(img_tags=orig_ann.img_tags)
-                    merged_anns.append(original_ann_info._replace(annotation=pred_ann.to_json()))
+                    merged_anns.append(
+                        original_ann_info._replace(annotation=pred_ann.to_json())
+                    )
         elif add_mode == "merge with existing labels":
             img_infos_dict = {}  # dataset_id -> image_id -> [ImageInfo]
             merged_anns = []
@@ -527,9 +539,13 @@ def apply_model_to_datasets(
                     orig_ann = sly.Annotation.from_json(
                         original_ann_info.annotation, res_project_meta
                     )
-                    pred_ann = sly.Annotation.from_json(ann_info.annotation, res_project_meta)
+                    pred_ann = sly.Annotation.from_json(
+                        ann_info.annotation, res_project_meta
+                    )
                     merged_anns.append(
-                        original_ann_info._replace(annotation=orig_ann.merge(pred_ann).to_json())
+                        original_ann_info._replace(
+                            annotation=orig_ann.merge(pred_ann).to_json()
+                        )
                     )
         else:
             merged_anns = res_ann_infos
@@ -608,7 +624,9 @@ def apply_model_to_images(
                         )
                         sleep(1)
                     current += 1
-                    sly.logger.info(f"Inferring image id{image_id}: {current} / {len(image_ids)}")
+                    sly.logger.info(
+                        f"Inferring image id{image_id}: {current} / {len(image_ids)}"
+                    )
                     result = progress["result"]
                     ann_pred_json.append(result)
         else:
@@ -682,7 +700,9 @@ def apply_model_to_images(
                 sly.logger.warn(
                     f"Couldn't process annotation prediction for image: {img_name} (ID: {image_id}). Image remain unchanged. Error: {e}"
                 )
-                pred_json = sly.Annotation(img_size=(image_info.height, image_info.width)).to_json()
+                pred_json = sly.Annotation(
+                    img_size=(image_info.height, image_info.width)
+                ).to_json()
                 ann_pred_json.append(pred_json)
 
     ann_preds = []
@@ -715,7 +735,9 @@ def apply_model_to_images(
                 "Can not process predictions from serving",
                 extra={"image_id": img_id, "details": repr(e)},
             )
-            sly.logger.debug("Response from serving app", extra={"serving_response": pred_json})
+            sly.logger.debug(
+                "Response from serving app", extra={"serving_response": pred_json}
+            )
             img_info = api.image.get_info_by_id(img_id)
             ann_pred = sly.Annotation(img_size=(img_info.height, img_info.width))
             ann_preds.append(ann_pred)
@@ -764,6 +786,15 @@ def apply_model_to_images(
             sly.Annotation.from_json(ann_info.annotation, g.project_meta)
             for ann_info in original_anns
         ]
+
+        res_anns = _exclude_duplicated_predictions(
+            api,
+            res_anns,
+            dataset_id,
+            image_ids,
+            inference_settings.get("existing_objects_iou_thresh", None),
+            res_project_meta,
+        )
 
         merged_anns = []
         for ann, pred in zip(original_anns, res_anns):
@@ -827,10 +858,14 @@ def validate_ann(ann_json: Dict[Any, Any]) -> None:
         )
 
     if not isinstance(ann_json["size"]["height"], int):
-        raise ValueError(f"Image 'height' must be 'int', not {type(ann_json['size']['height'])}")
+        raise ValueError(
+            f"Image 'height' must be 'int', not {type(ann_json['size']['height'])}"
+        )
 
     if not isinstance(ann_json["size"]["width"], int):
-        raise ValueError(f"Image 'width' must be 'int', not {type(ann_json['size']['width'])}")
+        raise ValueError(
+            f"Image 'width' must be 'int', not {type(ann_json['size']['width'])}"
+        )
 
 
 def postprocess(
@@ -848,7 +883,9 @@ def postprocess(
     :rtype: Tuple[sly.Annotation, sly.ProjectMeta]
     """
     # Reading parameters from widgets: selected classes, selected tags.
-    keep_classes = [obj_class.name for obj_class in nn_info.select_classes.get_selected_classes()]
+    keep_classes = [
+        obj_class.name for obj_class in nn_info.select_classes.get_selected_classes()
+    ]
     keep_tags = [tag_meta.name for tag_meta in nn_info.select_tags.get_selected_tags()]
 
     res_project_meta, class_mapping, tag_meta_mapping = merge_metas(project_meta)
@@ -899,12 +936,15 @@ def merge_metas(
         if data_type == "class":
             project_collection = project_meta.obj_classes
             keep_names = [
-                obj_class.name for obj_class in nn_info.select_classes.get_selected_classes()
+                obj_class.name
+                for obj_class in nn_info.select_classes.get_selected_classes()
             ]
             model_collection = g.model_meta.obj_classes
         else:
             project_collection = project_meta.tag_metas
-            keep_names = [tag_meta.name for tag_meta in nn_info.select_tags.get_selected_tags()]
+            keep_names = [
+                tag_meta.name for tag_meta in nn_info.select_tags.get_selected_tags()
+            ]
             model_collection = g.model_meta.tag_metas
         mapping = {}
         for name in keep_names:
@@ -985,7 +1025,9 @@ def find_item(
                 index += 1
 
 
-def generate_res_name(item: Union[sly.ObjClass, sly.TagMeta], suffix: str, index: int) -> str:
+def generate_res_name(
+    item: Union[sly.ObjClass, sly.TagMeta], suffix: str, index: int
+) -> str:
     """Generates a new name for the item.
 
     :param item: Item to generate a new name for.
