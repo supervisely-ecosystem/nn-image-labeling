@@ -792,7 +792,7 @@ def apply_model_to_images(
             res_anns,
             dataset_id,
             image_ids,
-            inference_settings.get("iou_merge_threshold", None),
+            inference_settings.get("existing_objects_iou_thresh", None),
             res_project_meta,
         )
 
