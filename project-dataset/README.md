@@ -12,7 +12,7 @@
   <a href="#How-To-Run">How To Run</a>
 </p>
 
-[![](https://img.shields.io/badge/supervisely-ecosystem-brightgreen)](../../../../supervisely-ecosystem/nn-image-labeling/project-dataset)
+[![](https://img.shields.io/badge/supervisely-ecosystem-brightgreen)](../../../../../supervisely-ecosystem/nn-image-labeling/project-dataset)
 [![](https://img.shields.io/badge/slack-chat-green.svg?logo=slack)](https://supervisely.com/slack)
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/supervisely-ecosystem/nn-image-labeling)
 [![views](https://app.supervisely.com/img/badges/views/supervisely-ecosystem/nn-image-labeling/project-dataset.png)](https://supervisely.com)
