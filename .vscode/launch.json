@@ -13,7 +13,7 @@
             }
         },
         {
-            "name": "UI app",
+            "name": "Apply NN to Images Project UI app",
             "type": "python",
             "request": "launch",
             "module": "uvicorn",
@@ -25,7 +25,6 @@
                 "8000",
                 "--ws",
                 "websockets",
-                "--reload"
             ],
             "jinja": true,
             "justMyCode": false,

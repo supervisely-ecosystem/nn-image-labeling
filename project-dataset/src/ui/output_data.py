@@ -12,7 +12,8 @@ nn_info = importlib.import_module("project-dataset.src.ui.nn_info")
 output_project_name = Input(f"{g.project_info.name}_inference", minlength=1)
 apply_button = Button("Apply model to input data", icon="zmdi zmdi-check")
 
-inference_progress = Progress()
+progress_main = Progress()
+progress_secondary = Progress(hide_on_finish=True)
 
 output_project_thumbnail = ProjectThumbnail()
 output_project_thumbnail.hide()
@@ -23,7 +24,13 @@ card = Card(
     "6️⃣ Output data",
     "New project with predictions will be created. Original project will not be modified.",
     content=Container(
-        [output_project_name, apply_button, inference_progress, output_project_thumbnail]
+        [
+            output_project_name,
+            apply_button,
+            progress_main,
+            progress_secondary,
+            output_project_thumbnail,
+        ]
     ),
     collapsable=True,
     lock_message="Connect to the deployed neural network on step 2️⃣.",
@@ -48,7 +55,12 @@ def apply_model_ds(
         }
         src_image_ids = [image.id for image in src_images]
         if len(src_image_ids) > 0:
-            dst_img_infos = api.image.copy_batch(dst_dataset_info.id, src_image_ids)
+            with progress_secondary(
+                message=f"Copying images from dataset: {src_ds_info.name}", total=len(src_image_ids)
+            ) as pbar2:
+                dst_img_infos = api.image.copy_batch(
+                    dst_dataset_info.id, src_image_ids, progress_cb=pbar2.update
+                )
         else:
             dst_img_infos = []
         for image_info in dst_img_infos:
@@ -115,12 +127,10 @@ def apply_model_ds(
         dst_image_infos_dict = {}  # dataset_id -> name -> image_info
         src_ds_image_infos_dict = {}  # dataset_id -> image_id -> [image_infos]
 
-        with inference_progress(message="Creating datasets...", total=selected_ds_count) as pbar:
+        with progress_main(message="Creating datasets...", total=selected_ds_count) as pbar:
             process_ds_tree(src_ds_tree)
         # 2. Apply model to the datasets
-        with inference_progress(
-            message="Processing images...", total=selected_images_count
-        ) as pbar:
+        with progress_main(message="Processing images...", total=selected_images_count) as pbar:
             for src_dataset_info in src_ds_list:
                 # iterating over batches of predictions
                 if src_dataset_info.images_count == 0:
@@ -205,7 +215,7 @@ def apply_model_ds(
 
 
 def apply_model_safe(res_project, res_project_meta, inference_settings, batch_size=10):
-    with inference_progress(message="Processing images...", total=len(g.input_images)) as pbar:
+    with progress_main(message="Processing images...", total=len(g.input_images)) as pbar:
         for dataset_info in g.selected_datasets_aggregated:
             res_dataset = api.dataset.create(
                 res_project.id,
