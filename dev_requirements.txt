@@ -1,3 +1,7 @@
-supervisely==6.73.460
+# annotation-tool
+# supervisely==6.73.341
+
+# project-dataset
+supervisely==6.73.467
 matplotlib>=3.3.2, <4.0.0
 imgaug>=0.4.0, <1.0.0
