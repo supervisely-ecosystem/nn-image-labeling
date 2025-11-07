@@ -217,21 +217,24 @@ def window_preview() -> None:
 
 def create_image_selector() -> None:
     """Create a selector with the input images and show it in the reloadable area."""
-    items = []
-    for image_info in g.input_images:
-        items.append(
-            Select.Item(
-                label=image_info.name,
-                value=image_info.id,
+    try:
+        items = []
+        for image_info in g.input_images:
+            items.append(
+                Select.Item(
+                    label=image_info.name,
+                    value=image_info.id,
+                )
             )
-        )
 
-    image_selector = Select(items, filterable=True, placeholder="Select image")
-    image_selector.set_value("")
-    image_selector_ra._content._widgets = [image_selector]
-    image_selector_ra.reload()
-
-
+        image_selector = Select(items, filterable=True, placeholder="Select image")
+        image_selector.set_value("")
+        image_selector_ra._content._widgets = [image_selector]
+        # image_selector_ra.reload() # Don't need to reload here, framework will do it automatically.
+    except Exception as e:
+        sly.logger.error(f"Error creating image selector: {e}", exc_info=True)
+        raise
+    
 @random_image_checkbox.value_changed
 def toggle_image_select_mode(is_random: bool) -> None:
     """Toggle the image selection mode between random and manual."""
