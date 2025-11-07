@@ -2,14 +2,25 @@ import importlib
 
 import supervisely as sly
 import yaml
-from supervisely.app.widgets import Button, Card, Container, Input, Progress, ProjectThumbnail
+from supervisely.app.widgets import (Button, Card, Checkbox, Container, Empty,
+                                     Field, Input, Progress, ProjectThumbnail)
 
 g = importlib.import_module("project-dataset.src.globals")
 settings = importlib.import_module("project-dataset.src.ui.inference_settings")
 inference_preview = importlib.import_module("project-dataset.src.ui.inference_preview")
 nn_info = importlib.import_module("project-dataset.src.ui.nn_info")
 
+continue_field = Field(content=Empty(), title="Continue", description="If selected, predictions will be uploaded to the source project. Already annotated images will be skipped")
+continue_predict_checkbox = Checkbox(content=continue_field)
 output_project_name = Input(f"{g.project_info.name}_inference", minlength=1)
+
+@continue_predict_checkbox.value_changed
+def _continue_predict_checkbox_value_changed(is_checked):
+    if is_checked:
+        output_project_name.hide()
+    else:
+        output_project_name.show()
+
 apply_button = Button("Apply model to input data", icon="zmdi zmdi-check")
 
 progress_main = Progress()
@@ -25,6 +36,7 @@ card = Card(
     "New project with predictions will be created. Original project will not be modified.",
     content=Container(
         [
+            continue_predict_checkbox,
             output_project_name,
             apply_button,
             progress_main,
@@ -40,7 +52,7 @@ card.collapse()
 
 
 def apply_model_ds(
-    src_project, dst_project, inference_settings, res_project_meta, save_imag_tags=False
+    src_project, dst_project, inference_settings, res_project_meta, save_imag_tags=False, continue_predict=False
 ):
     def process_ds(src_ds_info, parent_id):
         t = time.time()
@@ -207,11 +219,46 @@ def apply_model_ds(
                         timer.setdefault(src_dataset_info.id, {}).setdefault("upload_anns", 0)
                         timer[src_dataset_info.id]["upload_anns"] += time.time() - t
                         t = time.time()
-    except Exception:
-        api.dataset.remove_batch([ds.id for ds in dst_dataset_infos.values()])
-        raise
     finally:
         sly.logger.debug("Timer:", extra={"timer": timer})
+
+
+def apply_continue_predict(project_info, project_meta, inference_settings):
+    with progress_main(message="Processing images...", total=len(g.input_images)) as pbar:
+        image_infos = [image_info for image_info in g.input_images if image_info.labels_count == 0]
+        pbar.update(len(g.input_images) - len(image_infos))
+        pbar.refresh()
+        for dataset_info in g.selected_datasets_aggregated:
+            ds_image_infos = [image_info for image_info in image_infos if image_info.dataset_id == dataset_info.id]    
+            if len(ds_image_infos) == 0:
+                continue
+            for ds_image_infos_batch in sly.batched(ds_image_infos):
+                _, res_anns, final_project_meta = inference_preview.apply_model_to_images(
+                    dataset_info.id, ds_image_infos_batch, inference_settings
+                )
+                if project_meta != final_project_meta:
+                    project_meta = final_project_meta
+                    api.project.update_meta(project_info.id, project_meta.to_json())
+
+                image_ids = [image_info.id for image_info in ds_image_infos_batch]
+                try:
+                    api.annotation.upload_anns(image_ids, res_anns)
+                except:
+                    for res_img_info, ann in zip(image_ids, res_anns):
+                        try:
+                            api.annotation.upload_ann(res_img_info.id, ann)
+                        except Exception as e:
+                            sly.logger.warn(
+                                msg=f"Image: {res_img_info.name} (Image ID: {res_img_info.id}) couldn't be uploaded, image will be skipped, error: {e}.",
+                                extra={
+                                    "image_name": res_img_info.name,
+                                    "image_id": res_img_info.id,
+                                    "image_meta": res_img_info.meta,
+                                    "image_ann": ann,
+                                },
+                            )
+                            continue
+                pbar.update(len(ds_image_infos_batch))
 
 
 def apply_model_safe(res_project, res_project_meta, inference_settings, batch_size=10):
@@ -309,34 +356,38 @@ def apply_model():
             exc_info=True,
         )
 
-    res_project_meta = g.project_meta.clone()
-    res_project = api.project.create(
-        g.workspace_id, output_project_name.get_value(), change_name_if_conflict=True
-    )
-    api.project.update_meta(res_project.id, res_project_meta.to_json())
-
-    # -------------------------------------- Add Workflow Input -------------------------------------- #
-    g.workflow.add_input(project_id=g.selected_project, session_id=g.model_session_id)
-    # ----------------------------------------------- - ---------------------------------------------- #
-
-    if g.model_info["task type"] == "prompt-based object detection":
-        apply_model_safe(res_project, res_project_meta, inference_settings, batch_size=2)
+    continue_predict = continue_predict_checkbox.is_checked()
+    if continue_predict:
+        apply_continue_predict(g.project_info, g.project_meta.clone(), inference_settings)
     else:
-        try:
-            apply_model_ds(g.selected_project, res_project, inference_settings, res_project_meta)
-        except Exception as e:
-            sly.logger.warn(
-                msg=f"Couldn't apply model to the input data, error: {e}.",
-                exc_info=True,
-            )
+        res_project_meta = g.project_meta.clone()
+        res_project = api.project.create(
+            g.workspace_id, output_project_name.get_value(), change_name_if_conflict=True
+        )
+        api.project.update_meta(res_project.id, res_project_meta.to_json())
 
-            apply_model_safe(res_project, res_project_meta, inference_settings)
+        # -------------------------------------- Add Workflow Input -------------------------------------- #
+        g.workflow.add_input(project_id=g.selected_project, session_id=g.model_session_id)
+        # ----------------------------------------------- - ---------------------------------------------- #
 
-    output_project_thumbnail.set(api.project.get_info_by_id(res_project.id))
-    output_project_thumbnail.show()
-    # -------------------------------------- Add Workflow Output ------------------------------------- #
-    g.workflow.add_output(project_id=res_project.id)
-    # ----------------------------------------------- - ---------------------------------------------- #
+        if g.model_info["task type"] == "prompt-based object detection":
+            apply_model_safe(res_project, res_project_meta, inference_settings, batch_size=2)
+        else:
+            try:
+                apply_model_ds(g.selected_project, res_project, inference_settings, res_project_meta)
+            except Exception as e:
+                sly.logger.warn(
+                    msg=f"Couldn't apply model to the input data, error: {e}.",
+                    exc_info=True,
+                )
+
+                apply_model_safe(res_project, res_project_meta, inference_settings)
+
+        output_project_thumbnail.set(api.project.get_info_by_id(res_project.id))
+        output_project_thumbnail.show()
+        # -------------------------------------- Add Workflow Output ------------------------------------- #
+        g.workflow.add_output(project_id=res_project.id)
+        # ----------------------------------------------- - ---------------------------------------------- #
     main = importlib.import_module("project-dataset.src.main")
 
     main.app.stop()
