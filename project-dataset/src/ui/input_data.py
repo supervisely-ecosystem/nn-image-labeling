@@ -111,12 +111,17 @@ def get_selected_datasets() -> List[sly.DatasetInfo]:
 
 @sly.timeit
 def cache_input_images(
-    api: sly.Api = g.api,
-    selected_datasets: List[sly.DatasetInfo] = g.selected_datasets_aggregated,
+    api: sly.Api = None,
+    selected_datasets: List[sly.DatasetInfo] = None,
 ) -> None:
     """
     Cache input images for the model inference.
     """
+    if api is None:
+        api = g.api
+    if selected_datasets is None:
+        selected_datasets = g.selected_datasets_aggregated
+
     # Calculate total images count
     total_images = sum(ds.images_count for ds in selected_datasets)
 
