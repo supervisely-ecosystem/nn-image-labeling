@@ -132,4 +132,3 @@ def cache_input_images(
         sly.run_coroutine(_cache_images())
 
     sly.logger.debug(f"Input images were cached: {len(g.input_images)} images.")
-    sly.logger.debug(f"Input images were cached: {len(g.input_images)} images.")
