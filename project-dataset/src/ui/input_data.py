@@ -1,8 +1,11 @@
 import importlib
 from collections import defaultdict
+from typing import List
 
 import supervisely as sly
-from supervisely.app.widgets import Button, Card, Container, SelectDatasetTree, Text
+from supervisely.app.widgets import Button, Card, Container, Progress, SelectDatasetTree, Text
+
+caching_progress = Progress(hide_on_finish=True)
 
 g = importlib.import_module("project-dataset.src.globals")
 connect_nn = importlib.import_module("project-dataset.src.ui.connect_nn")
@@ -23,12 +26,13 @@ change_button.hide()
 no_datasets_text = Text(
     "No datasets were selected, please select at least one dataset.", status="warning"
 )
+caching_progress.hide()
 no_datasets_text.hide()
 
 card = Card(
     "1️⃣ Choose input",
     "Select a project or a dataset to start",
-    content=Container([select_dataset, select_button, no_datasets_text]),
+    content=Container([select_dataset, select_button, caching_progress, no_datasets_text]),
     content_top_right=change_button,
     collapsable=True,
     lock_message="Click on the Change button to select another project or dataset.",
@@ -79,7 +83,7 @@ def datasets_changed():
     )
 
 
-def get_selected_datasets() -> list:
+def get_selected_datasets() -> list[sly.DatasetInfo]:
     selected_ids = set(g.selected_datasets)
     all_datasets = []
 
@@ -105,9 +109,27 @@ def get_selected_datasets() -> list:
     return all_datasets
 
 
-def cache_input_images() -> None:
-    """Cache input images for the model inference."""
-    g.input_images = []
-    for dataset in g.selected_datasets_aggregated:
-        g.input_images.extend(g.api.image.get_list(dataset.id))
+def cache_input_images(
+    api: sly.Api = g.api,
+    selected_datasets: list[sly.DatasetInfo] = g.selected_datasets_aggregated,
+) -> None:
+    """
+    Cache input images for the model inference.
+    """
+    # Calculate total images count
+    total_images = sum(ds.images_count for ds in selected_datasets)
+
+    async def _cache_images():
+        g.input_images = []
+        for dataset in selected_datasets:
+            async for imgs in api.image.get_list_generator_async(dataset.id):
+                g.input_images.extend(imgs)
+                caching_progress.update(len(g.input_images))
+
+    caching_progress.show()
+    with caching_progress(message="Caching input images...", total=total_images):
+        sly.run_coroutine(_cache_images())
+
+    sly.logger.debug(f"Input images were cached: {len(g.input_images)} images.")
+    sly.logger.debug(f"Input images were cached: {len(g.input_images)} images.")
     sly.logger.debug(f"Input images were cached: {len(g.input_images)} images.")
