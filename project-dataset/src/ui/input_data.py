@@ -108,7 +108,7 @@ def get_selected_datasets() -> list[sly.DatasetInfo]:
 
     return all_datasets
 
-
+@sly.timeit
 def cache_input_images(
     api: sly.Api = g.api,
     selected_datasets: List[sly.DatasetInfo] = g.selected_datasets_aggregated,
