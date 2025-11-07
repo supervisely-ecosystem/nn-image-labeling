@@ -83,7 +83,7 @@ def datasets_changed():
     )
 
 
-def get_selected_datasets() -> list[sly.DatasetInfo]:
+def get_selected_datasets() -> List[sly.DatasetInfo]:
     selected_ids = set(g.selected_datasets)
     all_datasets = []
 
@@ -108,6 +108,7 @@ def get_selected_datasets() -> list[sly.DatasetInfo]:
 
     return all_datasets
 
+
 @sly.timeit
 def cache_input_images(
     api: sly.Api = g.api,
@@ -130,4 +131,5 @@ def cache_input_images(
     with caching_progress(message="Caching input images...", total=total_images):
         sly.run_coroutine(_cache_images())
 
+    sly.logger.debug(f"Input images were cached: {len(g.input_images)} images.")
     sly.logger.debug(f"Input images were cached: {len(g.input_images)} images.")
