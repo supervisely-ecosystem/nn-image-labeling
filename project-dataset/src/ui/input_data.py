@@ -111,7 +111,7 @@ def get_selected_datasets() -> list[sly.DatasetInfo]:
 
 def cache_input_images(
     api: sly.Api = g.api,
-    selected_datasets: list[sly.DatasetInfo] = g.selected_datasets_aggregated,
+    selected_datasets: List[sly.DatasetInfo] = g.selected_datasets_aggregated,
 ) -> None:
     """
     Cache input images for the model inference.
@@ -130,6 +130,4 @@ def cache_input_images(
     with caching_progress(message="Caching input images...", total=total_images):
         sly.run_coroutine(_cache_images())
 
-    sly.logger.debug(f"Input images were cached: {len(g.input_images)} images.")
-    sly.logger.debug(f"Input images were cached: {len(g.input_images)} images.")
     sly.logger.debug(f"Input images were cached: {len(g.input_images)} images.")
