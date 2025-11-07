@@ -84,15 +84,18 @@ def apply_model_ds(
             dst_project.id, src_ds_info.name, src_ds_info.description, parent_id=parent_id
         )
         dst_dataset_infos[src_ds_info] = dst_dataset_info
-
+        l_time = time.time()
+        sly.logger.info("Starting to collect source images info")
         src_images = api.image.get_list(src_ds_info.id)
+        l_time = time.time() - l_time
+        sly.logger.info(f"Collected {len(src_images)} image infos from dataset: {src_ds_info.name} in {l_time:.2f} seconds")
         src_ds_image_infos_dict[src_ds_info.id] = {
             image_info.id: image_info for image_info in src_images
         }
-        src_image_ids = [image.id for image in src_images]
-        if len(src_image_ids) > 0:
+        # src_image_ids = [image.id for image in src_images]
+        if len(src_images) > 0:
             with progress_secondary(
-                message=f"Copying images from dataset: {src_ds_info.name}", total=len(src_image_ids)
+                message=f"Copying images from dataset: {src_ds_info.name}", total=len(src_images)
             ) as pbar2:
                 dst_img_infos = api.image.copy_batch_optimized(
                     src_dataset_id=src_ds_info.id,
