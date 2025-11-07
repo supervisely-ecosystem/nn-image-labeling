@@ -125,15 +125,18 @@ def cache_input_images(
     # Calculate total images count
     total_images = sum(ds.images_count for ds in selected_datasets)
 
-    async def _cache_images():
+    async def _cache_images(progress_cb: sly.Progress):
         g.input_images = []
+        processed_count = 0
         for dataset in selected_datasets:
             async for imgs in api.image.get_list_generator_async(dataset.id):
                 g.input_images.extend(imgs)
-                caching_progress.update(len(g.input_images))
+                current_sum = len(g.input_images)
+                progress_cb.update(current_sum - processed_count)
+                processed_count = current_sum
 
     caching_progress.show()
-    with caching_progress(message="Caching input images...", total=total_images):
-        sly.run_coroutine(_cache_images())
+    with caching_progress(message="Caching input images...", total=total_images) as progress:
+        sly.run_coroutine(_cache_images(progress))
 
     sly.logger.debug(f"Input images were cached: {len(g.input_images)} images.")
