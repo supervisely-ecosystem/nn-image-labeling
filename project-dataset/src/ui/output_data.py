@@ -3,17 +3,31 @@ from typing import List
 
 import supervisely as sly
 import yaml
-from supervisely.app.widgets import (Button, Card, Checkbox, Container, Empty,
-                                     Field, Input, Progress, ProjectThumbnail)
+from supervisely.app.widgets import (
+    Button,
+    Card,
+    Checkbox,
+    Container,
+    Empty,
+    Field,
+    Input,
+    Progress,
+    ProjectThumbnail,
+)
 
 g = importlib.import_module("project-dataset.src.globals")
 settings = importlib.import_module("project-dataset.src.ui.inference_settings")
 inference_preview = importlib.import_module("project-dataset.src.ui.inference_preview")
 nn_info = importlib.import_module("project-dataset.src.ui.nn_info")
 
-continue_field = Field(content=Empty(), title="Continue", description="If selected, predictions will be uploaded to the source project. Already annotated images will be skipped")
+continue_field = Field(
+    content=Empty(),
+    title="Continue",
+    description="If selected, predictions will be uploaded to the source project. Already annotated images will be skipped",
+)
 continue_predict_checkbox = Checkbox(content=continue_field)
 output_project_name = Input(f"{g.project_info.name}_inference", minlength=1)
+
 
 @continue_predict_checkbox.value_changed
 def _continue_predict_checkbox_value_changed(is_checked):
@@ -21,6 +35,7 @@ def _continue_predict_checkbox_value_changed(is_checked):
         output_project_name.hide()
     else:
         output_project_name.show()
+
 
 apply_button = Button("Apply model to input data", icon="zmdi zmdi-check")
 
@@ -53,26 +68,41 @@ card.collapse()
 
 
 def apply_model_ds(
-    src_project, dst_project, inference_settings, res_project_meta, save_imag_tags=False, continue_predict=False
+    src_project,
+    dst_project,
+    inference_settings,
+    res_project_meta,
+    save_imag_tags=False,
+    continue_predict=False,
 ):
-    def process_ds(src_ds_info, parent_id):
+    def process_ds(src_ds_info: sly.DatasetInfo, parent_id):
         t = time.time()
+        sly.logger.info(
+            f"Starting to process dataset: {src_ds_info.name} "
+            f"(ID: {src_ds_info.id}, Images: {src_ds_info.images_count})"
+        )
         dst_dataset_info = api.dataset.create(
             dst_project.id, src_ds_info.name, src_ds_info.description, parent_id=parent_id
         )
         dst_dataset_infos[src_ds_info] = dst_dataset_info
-
+        l_time = time.time()
+        sly.logger.info("Starting to collect source images info")
         src_images = api.image.get_list(src_ds_info.id)
+        l_time = time.time() - l_time
+        sly.logger.info(f"Collected {len(src_images)} image infos from dataset: {src_ds_info.name} in {l_time:.2f} seconds")
         src_ds_image_infos_dict[src_ds_info.id] = {
             image_info.id: image_info for image_info in src_images
         }
-        src_image_ids = [image.id for image in src_images]
-        if len(src_image_ids) > 0:
+        # src_image_ids = [image.id for image in src_images]
+        if len(src_images) > 0:
             with progress_secondary(
-                message=f"Copying images from dataset: {src_ds_info.name}", total=len(src_image_ids)
+                message=f"Copying images from dataset: {src_ds_info.name}", total=len(src_images)
             ) as pbar2:
-                dst_img_infos = api.image.copy_batch(
-                    dst_dataset_info.id, src_image_ids, progress_cb=pbar2.update
+                dst_img_infos = api.image.copy_batch_optimized(
+                    src_dataset_id=src_ds_info.id,
+                    src_image_infos=src_images,
+                    dst_dataset_id=dst_dataset_info.id,
+                    progress_cb=pbar2.update,
                 )
         else:
             dst_img_infos = []
@@ -230,7 +260,9 @@ def apply_continue_predict(project_info, project_meta, inference_settings):
         pbar.update(len(g.input_images) - len(image_infos))
         pbar.refresh()
         for dataset_info in g.selected_datasets_aggregated:
-            ds_image_infos = [image_info for image_info in image_infos if image_info.dataset_id == dataset_info.id]    
+            ds_image_infos = [
+                image_info for image_info in image_infos if image_info.dataset_id == dataset_info.id
+            ]
             if len(ds_image_infos) == 0:
                 continue
             for ds_image_infos_batch in sly.batched(ds_image_infos):
@@ -436,7 +468,9 @@ def apply_model():
             apply_model_safe(res_project, res_project_meta, inference_settings, batch_size=2)
         else:
             try:
-                apply_model_ds(g.selected_project, res_project, inference_settings, res_project_meta)
+                apply_model_ds(
+                    g.selected_project, res_project, inference_settings, res_project_meta
+                )
             except Exception as e:
                 sly.logger.warn(
                     msg=f"Couldn't apply model to the input data, error: {e}.",
