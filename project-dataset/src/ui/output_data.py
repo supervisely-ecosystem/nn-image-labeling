@@ -166,7 +166,6 @@ def apply_model_ds(
                 if src_dataset_info.images_count == 0:
                     continue
                 t = time.time()
-                x = 0
                 for (
                     _,
                     merged_ann_infos_batch,
@@ -212,14 +211,11 @@ def apply_model_ds(
                     timer[src_dataset_info.id]["prepare_anns"] += time.time() - t
                     t = time.time()
                     # upload_annotations
-                    if x > 300:
-                        raise RuntimeError("Test")
                     try:
                         api.annotation.upload_anns(
                             [image_info.id for image_info in dst_image_infos], dst_anns
                         )
                         pbar.update(len(dst_anns))
-                        x += len(dst_anns)
                     except:
                         for img_info, ann in zip(dst_image_infos, dst_anns):
                             try:
