@@ -428,7 +428,7 @@ def apply_model_safe(
                     res_project_meta = final_project_meta
                     api.project.update_meta(res_project.id, res_project_meta.to_json())
 
-                existing = get_images(res_dataset.id)
+                existing = get_images(api, res_dataset.id)
                 existing_names = [image_info.name for image_info in existing]
                 missing_names, missing_ids, missing_metas = [], [], []
                 for name, src_image_id, meta in zip(res_names, image_ids, res_metas):
