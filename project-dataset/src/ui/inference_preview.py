@@ -234,7 +234,8 @@ def create_image_selector() -> None:
     except Exception as e:
         sly.logger.error(f"Error creating image selector: {e}", exc_info=True)
         raise
-    
+
+
 @random_image_checkbox.value_changed
 def toggle_image_select_mode(is_random: bool) -> None:
     """Toggle the image selection mode between random and manual."""
@@ -751,7 +752,11 @@ def apply_model_to_images(
     ann_preds = []
     for img_id, pred_json in zip(image_ids, ann_pred_json):
         try:
-            if isinstance(pred_json, dict) and "annotation" in pred_json.keys():
+            if not isinstance(pred_json, dict):
+                raise ValueError(
+                    f"pred_json must be a dict, got type: {type(pred_json)}, value: {pred_json}"
+                )
+            if "annotation" in pred_json.keys():
                 pred_json = pred_json["annotation"]
             if g.model_info["task type"] == "prompt-based object detection":
                 # add tag to model meta if necessary
@@ -760,6 +765,8 @@ def apply_model_to_images(
                         sly.TagMeta("confidence", value_type="any_number")
                     )
                 # add obj class to model meta if necessary
+                if "objects" not in pred_json:
+                    raise ValueError("No 'objects' field in predictions JSON.")
                 for obj in pred_json["objects"]:
                     class_name = obj["classTitle"]
                     obj_class = g.model_meta.get_obj_class(class_name)
