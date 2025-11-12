@@ -753,7 +753,9 @@ def apply_model_to_images(
     for img_id, pred_json in zip(image_ids, ann_pred_json):
         try:
             if not isinstance(pred_json, dict):
-                raise ValueError(f"pred_json must be a dict, got {type(pred_json)}")
+                raise ValueError(
+                    f"pred_json must be a dict, got type: {type(pred_json)}, value: {pred_json}"
+                )
             if "annotation" in pred_json.keys():
                 pred_json = pred_json["annotation"]
             if g.model_info["task type"] == "prompt-based object detection":
