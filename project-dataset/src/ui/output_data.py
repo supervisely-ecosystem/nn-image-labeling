@@ -1,19 +1,11 @@
 import importlib
+from time import time
 from typing import List
 
 import supervisely as sly
 import yaml
-from supervisely.app.widgets import (
-    Button,
-    Card,
-    Checkbox,
-    Container,
-    Empty,
-    Field,
-    Input,
-    Progress,
-    ProjectThumbnail,
-)
+from supervisely.app.widgets import (Button, Card, Checkbox, Container, Empty,
+                                     Field, Input, Progress, ProjectThumbnail)
 
 g = importlib.import_module("project-dataset.src.globals")
 settings = importlib.import_module("project-dataset.src.ui.inference_settings")
@@ -75,7 +67,7 @@ def apply_model_ds(
     save_imag_tags=False,
     continue_predict=False,
 ):
-    def process_ds(src_ds_info: sly.DatasetInfo, parent_id):
+    def process_ds(src_ds_info, parent_id, src_image_infos: List[sly.ImageInfo] = None):
         t = time.time()
         sly.logger.info(
             f"Starting to process dataset: {src_ds_info.name} "
@@ -84,16 +76,19 @@ def apply_model_ds(
         dst_dataset_info = api.dataset.create(
             dst_project.id, src_ds_info.name, src_ds_info.description, parent_id=parent_id
         )
-        dst_dataset_infos[src_ds_info] = dst_dataset_info
-        l_time = time.time()
-        sly.logger.info("Starting to collect source images info")
         src_images = api.image.get_list(src_ds_info.id)
+        dst_dataset_infos[src_ds_info] = dst_dataset_info
+        sly.logger.info("Starting to collect source images info")
+        l_time = time.time()
+        if src_image_infos is None:
+            src_images = api.image.get_list(src_ds_info.id)
+        else:
+            src_images = [image_info for image_info in src_image_infos if image_info.dataset_id == src_ds_info.id]
         l_time = time.time() - l_time
         sly.logger.info(f"Collected {len(src_images)} image infos from dataset: {src_ds_info.name} in {l_time:.2f} seconds")
         src_ds_image_infos_dict[src_ds_info.id] = {
             image_info.id: image_info for image_info in src_images
         }
-        # src_image_ids = [image.id for image in src_images]
         if len(src_images) > 0:
             with progress_secondary(
                 message=f"Copying images from dataset: {src_ds_info.name}", total=len(src_images)
@@ -102,7 +97,9 @@ def apply_model_ds(
                     src_dataset_id=src_ds_info.id,
                     src_image_infos=src_images,
                     dst_dataset_id=dst_dataset_info.id,
-                    progress_cb=pbar2.update,
+                    with_annotations=False,
+                    dst_names=[image_info.name for image_info in src_images],
+                    progress_cb=pbar2.update
                 )
         else:
             dst_img_infos = []
@@ -113,11 +110,11 @@ def apply_model_ds(
         pbar.update(1)
         return dst_dataset_info.id
 
-    def process_ds_tree(ds_tree, parent_id=None):
+    def process_ds_tree(ds_tree, parent_id=None, src_image_infos: List[sly.ImageInfo] = None):
         for ds_info, children in ds_tree.items():
-            current_ds_id = process_ds(ds_info, parent_id)
+            current_ds_id = process_ds(ds_info, parent_id, src_image_infos)
             if children:
-                process_ds_tree(children, current_ds_id)
+                process_ds_tree(children, current_ds_id, src_image_infos)
 
     def count_selected_ds(data):
         ds_count = 0
@@ -133,16 +130,6 @@ def apply_model_ds(
                 images_count += nested_images_count
 
         return ds_count, images_count
-
-    # def ds_tree_to_list(data):
-    #     dataset_list = []
-
-    #     for ds_info, children in data.items():
-    #         dataset_list.append(ds_info)
-    #         if children:
-    #             dataset_list.extend(ds_tree_to_list(children))
-
-    #     return dataset_list
 
     def filter_tree(ds_tree, ids):
         filtered = {}
@@ -171,7 +158,7 @@ def apply_model_ds(
         src_ds_image_infos_dict = {}  # dataset_id -> image_id -> [image_infos]
 
         with progress_main(message="Creating datasets...", total=selected_ds_count) as pbar:
-            process_ds_tree(src_ds_tree)
+            process_ds_tree(src_ds_tree, src_image_infos=g.input_images)
         # 2. Apply model to the datasets
         with progress_main(message="Processing images...", total=selected_images_count) as pbar:
             for src_dataset_info in src_ds_list:
@@ -179,6 +166,7 @@ def apply_model_ds(
                 if src_dataset_info.images_count == 0:
                     continue
                 t = time.time()
+                x = 0
                 for (
                     _,
                     merged_ann_infos_batch,
@@ -224,11 +212,14 @@ def apply_model_ds(
                     timer[src_dataset_info.id]["prepare_anns"] += time.time() - t
                     t = time.time()
                     # upload_annotations
+                    if x > 300:
+                        raise RuntimeError("Test")
                     try:
                         api.annotation.upload_anns(
                             [image_info.id for image_info in dst_image_infos], dst_anns
                         )
                         pbar.update(len(dst_anns))
+                        x += len(dst_anns)
                     except:
                         for img_info, ann in zip(dst_image_infos, dst_anns):
                             try:
@@ -319,7 +310,7 @@ def get_chain_in_dst(chain: List[sly.DatasetInfo], dst_datasets: List[sly.Datase
     return dst_chain
 
 def create_missing_datasets(src_chain: List[sly.DatasetInfo], dst_project_id: int, dst_chain: List[sly.DatasetInfo]) -> List[sly.DatasetInfo]:
-    if src_chain < dst_chain:
+    if len(src_chain) < len(dst_chain):
         raise RuntimeError("Unexpected error! The destination dataset depth is more than source")
     while len(src_chain) > len(dst_chain):
         if len(dst_chain) == 0:
@@ -340,7 +331,14 @@ def get_or_create_dataset_in_dst(src_dataset: sly.DatasetInfo, dst_project_id: i
     dst_chain = get_chain_in_dst(src_chain, dst_all_datasets)
     dst_chain = create_missing_datasets(src_chain, dst_project_id, dst_chain)
     return dst_chain[-1]
-    
+
+def get_images(api, dataset_id):
+    async def _get_images():
+        all_imgs = []
+        async for imgs in api.image.get_list_generator_async(dataset_id):
+            all_imgs.extend(imgs)
+        return all_imgs
+    return sly.run_coroutine(_get_images())
 
 def apply_model_safe(res_project: sly.ProjectInfo, res_project_meta: sly.ProjectMeta, inference_settings, batch_size=10):
     dst_all_datasets = api.dataset.get_list(res_project.id, recursive=True)
@@ -350,12 +348,12 @@ def apply_model_safe(res_project: sly.ProjectInfo, res_project_meta: sly.Project
             res_dataset = get_or_create_dataset_in_dst(
                 src_dataset=dataset_info,
                 dst_project_id=res_project.id,
-                src_all_datasets=g.selected_dataset_aggregated,
+                src_all_datasets=g.selected_datasets_aggregated,
                 dst_all_datasets=dst_all_datasets
             )
 
             final_project_meta = None
-            image_infos = api.image.get_list(dataset_info.id)
+            image_infos = get_images(dataset_info.id)
             for batched_image_infos in sly.batched(image_infos, batch_size=batch_size):
                 try:
                     image_ids, res_names, res_metas = [], [], []
@@ -396,7 +394,7 @@ def apply_model_safe(res_project: sly.ProjectInfo, res_project_meta: sly.Project
                     res_project_meta = final_project_meta
                     api.project.update_meta(res_project.id, res_project_meta.to_json())
 
-                existing = api.image.get_list(res_dataset.id)
+                existing = get_images(res_dataset.id)
                 existing_names = [image_info.name for image_info in existing]
                 missing_names, missing_ids, missing_metas = [], [], []
                 for name, src_image_id, meta in zip(res_names, image_ids, res_metas):
@@ -404,10 +402,11 @@ def apply_model_safe(res_project: sly.ProjectInfo, res_project_meta: sly.Project
                         missing_names.append(name)
                         missing_ids.append(src_image_id)
                         missing_metas.append(meta)
+                uploaded = []
                 if missing_names:
                     uploaded = api.image.upload_ids(res_dataset.id, missing_names, missing_ids, metas=missing_metas)
-                res_images_infos = []
                 name_to_info = {image_info.name: image_info for image_info in existing+uploaded}
+                res_images_infos = []
                 for name in res_names:
                     res_images_infos.append(name_to_info[name])
                 res_ids = [image_info.id for image_info in res_images_infos]
