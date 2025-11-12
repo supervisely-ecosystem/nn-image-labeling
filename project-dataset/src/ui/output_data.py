@@ -508,8 +508,7 @@ def apply_model():
                 )
             except Exception as e:
                 sly.logger.warn(
-                    msg=f"Couldn't apply model to the input data, error: {e}.",
-                    exc_info=True,
+                    msg=f"Couldn't apply model to the input data, error: {repr(e)}.",
                 )
 
                 apply_model_safe(res_project, res_project_meta, inference_settings)
