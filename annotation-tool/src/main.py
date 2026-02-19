@@ -500,16 +500,7 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
                 final_labels.append(label.clone(obj_class=project_class))
                 continue
 
-            shape_suffix_map = {
-                "rectangle": "rect",
-                "point": "point",
-                "bitmap": "bitmap",
-                "polygon": "polygon",
-                "polyline": "polyline",
-                "line": "line",
-            }
-            shape_suffix = shape_suffix_map.get(actual_geometry, actual_geometry)
-            base_name = f"{label.obj_class.name}_{shape_suffix}"
+            base_name = f"{label.obj_class.name}_pred"
             class_name = base_name
             index = 1
 
