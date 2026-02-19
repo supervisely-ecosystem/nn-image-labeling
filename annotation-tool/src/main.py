@@ -484,10 +484,43 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
             )
             api.project.update_meta(project_id, project_meta)
         # add obj class to project meta if necessary
+        final_labels = []
         for label in ann_pred.labels:
-            if not project_meta.get_obj_class(label.obj_class.name):
+            project_class = project_meta.get_obj_class(label.obj_class.name)
+
+            if project_class is None:
                 project_meta = project_meta.add_obj_class(label.obj_class)
                 api.project.update_meta(project_id, project_meta)
+                final_labels.append(label)
+                continue
+
+            expected_geometry = project_class.geometry_type.geometry_name()
+            actual_geometry = label.geometry.geometry_name()
+            if expected_geometry == actual_geometry:
+                final_labels.append(label.clone(obj_class=project_class))
+                continue
+
+            base_name = f"{label.obj_class.name}_pred"
+            class_name = base_name
+            index = 1
+
+            while True:
+                existing_class = project_meta.get_obj_class(class_name)
+                if existing_class is None:
+                    new_class = label.obj_class.clone(name=class_name)
+                    project_meta = project_meta.add_obj_class(new_class)
+                    api.project.update_meta(project_id, project_meta)
+                    final_labels.append(label.clone(obj_class=new_class))
+                    break
+
+                if existing_class.geometry_type.geometry_name() == actual_geometry:
+                    final_labels.append(label.clone(obj_class=existing_class))
+                    break
+
+                index += 1
+                class_name = f"{base_name}_{index}"
+
+        ann_pred = ann_pred.clone(labels=final_labels)
 
     if not (
         session_info.get("task type") == "salient object segmentation" and label_roi is not None
