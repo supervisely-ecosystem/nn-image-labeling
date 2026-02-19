@@ -500,17 +500,34 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
                 final_labels.append(label.clone(obj_class=project_class))
                 continue
 
-            suffix = state.get("suffix", "model")
-            index = 0
-            class_name = f"{label.obj_class.name}-{suffix}"
-            while project_meta.get_obj_class(class_name) is not None:
-                index += 1
-                class_name = f"{label.obj_class.name}-{suffix}-{index}"
+            shape_suffix_map = {
+                "rectangle": "rect",
+                "point": "point",
+                "bitmap": "bitmap",
+                "polygon": "polygon",
+                "polyline": "polyline",
+                "line": "line",
+            }
+            shape_suffix = shape_suffix_map.get(actual_geometry, actual_geometry)
+            base_name = f"{label.obj_class.name}_{shape_suffix}"
+            class_name = base_name
+            index = 1
 
-            new_class = label.obj_class.clone(name=class_name)
-            project_meta = project_meta.add_obj_class(new_class)
-            api.project.update_meta(project_id, project_meta)
-            final_labels.append(label.clone(obj_class=new_class))
+            while True:
+                existing_class = project_meta.get_obj_class(class_name)
+                if existing_class is None:
+                    new_class = label.obj_class.clone(name=class_name)
+                    project_meta = project_meta.add_obj_class(new_class)
+                    api.project.update_meta(project_id, project_meta)
+                    final_labels.append(label.clone(obj_class=new_class))
+                    break
+
+                if existing_class.geometry_type.geometry_name() == actual_geometry:
+                    final_labels.append(label.clone(obj_class=existing_class))
+                    break
+
+                index += 1
+                class_name = f"{base_name}_{index}"
 
         ann_pred = ann_pred.clone(labels=final_labels)
 
