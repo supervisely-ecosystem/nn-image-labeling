@@ -15,3 +15,4 @@ jobs:
       tag_version: "${{ github.event.inputs.tag_version }}"
       config_file: "annotation-tool/config.json"
       cve_checks: true
+      skip_tag_check: true

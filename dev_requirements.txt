@@ -6,3 +6,5 @@
 
 git+https://github.com/supervisely/supervisely.git@upgrade-protobuf
 matplotlib>=3.10.0, <4.0.0
+ruamel.yaml>=0.18.0
+PyYAML>=6.0
