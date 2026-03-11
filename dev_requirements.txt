@@ -2,6 +2,7 @@
 # supervisely==6.73.486
 
 # project-dataset
-supervisely==6.73.486
-matplotlib>=3.3.2, <4.0.0
-imgaug>=0.4.0, <1.0.0
+# supervisely==6.73.486
+
+git+https://github.com/supervisely/supervisely.git@upgrade-protobuf
+matplotlib>=3.10.0, <4.0.0
