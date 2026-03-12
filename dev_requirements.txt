@@ -1,10 +1,6 @@
-# annotation-tool
-# supervisely==6.73.486
+# supervisely==6.73.545
 
-# project-dataset
-# supervisely==6.73.486
-
-git+https://github.com/supervisely/supervisely.git@upgrade-protobuf
+supervisely[agent] @ git+https://github.com/supervisely/supervisely.git@upgrade-protobuf
 matplotlib>=3.10.0, <4.0.0
 ruamel.yaml>=0.18.0
 PyYAML>=6.0
