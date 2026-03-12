@@ -13,6 +13,7 @@ root_source_path = str(pathlib.Path(sys.argv[0]).parents[2])
 sly.logger.info(f"Root source directory: {root_source_path}")
 sys.path.append(root_source_path)
 
+import asyncio
 import io
 
 import ruamel.yaml
@@ -589,9 +590,8 @@ def main():
     data["ownerId"] = owner_id
     data["teamId"] = team_id
     init_ui(data, state)
-    import asyncio
 
-    asyncio._set_running_loop(asyncio.new_event_loop())
+    asyncio.set_event_loop(asyncio.new_event_loop())
     my_app.run(data=data, state=state)
 
 
