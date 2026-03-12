@@ -589,7 +589,9 @@ def main():
     data["ownerId"] = owner_id
     data["teamId"] = team_id
     init_ui(data, state)
+    import asyncio
 
+    asyncio._set_running_loop(asyncio.new_event_loop())
     my_app.run(data=data, state=state)
 
 
