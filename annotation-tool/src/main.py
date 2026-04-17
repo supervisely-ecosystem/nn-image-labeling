@@ -56,6 +56,20 @@ def set_promptable_segmentation_mode(settings, mode):
     }.get(mode, settings["inference_mode"])
 
 
+def set_text_prompt_from_project_class(settings, project_meta):
+    if settings.get("inference_mode") != "text":
+        return
+    if settings.get("text_prompt") not in [None, "None", ""]:
+        return
+    prompt_classes = [
+        obj_class
+        for obj_class in project_meta.obj_classes
+        if obj_class.name not in ["positive", "negative"] and obj_class.geometry_type != sly.Point
+    ]
+    if len(prompt_classes) == 1:
+        settings["text_prompt"] = prompt_classes[0].name
+
+
 @my_app.callback("connect")
 @sly.timeit
 def connect(api: sly.Api, task_id, context, state, app_logger):
@@ -339,6 +353,7 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
                 settings = ryaml.load(settings_str)
                 # set necessary parameters
                 set_promptable_segmentation_mode(settings, "raw")
+                set_text_prompt_from_project_class(settings, project_meta)
                 # transform dict back to string
                 stream = io.BytesIO()
                 ryaml.dump(settings, stream)
