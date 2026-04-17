@@ -44,6 +44,18 @@ mask_colors = [[255, 0, 0]]
 ann_cache = defaultdict(list)  # only one (current) image in cache
 
 
+def set_promptable_segmentation_mode(settings, mode):
+    settings["mode"] = mode
+    if "inference_mode" not in settings:
+        return
+    settings["inference_mode"] = {
+        "bbox": "box",
+        "combined": "points+box",
+        "points": "points",
+        "raw": "text",
+    }.get(mode, settings["inference_mode"])
+
+
 @my_app.callback("connect")
 @sly.timeit
 def connect(api: sly.Api, task_id, context, state, app_logger):
@@ -205,7 +217,7 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
                         if object_roi.contains(label.geometry.to_bbox()):
                             points.append(label)
                 if len(points) > 0:
-                    settings["mode"] = "combined"
+                    set_promptable_segmentation_mode(settings, "combined")
                     app_logger.info("Switching model to combined mode")
                     settings["input_image_id"] = image_id
                     settings["point_coordinates"] = [
@@ -235,7 +247,7 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
                         if object_roi.contains(label.geometry.to_bbox()):
                             points.extend(label.geometry.exterior)
                 if len(points) > 0:
-                    settings["mode"] = "points"
+                    set_promptable_segmentation_mode(settings, "points")
                     app_logger.info("Switching model to points mode")
                     settings["input_image_id"] = image_id
                     settings["point_coordinates"] = [[point.col, point.row] for point in points]
@@ -254,7 +266,7 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
                     points_outside_box = True
             if "line" not in geometries and ("point" not in geometries or points_outside_box):
                 # if "point" not in geometries or points_outside_box:
-                settings["mode"] = "bbox"
+                set_promptable_segmentation_mode(settings, "bbox")
                 app_logger.info("Switching model to bbox mode")
                 settings["bbox_coordinates"] = [
                     object_roi.top,
@@ -289,7 +301,7 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
                 ryaml = ruamel.yaml.YAML()
                 settings = ryaml.load(settings_str)
                 # set necessary parameters
-                settings["mode"] = "points"
+                set_promptable_segmentation_mode(settings, "points")
                 settings["input_image_id"] = image_id
                 points = [
                     label
@@ -326,7 +338,7 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
                 ryaml = ruamel.yaml.YAML()
                 settings = ryaml.load(settings_str)
                 # set necessary parameters
-                settings["mode"] = "raw"
+                set_promptable_segmentation_mode(settings, "raw")
                 # transform dict back to string
                 stream = io.BytesIO()
                 ryaml.dump(settings, stream)
