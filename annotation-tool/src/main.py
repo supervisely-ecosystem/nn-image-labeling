@@ -56,18 +56,20 @@ def set_promptable_segmentation_mode(settings, mode):
     }.get(mode, settings["inference_mode"])
 
 
-def set_text_prompt_from_project_class(settings, project_meta):
-    if settings.get("inference_mode") != "text":
-        return
-    if settings.get("text_prompt") not in [None, "None", ""]:
-        return
-    prompt_classes = [
-        obj_class
+def get_promptable_classes(project_meta):
+    return [
+        obj_class.name
         for obj_class in project_meta.obj_classes
         if obj_class.name not in ["positive", "negative"] and obj_class.geometry_type != sly.Point
     ]
-    if len(prompt_classes) == 1:
-        settings["text_prompt"] = prompt_classes[0].name
+
+
+def needs_text_prompt(settings):
+    return settings.get("inference_mode") == "text" and settings.get("text_prompt") in [
+        None,
+        "None",
+        "",
+    ]
 
 
 @my_app.callback("connect")
@@ -353,7 +355,6 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
                 settings = ryaml.load(settings_str)
                 # set necessary parameters
                 set_promptable_segmentation_mode(settings, "raw")
-                set_text_prompt_from_project_class(settings, project_meta)
                 # transform dict back to string
                 stream = io.BytesIO()
                 ryaml.dump(settings, stream)
@@ -383,9 +384,34 @@ def inference(api: sly.Api, task_id, context, state, app_logger):
                             ann = ann.delete_label(label)
 
     try:
-        ann_pred_json = api.task.send_request(
-            state["sessionId"], "inference_image_id", data=data, raise_error=True
-        )
+        if (
+            session_info.get("task type") == "promptable segmentation"
+            and data["settings"].get("mode") == "raw"
+            and needs_text_prompt(data["settings"])
+        ):
+            ann_pred_json = None
+            for text_prompt in get_promptable_classes(project_meta):
+                prompt_data = data.copy()
+                prompt_data["settings"] = data["settings"].copy()
+                prompt_data["settings"]["text_prompt"] = text_prompt
+                prompt_ann_pred_json = api.task.send_request(
+                    state["sessionId"],
+                    "inference_image_id",
+                    data=prompt_data,
+                    raise_error=True,
+                )
+                if ann_pred_json is None:
+                    ann_pred_json = prompt_ann_pred_json
+                else:
+                    ann_pred_json["annotation"]["objects"].extend(
+                        prompt_ann_pred_json["annotation"]["objects"]
+                    )
+            if ann_pred_json is None:
+                raise ValueError("No project classes found to use as text prompts.")
+        else:
+            ann_pred_json = api.task.send_request(
+                state["sessionId"], "inference_image_id", data=data, raise_error=True
+            )
     except Exception as e:
         image_info = api.image.get_info_by_id(image_id)
         sly.logger.info(
