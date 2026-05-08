@@ -13,6 +13,7 @@ jobs:
     with:
       image_name: "${{ github.event.repository.name }}"
       cve_checks: true
+      no_cache_requirements: true
   Supervisely-Release:
     if: "!github.event.release.prerelease"
     needs: build-image
