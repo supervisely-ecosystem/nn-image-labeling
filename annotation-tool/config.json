@@ -11,14 +11,15 @@
     "labeling"
   ],
   "description": "Use deployed neural network in labeling interface",
-  "docker_image": "supervisely/nn-image-labeling:6.73.545",
-  "min_instance_version": "6.15.40",
+  "docker_image": "supervisely/nn-image-labeling:6.73.567",
   "main_script": "annotation-tool/src/main.py",
   "gui_template": "annotation-tool/src/gui.html",
   "task_location": "application_sessions",
   "isolate": true,
   "headless": false,
-  "integrated_into": ["image_annotation_tool"],
+  "integrated_into": [
+    "image_annotation_tool"
+  ],
   "icon": "https://i.imgur.com/nnB2BqW.png",
   "icon_background": "#FFFFFF",
   "hotkeys": [
@@ -27,5 +28,6 @@
       "command": "inference"
     }
   ],
-  "poster": "https://user-images.githubusercontent.com/106374579/187226641-dce1a180-66b8-45ad-840e-ab5e445ee342.png"
+  "poster": "https://user-images.githubusercontent.com/106374579/187226641-dce1a180-66b8-45ad-840e-ab5e445ee342.png",
+  "instance_version": "6.15.60"
 }
