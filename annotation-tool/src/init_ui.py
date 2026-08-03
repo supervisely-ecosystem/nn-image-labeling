@@ -28,5 +28,6 @@ def init_ui(data, state):
     state["useModelSuffix"] = False
     state["settings"] = "# empty"
     state["addMode"] = "merge"
+    state["outputGeometry"] = "model"
     state["processing"] = False
     state["allow_full_image_inference"] = True

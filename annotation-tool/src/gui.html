@@ -173,6 +173,15 @@
                       Always add suffix to model predictions
                     </el-checkbox>
 
+                    <div class="mb15 mt15">
+                        <div><b>Output geometry</b></div>
+                        <div>Convert compatible model predictions to the selected geometry</div>
+                        <el-select v-model="state.outputGeometry" size="mini">
+                            <el-option key="model" label="Model output" value="model"></el-option>
+                            <el-option key="polygon" label="Polygon" value="polygon"></el-option>
+                        </el-select>
+                    </div>
+
                     <div class="mb15">
                         <div><b>How to add predictions</b></div>
                         <el-select v-model="state.addMode" size="mini">
