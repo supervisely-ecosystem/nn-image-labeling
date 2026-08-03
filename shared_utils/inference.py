@@ -36,8 +36,20 @@ def postprocess(
     model_meta: sly.ProjectMeta,
     state,
 ):
-    keep_classes = ui.get_keep_classes(state)  # @TODO: for debug ['dog'] #
-    keep_tags = ui.get_keep_tags(state)
+    selected_classes = ui.get_keep_classes(state)
+    predicted_classes = {label.obj_class.name for label in ann.labels}
+    keep_classes = [name for name in selected_classes if name in predicted_classes]
+
+    selected_tags = ui.get_keep_tags(state)
+    predicted_tags = {tag.meta.name for tag in ann.img_tags}
+    predicted_tags.update(
+        tag.meta.name
+        for label in ann.labels
+        if label.obj_class.name in keep_classes
+        for tag in label.tags
+    )
+    keep_tags = [name for name in selected_tags if name in predicted_tags]
+
     output_model_meta = _get_output_model_meta(
         model_meta, state.get("outputGeometry", "model")
     )

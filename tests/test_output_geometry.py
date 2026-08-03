@@ -19,6 +19,52 @@ def make_state(model_meta, output_geometry):
 
 
 class OutputGeometryTestCase(unittest.TestCase):
+    def test_adds_only_classes_and_tags_present_in_prediction(self):
+        model_classes = [
+            sly.ObjClass(f"class_{index}", sly.Rectangle) for index in range(50)
+        ]
+        model_tags = [
+            sly.TagMeta(f"tag_{index}", sly.TagValueType.NONE) for index in range(20)
+        ]
+        model_meta = sly.ProjectMeta(obj_classes=model_classes, tag_metas=model_tags)
+        predicted_class = model_classes[17]
+        image_tag = sly.Tag(model_tags[2])
+        label_tag = sly.Tag(model_tags[3])
+        annotation = sly.Annotation(
+            img_size=(20, 20),
+            labels=[
+                sly.Label(
+                    sly.Rectangle(1, 2, 10, 12),
+                    predicted_class,
+                    tags=[label_tag],
+                )
+            ],
+            img_tags=[image_tag],
+        )
+
+        result, result_meta = postprocess(
+            None,
+            None,
+            annotation,
+            sly.ProjectMeta(),
+            model_meta,
+            make_state(model_meta, "model"),
+        )
+
+        self.assertEqual(
+            [obj_class.name for obj_class in result_meta.obj_classes],
+            ["class_17"],
+        )
+        self.assertEqual(
+            [tag_meta.name for tag_meta in result_meta.tag_metas],
+            ["tag_2", "tag_3"],
+        )
+        self.assertEqual([tag.meta.name for tag in result.img_tags], ["tag_2"])
+        self.assertEqual(
+            [tag.meta.name for tag in result.labels[0].tags],
+            ["tag_3"],
+        )
+
     def test_converts_bitmap_components_and_reuses_polygon_class(self):
         model_class = sly.ObjClass("Cat", sly.Bitmap, [200, 201, 202])
         project_class = sly.ObjClass("Cat", sly.Polygon, [1, 2, 3])
