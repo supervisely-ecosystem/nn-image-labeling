@@ -3,6 +3,31 @@ import shared_utils.ui2 as ui
 from shared_utils.merge_metas import merge_metas
 
 
+OUTPUT_GEOMETRIES = {
+    "model": None,
+    "polygon": sly.Polygon,
+}
+
+
+def _can_convert_geometry(source_geometry, target_geometry):
+    if target_geometry is None or source_geometry == target_geometry:
+        return True
+    return target_geometry in source_geometry.allowed_transforms()
+
+
+def _get_output_model_meta(model_meta: sly.ProjectMeta, output_geometry: str):
+    target_geometry = OUTPUT_GEOMETRIES.get(output_geometry)
+    if target_geometry is None:
+        return model_meta
+
+    output_classes = []
+    for obj_class in model_meta.obj_classes:
+        if _can_convert_geometry(obj_class.geometry_type, target_geometry):
+            obj_class = obj_class.clone(geometry_type=target_geometry, geometry_config={})
+        output_classes.append(obj_class)
+    return model_meta.clone(obj_classes=output_classes)
+
+
 def postprocess(
     api: sly.Api,
     project_id,
@@ -13,8 +38,16 @@ def postprocess(
 ):
     keep_classes = ui.get_keep_classes(state)  # @TODO: for debug ['dog'] #
     keep_tags = ui.get_keep_tags(state)
+    output_model_meta = _get_output_model_meta(
+        model_meta, state.get("outputGeometry", "model")
+    )
     res_project_meta, class_mapping, tag_meta_mapping = merge_metas(
-        project_meta, model_meta, keep_classes, keep_tags, state["suffix"], state["useModelSuffix"]
+        project_meta,
+        output_model_meta,
+        keep_classes,
+        keep_tags,
+        state["suffix"],
+        state["useModelSuffix"],
     )
 
     image_tags = []
@@ -32,10 +65,12 @@ def postprocess(
             if tag.meta.name not in keep_tags:
                 continue
             label_tags.append(tag.clone(meta=tag_meta_mapping[tag.meta.name]))
-        new_label = label.clone(
-            obj_class=class_mapping[label.obj_class.name.strip()], tags=sly.TagCollection(label_tags)
-        )
-        new_labels.append(new_label)
+        output_class = class_mapping[label.obj_class.name.strip()]
+        label = label.clone(tags=sly.TagCollection(label_tags))
+        if label.geometry.geometry_name() == output_class.geometry_type.geometry_name():
+            new_labels.append(label.clone(obj_class=output_class))
+        else:
+            new_labels.extend(label.convert(output_class))
 
     res_ann = ann.clone(labels=new_labels, img_tags=sly.TagCollection(image_tags))
     return res_ann, res_project_meta

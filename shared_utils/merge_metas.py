@@ -6,46 +6,41 @@ def generate_res_name(item, suffix, index):
     return f"{item.name}-{suffix}" if index == 0 else f"{item.name}-{suffix}-{index}"
 
 
+def items_match(existing_item, model_item, candidate_name):
+    candidate = model_item.clone(name=candidate_name)
+    if isinstance(model_item, sly.ObjClass):
+        return (
+            existing_item.name == candidate.name
+            and existing_item.geometry_type == candidate.geometry_type
+            and existing_item.geometry_config == candidate.geometry_config
+        )
+    return existing_item == candidate
+
+
 def find_item(
     collection: KeyIndexedCollection,
     item,
     suffix,
     use_suffix: bool = False,
 ):
-    index = 0
-    res_name = item.name.strip()
-    while True:
-        existing_item = collection.get(res_name.strip())
+    base_name = item.name.strip()
+
+    if use_suffix is False:
+        existing_item = collection.get(base_name)
         if existing_item is None:
-            if use_suffix is True:
-                res_name = generate_res_name(item, suffix, index)
-                existing_item = collection.get(res_name)
-                if existing_item is not None:
-                    return existing_item, None
+            return None, base_name
+        if items_match(existing_item, item, base_name):
+            return existing_item, None
+
+    index = 0
+    while True:
+        res_name = generate_res_name(item, suffix, index)
+        existing_item = collection.get(res_name)
+        if existing_item is None:
             return None, res_name
-        else:
-            if existing_item == item.clone(name=res_name):
-                if use_suffix is True:
-                    res_name = generate_res_name(item, suffix, index)
-                    existing_item = collection.get(res_name)
-                    if existing_item is None:
-                        return None, res_name
-                    elif existing_item == item.clone(name=res_name):
-                        res_name = generate_res_name(item, suffix, index)
-                        existing_item = collection.get(res_name)
-                        if existing_item is None:
-                            return None, res_name
-                        return existing_item, None
-                    else:
-                        index += 1
-                        res_name = generate_res_name(item, suffix, index)
-                        existing_item = collection.get(res_name)
-                        if existing_item is None:
-                            return None, res_name
-                return existing_item, None
-            else:
-                res_name = generate_res_name(item, suffix, index)
-                index += 1
+        if items_match(existing_item, item, res_name):
+            return existing_item, None
+        index += 1
 
 
 def merge_metas(
