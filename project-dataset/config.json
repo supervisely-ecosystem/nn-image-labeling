@@ -12,7 +12,7 @@
     "labeling"
   ],
   "description": "NN Inference on images in project or dataset",
-  "docker_image": "supervisely/nn-image-labeling:6.73.567",
+  "docker_image": "supervisely/nn-image-labeling:6.74.32",
   "entrypoint": "python -m uvicorn project-dataset.src.main:app --host 0.0.0.0 --port 8000",
   "task_location": "workspace_tasks",
   "isolate": true,
@@ -27,5 +27,5 @@
     "context_root": "Neural Networks"
   },
   "poster": "https://user-images.githubusercontent.com/106374579/187227957-ea4fd452-35ef-4969-9e55-cd7a5a4873ee.png",
-  "instance_version": "6.15.60"
+  "instance_version": "6.17.22"
 }
