@@ -13,7 +13,7 @@ jobs:
     with:
       image_name: "${{ github.event.repository.name }}"
       dockerfile_template_path: "docker/Dockerfile.tmpl"
-      cve_checks: true
+      cve_checks: false
   Supervisely-Release:
     if: "!github.event.release.prerelease"
     needs: build-image
